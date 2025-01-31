@@ -1,20 +1,36 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Hello HomeController!{% endblock %}
+{% block content %}
+<div class="container my-5">
+    <!-- Présentation de l'entreprise -->
+    <section id="presentation" class="mb-5">
+        <h1 class="text-center mb-4">Bienvenue sur Covoiturage EcoRide</h1>
+        <div class="row">
+            <div class="col-md-6">
+                <p>
+                    Covoiturage est une plateforme dédiée à faciliter les déplacements entre utilisateurs en utilisant des voitures. Notre mission est de connecter des conducteurs et des passagers pour des trajets sûrs et économiques.
+                </p>
+            </div>
+            <div class="col-md-6">
+                <img src="{{ asset('images/image1.jpg') }}" alt="Présentation de l'entreprise" class="img-fluid rounded">
+            </div>
+        </div>
+    </section>
 
-{% block body %}
-<style>
-    .example-wrapper { margin: 1em auto; max-width: 800px; width: 95%; font: 18px/1.5 sans-serif; }
-    .example-wrapper code { background: #F5F5F5; padding: 2px 6px; }
-</style>
+    <!-- Barre de recherche -->
+    <section id="search" class="mb-5">
+        <h2 class="text-center mb-4">Trouvez votre itinéraire</h2>
+        <form id="search-form" class="d-flex justify-content-center">
+            <div class="input-group w-50">
+                <input type="text" class="form-control" id="lieu_depart" placeholder="Lieu de départ" required>
+                <input type="text" class="form-control" id="lieu_arrivee" placeholder="Lieu d'arrivée" required>
+                <button type="submit" class="btn btn-primary">Rechercher</button>
+            </div>
+        </form>
+        <div id="search-results" class="mt-3"></div>
+    </section>
 
-<div class="example-wrapper">
-    <h1>Hello</h1>
-
-    This friendly message is coming from:
-    <ul>
-        <li>Your controller at <code>F:/xampp/htdocs/EcoRide/src/Controller/HomeController.php</code></li>
-        <li>Your template at <code>F:/xampp/htdocs/EcoRide/templates/home/index.html.twig</code></li>
-    </ul>
+    <!-- Autres sections si nécessaire -->
 </div>
 {% endblock %}
+

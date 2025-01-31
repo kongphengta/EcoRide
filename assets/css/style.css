@@ -1,0 +1,22 @@
+/* style.css */
+body {
+    background-color: white;
+    font-family: Arial, sans-serif;
+}
+
+header {
+    background-color: #f8f9fa;
+}
+
+footer {
+    background-color: #f8f9fa;
+}
+
+#presentation img {
+    max-height: 300px;
+    object-fit: cover;
+}
+
+#search .input-group {
+    max-width: 800px;
+}
