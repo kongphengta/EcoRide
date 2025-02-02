@@ -1,6 +1,6 @@
 /* style.css */
 body {
-    background-color: white;
+    background-color:white;
     font-family: Arial, sans-serif;
 }
 
@@ -20,3 +20,11 @@ footer {
 #search .input-group {
     max-width: 800px;
 }
+.carousel-img {
+    margin-top: 50px;
+    width: 1194px;
+    height: 486px;
+    
+}
+
+    

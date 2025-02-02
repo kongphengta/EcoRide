@@ -1,22 +1,87 @@
 {% extends 'base.html.twig' %}
 
 {% block content %}
+
+<div id="carouselExampleInterval" class="carousel slide" data-bs-ride="carousel">
+  <div class="carousel-inner text-center">
+    <div class="carousel-item active" data-bs-interval="1000">
+      <img src="{{ asset('images/FORD.jpg') }}"class="carousel-img" alt="image de voiteur BMW">
+    </div>
+    <div class="carousel-item" data-bs-interval="2000">
+      <img src="{{ asset('images/MAZDA.jpg') }}" class="carousel-img" style=""  alt="image de voiture MAZDA">
+    </div>
+    <div class="carousel-item" data-bs-interval="3000">>
+      <img src="{{ asset('images/AUDI.jpg') }}" class="carousel-img" alt="image de voiture AUDI">
+    </div>
+  </div>
+  <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleInterval" data-bs-slide="prev">
+    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+    <span class="visually-hidden">Previous</span>
+  </button>
+  <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleInterval" data-bs-slide="next">
+    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+    <span class="visually-hidden">Next</span>
+  </button>
+</div>
+
 <div class="container my-5">
     <!-- Présentation de l'entreprise -->
     <section id="presentation" class="mb-5">
         <h1 class="text-center mb-4">Bienvenue sur Covoiturage EcoRide</h1>
         <div class="row">
-            <div class="col-md-6">
+            <div class="col text-center">
                 <p>
                     Covoiturage est une plateforme dédiée à faciliter les déplacements entre utilisateurs en utilisant des voitures. Notre mission est de connecter des conducteurs et des passagers pour des trajets sûrs et économiques.
                 </p>
             </div>
-            <div class="col-md-6">
-                <img src="{{ asset('images/image1.jpg') }}" alt="Présentation de l'entreprise" class="img-fluid rounded">
+        </div>
+    </section>
+    <!-- Villes -->
+    <section id="villes" class="mb-5">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card" style="width: 18rem;">
+                    <img src="{{ asset('images/Marseille.jpg') }}" class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">Marseille vieux port</h5>
+                        <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+
+                    </div>
+                </div> 
+            </div>
+
+             <div class="col-md-3">
+                <div class="card" style="width: 18rem;">
+                    <img src="{{ asset('images/Paris.jpg') }}" class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">Paris Le Louvre</h5>
+                        <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+
+                    </div>
+                </div> 
+            </div>
+             <div class="col-md-3">
+                <div class="card" style="width: 18rem;">
+                    <img src="{{ asset('images/Lyon.jpg') }}" class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">Lyon place bellecour</h5>
+                        <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+
+                    </div>
+                </div> 
+            </div>
+             <div class="col-md-3">
+                <div class="card" style="width: 18rem;">
+                    <img src="{{ asset('images/Lille.avif') }}" class="card-img-top" alt="...">
+                    <div class="card-body">
+                        <h5 class="card-title">Lille palais des beaux-arts</h5>
+                        <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
+
+                    </div>
+                </div> 
             </div>
         </div>
     </section>
-
     <!-- Barre de recherche -->
     <section id="search" class="mb-5">
         <h2 class="text-center mb-4">Trouvez votre itinéraire</h2>

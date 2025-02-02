@@ -10,11 +10,10 @@
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <nav class="navbar navbar-expand-lg navbar-light bg-primary">
             <div class="container">
-                <a class="navbar-brand" href="#">
+                <a class="navbar-brand text-white" href="#">
                     <img src="{{ asset('images/logo.png') }}" alt="Logo" width="30" height="30" class="d-inline-block align-text-top">
-                    Covoiturage
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
@@ -22,13 +21,18 @@
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" href="#">Accueil</a>
+                            <a class="nav-link active text-white" aria-current="page" href="#">Accueil</a>
+                        </li>
+                                      <li class="nav-item">
+                            <a class="nav-link text-white" href="#">Créer un compte</a>
+                        </li>              <li class="nav-item">
+                            <a class="nav-link text-white" href="#">Se connecter</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">À propos</a>
+                            <a class="nav-link text-white" href="#">À propos</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">Contact</a>
+                            <a class="nav-link text-white" href="#">Contact</a>
                         </li>
                     </ul>
                 </div>
@@ -41,7 +45,7 @@
         {% endblock %}
     </main>
 
-    <footer class="bg-light text-center py-3">
+    <footer class="bg-light text-center py-3 ">
         <p>Contactez-nous : <a href="mailto:contact@covoiturage.com">contact@covoiturage.com</a></p>
         <p><a href="/mentions-legales">Mentions légales</a></p>
     </footer>
