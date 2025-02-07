@@ -1,0 +1,15 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Hello AccountController!{% endblock %}
+
+{% block body %}
+<div class="container my-5">
+    <h1>Mon compte</h1>
+    <div class="row">
+        <div class="col-md-6">
+            <h4 class="mb-5"><i>Utilisez le formulaire ci-dessous pour mettre à jour vos informations</i></h4>
+            {{ form(accountForm) }}
+        </div>    
+    </div>
+
+{% endblock %}

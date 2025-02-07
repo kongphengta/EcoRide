@@ -2,13 +2,13 @@
 
 namespace App\Entity;
 
-use App\Repository\UserRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use App\Repository\UserRepository;
+use Doctrine\Common\Collections\Collection;
+use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
@@ -78,7 +78,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $this->covoiturage = new ArrayCollection();
     }
-
     public function getId(): ?int
     {
         return $this->id;
@@ -110,7 +109,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      * @see UserInterface
      *
      * @return list<string>
-     */
+    */
+
     public function getRoles(): array
     {
         $roles = $this->roles;
