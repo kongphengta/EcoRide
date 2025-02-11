@@ -21,4 +21,9 @@ final class LoginController extends AbstractController
             'last_username' => $lastUsername,
         ]);
     }
+    #[Route('/deconnexion', name: 'app_logout', methods: ['GET'])]
+    public function logout(): void
+    {
+        throw new \Exception('This method can be blank - it will be intercepted by the logout key on your firewall');
+    }
 }

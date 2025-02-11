@@ -8,9 +8,13 @@
     <div class="row form-control">
         <div class="col-md-6">
             <h4 class="mb-5"><i>Utilisez le formulaire ci-dessous pour vous s'inscrire</i></h4>
-                {{ form(registerForm) }}
+        {{ form(registerForm) }}
         </div>    
+        <div class="text-center mt-3">
+            <p>Vous avez déjà un compte ? <a href="{{ path('app_login') }}">Connectez-vous ici</a></p>
+        </div>
     </div>
+   
 </div>
 
 {% endblock %}

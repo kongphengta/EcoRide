@@ -1,15 +1,59 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Hello AccountController!{% endblock %}
+{% block title %}mon compte!{% endblock %}
 
 {% block body %}
 <div class="container my-5">
     <h1>Mon compte</h1>
+    <h4>Bonjour, {{ app.user.prenom }} {{ app.user.nom }}</h4> <br>
+     <p>Bienvenue sur votre espace personnel.</p>
     <div class="row">
-        <div class="col-md-6">
-            <h4 class="mb-5"><i>Utilisez le formulaire ci-dessous pour mettre à jour vos informations</i></h4>
-            {{ form(accountForm) }}
-        </div>    
+    <div class="col-md-6">
     </div>
+        <div class="col-md-6">
+            <h2>Modifier mon mot de passe</h2>
+            <p>Pour des raisons de sécurité, nous vous recommandons de changer régulièrement votre mot de passe.</p>
+            <a href="{{ path('app_account_modify_pwd') }}" class="btn btn-warning">Modifier mon mot de passe</a>
+        </div>
+    </div>
+    {# <div class="row">
+        <div class="col-md-6">
+            <h2 class="mt-5">Mes informations</h2>
+            <p>Vous pouvez consulter et modifier vos informations personnelles.</p>
+            <a href="{{ path('app_account_edit') }}" class="btn btn-primary">Modifier mes informations</a>
+        </div>
+        <div class="col-md-6">
+            <h2 class="mt-5">Mes réservations</h2>
+            <p>Vous pouvez consulter et annuler vos réservations.</p>
+            <a href="{{ path('app_account_reservations') }}" class="btn btn-primary">Voir mes réservations</a>
+        </div>
+    </div> #}
 
+
+    <div class="mt-5">
+        <!-- Button trigger modal -->
+        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#logoutModal">
+            Se déconnecter
+        </button>
+
+        <!-- Modal -->
+        <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="logoutModalLabel">Confirmation de déconnexion</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Êtes-vous sûr de vouloir vous déconnecter ?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <a href="{{ path('app_logout') }}" class="btn btn-danger">Se déconnecter</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

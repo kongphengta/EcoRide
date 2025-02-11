@@ -1,1 +1,2 @@
-# Présentation 
+# Présentation EcoRide
+EcoRide est une application innovante visant à promouvoir le covoiturage écologique. Elle permet aux utilisateurs de partager des trajets en voiture, réduisant ainsi leur empreinte carbone et les coûts de transport. L'application offre une interface conviviale pour planifier, organiser et suivre les trajets partagés en temps réel. Rejoignez-nous pour rendre les déplacements plus verts et plus économiques.
