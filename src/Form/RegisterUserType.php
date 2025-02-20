@@ -43,12 +43,6 @@ class RegisterUserType extends AbstractType
 
                 'second_options' => [
                 'label' => 'Confirmez votre mot de passe',
-                'constraints' => [
-                    new Length([
-                        'min' => 6,
-                        'max' => 25
-                    ])
-                ],
                 'attr' => [
                     'placeholder' => 'Confirmez votre mot de passe'
                 ]
