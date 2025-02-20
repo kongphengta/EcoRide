@@ -22,7 +22,7 @@ Une fois installé il me fournit tout c'est donc j'ai besoin travailler.
 - Base de données **MySQL**.    
 - **PHP** et **Perl**.  
 - Unserveur **FTP**.  
-- **phpMyAdmin** pour gérer mes base de données de manière graphique.  
+- **phpMyAdmin** pour gérer mes bases de données de manière graphique.  
 
 ## Utilisation  
 
