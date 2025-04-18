@@ -1,0 +1,21 @@
+{# templates/covoiturage_resultats/index.html.twig #}
+
+{% extends 'base.html.twig' %}
+
+{% block title %}Résultats des covoiturages
+{% endblock %}
+
+{% block body %}
+	<div class="container mt-5">
+		<h1>Résultats de votre recherche</h1>
+
+		<p>Vous avez recherché un covoiturage de
+			<strong>{{ depart }}</strong>
+			vers
+			<strong>{{ arrivee }}</strong>
+			pour la date du
+			<strong>{{ date }}</strong>.</p>
+
+		{# Ici, j'afficerai la liste des covoiturages trouvés #}
+	</div>
+{% endblock %}

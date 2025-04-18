@@ -1,0 +1,29 @@
+{# templates/contact/index.html.twig #}
+
+{% extends 'base.html.twig' %}
+
+{% block title %}Contactez-nous
+{% endblock %}
+
+{% block body %}
+	<div class="container mt-5">
+		<h1>Contactez l'équipe EcoRide</h1>
+		<p class="lead">Vous avez une question, une suggestion ou une réclamation ? N'hésitez pas à nous contacter via le formulaire ci-dessous.</p>
+
+		<form>
+			<div class="mb-3">
+				<label for="nom" class="form-label">Nom</label>
+				<input type="text" class="form-control" id="nom" placeholder="Votre nom">
+			</div>
+			<div class="mb-3">
+				<label for="email" class="form-label">Email</label>
+				<input type="email" class="form-control" id="email" placeholder="Votre adresse email">
+			</div>
+			<div class="mb-3">
+				<label for="message" class="form-label">Message</label>
+				<textarea class="form-control" id="message" rows="5" placeholder="Votre message"></textarea>
+			</div>
+			<button type="submit" class="btn btn-primary">Envoyer le message</button>
+		</form>
+	</div>
+{% endblock %}

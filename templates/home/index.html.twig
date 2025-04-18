@@ -1,0 +1,59 @@
+{# templates/index.html.twig #}
+
+{% extends 'base.html.twig' %}
+
+{% block title %}Bienvenue sur EcoRide!
+{% endblock %}
+
+{% block body %}
+	<div class="container mt-5">
+		<header class="text-center mb-5">
+			<h1>Bienvenue sur
+				<span class="text-success">EcoRide</span>
+			</h1>
+			<p class="lead">Votre plateforme de covoiturage
+				<span class="text-success">écologique</span>.</p>
+		</header>
+
+		<section class="mb-5">
+			<h2>
+				<i class="bi bi-leaf-fill text-success me-2"></i>
+				Notre Engagement Écologique</h2>
+			<p>EcoRide est née d'une volonté forte de réduire l'empreinte carbone de nos déplacements. En favorisant le covoiturage, nous offrons une alternative économique et respectueuse de l'environnement pour vos trajets en voiture.</p>
+			<div class="row mt-4">
+				<div class="col-md-6 mb-3">
+					<img src="{{ asset('build/images/eco_car_1.jpg') }}" alt="Covoiturage écologique" class="img-fluid rounded shadow-sm">
+				</div>
+				<div class="col-md-6 mb-3">
+					<img src="{{ asset('build/images/share_ride_1.jpg') }}" alt="Partage de trajet convivial" class="img-fluid rounded shadow-sm">
+				</div>
+			</div>
+			<p>Rejoignez la communauté EcoRide et contribuez à un avenir plus vert tout en économisant sur vos déplacements !</p>
+		</section>
+
+		<section class="mb-5">
+			<h2>
+				<i class="bi bi-search me-2"></i>
+				Trouvez votre trajet</h2>
+			<form class="row g-3" action="{{ path('app_covoiturages_resultats') }}" method="GET">
+				<div class="col-md-4">
+					<label for="depart" class="form-label">Départ</label>
+					<input type="text" class="form-control" id="depart" name="depart" placeholder="Ville de départ">
+				</div>
+				<div class="col-md-4">
+					<label for="arrivee" class="form-label">Arrivée</label>
+					<input type="text" class="form-control" id="arrivee" name="arrivee" placeholder="Ville d'arrivée">
+				</div>
+				<div class="col-md-4">
+					<label for="date" class="form-label">Date</label>
+					<input type="date" class="form-control" id="date" name="date">
+				</div>
+				<div class="col-12">
+					<button type="submit" class="btn btn-outline-success">
+						<i class="bi bi-arrow-right-circle me-2"></i>
+						Rechercher un trajet</button>
+				</div>
+			</form>
+		</section>
+	</div>
+{% endblock %}

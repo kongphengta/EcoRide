@@ -1,0 +1,16 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Compléter votre profil
+{% endblock %}
+
+{% block body %}
+	<div class="container my-5">
+		<h1>Compléter votre profil</h1>
+		<p>Ce formulaire vous permettra de fournir des informations supplémentaires.</p>
+		{# Ici, nous afficherons le formulaire ProfileFormType #}
+		{{ form_start(profileForm) }}
+		{{ form_widget(profileForm) }}
+		<button type="submit" class="btn btn-primary">Enregistrer les informations</button>
+		{{ form_end(profileForm) }}
+	</div>
+{% endblock %}

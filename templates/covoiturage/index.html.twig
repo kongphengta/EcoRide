@@ -1,0 +1,46 @@
+{# templates/covoiturage/index.html.twig #}
+
+{% extends 'base.html.twig' %}
+
+{% block title %}Trouvez votre covoiturage idéal
+{% endblock %}
+
+{% block body %}
+	<div class="container mt-5">
+		<header class="mb-4">
+			<h1>
+				<i class="bi bi-car-front-fill text-info me-2"></i>
+				Trouvez le covoiturage parfait pour votre prochain trajet</h1>
+			<p class="lead">Partez à la découverte de nouvelles destinations tout en partageant les frais et en réduisant votre empreinte carbone.</p>
+		</header>
+
+		<section class="mb-4">
+			<h2>Rechercher un covoiturage</h2>
+			<form class="row g-3">
+				<div class="col-md-4">
+					<label for="depart" class="form-label">Départ</label>
+					<input type="text" class="form-control" id="depart" placeholder="Ville de départ">
+				</div>
+				<div class="col-md-4">
+					<label for="arrivee" class="form-label">Arrivée</label>
+					<input type="text" class="form-control" id="arrivee" placeholder="Ville d'arrivée">
+				</div>
+				<div class="col-md-3">
+					<label for="date" class="form-label">Date</label>
+					<input type="date" class="form-control" id="date">
+				</div>
+			</form>
+			<div class="col-md-1 mt-3">
+				<button type="submit" class="btn btn-outline-info">
+					<i class="bi bi-search">Recherche</i>
+				</button>
+			</div>
+		</section>
+
+		<section>
+			<h2>Derniers covoiturages proposés</h2>
+			<p>Consultez les derniers trajets partagés par notre communauté :</p>
+			{# Ici, nous afficherons la liste des covoiturages plus tard #}
+		</section>
+	</div>
+{% endblock %}
