@@ -39,24 +39,16 @@ class LoginFormAuthenticator extends AbstractLoginFormAuthenticator
             ]
         );
     }
-
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
-        // dd($token->getUser());
-
+        // Vérifier s'il y a un chemin cible (redirection après accès refusé)
         if ($targetPath = $this->getTargetPath($request->getSession(), $firewallName)) {
             return new RedirectResponse($targetPath);
         }
-        /** @var \App\Entity\User $user */
-        $user = $token->getUser();
 
-        // dd($user); // <-- Ajoute cette ligne ici
-
-        if ($user->getFirstname() !== true && $user->getLastname() !== true && $user->getPseudo() !== true) {
-            return new RedirectResponse($this->urlGenerator->generate('app_profile'));
-        } else {
-            return new RedirectResponse($this->urlGenerator->generate('app_complete_profile'));
-        }
+        // IMPORTANT: Retourner null ici pour laisser le LoginSuccessHandler (configuré dans security.yaml)
+        // prendre le relais pour la redirection standard après connexion.
+        return null;
     }
 
     protected function getLoginUrl(Request $request): string

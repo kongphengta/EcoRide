@@ -1,0 +1,76 @@
+{# templates/registration/register.html.twig #}
+{% extends 'base.html.twig' %}
+{# Adaptez si votre template de base a un autre nom #}
+
+{% block title %}Inscription - EcoRide
+{% endblock %}
+
+{% block body %}
+	<div class="container mt-5">
+		<div class="row justify-content-center">
+			<div class="col-md-8 col-lg-6">
+				<h1 class="mb-4 text-center">Créez votre compte EcoRide</h1>
+
+				{# Affichage des messages flash (utile pour les succès/erreurs après redirection) #}
+				{% for label, messages in app.flashes %}
+					{% for message in messages %}
+						<div class="alert alert-{{ label }}" role="alert">
+							{{ message }}
+						</div>
+					{% endfor %}
+				{% endfor %}
+
+				{# Début du formulaire #}
+				{{ form_start(registrationForm, {'attr': {'class': 'needs-validation', 'novalidate': 'novalidate'}}) }}
+
+				{# Affichage des champs du formulaire (firstname, lastname, pseudo, email, plainPassword) #}
+				{# Twig va utiliser les labels définis dans RegistrationFormType #}
+
+					<div class="mb-3"> {{ form_row(registrationForm.firstname, {'attr': {'class': 'form-control'}}) }}
+				</div>
+
+				<div class="mb-3">
+					{{ form_row(registrationForm.lastname, {'attr': {'class': 'form-control'}}) }}
+				</div>
+
+				<div class="mb-3">
+					{{ form_row(registrationForm.pseudo, {'attr': {'class': 'form-control'}}) }}
+				</div>
+
+				<div class="mb-3">
+					{{ form_row(registrationForm.email, {'attr': {'class': 'form-control'}}) }}
+				</div>
+
+				{# Le champ RepeatedType ('plainPassword') génère deux champs #}
+				{# form_row gère bien l'affichage des deux avec leurs labels #}
+				<div class="mb-3">
+					{{ form_row(registrationForm.plainPassword.first, {'label': 'Mot de passe', 'attr': {'class': 'form-control'}}) }}
+				</div>
+				<div class="mb-3">
+					{{ form_row(registrationForm.plainPassword.second, {'label': 'Confirmer le mot de passe', 'attr': {'class': 'form-control'}}) }}
+					{# Affichage des erreurs globales du champ RepeatedType (si les mots de passe ne correspondent pas) #}
+					{{ form_errors(registrationForm.plainPassword) }}
+				</div>
+
+
+				{# Affichage des erreurs générales du formulaire (rarement utilisé si les erreurs sont sur les champs) #}
+				{# {{ form_errors(registrationForm) }} #}
+
+				{# Affichage du champ CSRF (géré automatiquement par form_end) #}
+				{# {{ form_row(registrationForm._token) }} #}
+
+					<div class="d-grid gap-2 mt-4"> <button type="submit" class="btn btn-primary btn-lg">S'inscrire</button>
+				</div>
+
+				{{ form_end(registrationForm) }}
+				{# Fin du formulaire, génère la balise </form> et le champ CSRF #}
+
+				<p class="text-center mt-5">
+					Déjà un compte ?
+					<a href="{{ path('app_login') }}">Connectez-vous</a>
+					{# Adaptez 'app_login' si besoin #}
+				</p>
+			</div>
+		</div>
+	</div>
+{% endblock %}

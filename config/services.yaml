@@ -4,6 +4,9 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    app.mailer_from: 'no-reply@ecoride.local'
+    app.mailer_from_name: 'Équipe EcoRide'
+    app.reset_password_token_lifetime: 3600 # Durée de validité du token en 1heure (3600 secondes)
 
 services:
     # default configuration for services in *this* file

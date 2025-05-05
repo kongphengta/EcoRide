@@ -1,4 +1,5 @@
 <?php
+// src/Form/RegistrationFormType.php
 
 namespace App\Form;
 
@@ -18,28 +19,6 @@ class RegistrationFormType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('email', EmailType::class, [
-                'label' => 'Adresse e-mail',
-            ])
-            ->add('password', RepeatedType::class, [
-                'type' => PasswordType::class,
-                'invalid_message' => 'Les mots de passe doivent correspondre.',
-                'options' => ['attr' => ['class' => 'password-field']],
-                'required' => true,
-                'first_options'  => ['label' => 'Mot de passe'],
-                'second_options' => ['label' => 'Confirmer le mot de passe'],
-                'constraints' => [
-                    new NotBlank([
-                        'message' => 'Veuillez entrer un mot de passe',
-                    ]),
-                    new Length([
-                        'min' => 6,
-                        'minMessage' => 'Votre mot de passe doit contenir au moins {{ limit }} caractères',
-                        // max length allowed by Symfony for security reasons
-                        'max' => 4096,
-                    ]),
-                ],
-            ])
             ->add('firstname', TextType::class, [
                 'label' => 'Prénom',
                 'attr' => [
@@ -62,7 +41,43 @@ class RegistrationFormType extends AbstractType
                     ]),
                 ],
             ])
-            ->add('pseudo', TextType::class)
+            ->add('pseudo', TextType::class, [
+                'label' => 'Pseudo',
+                'constraints' => [
+                    new NotBlank([
+                        'message' => 'Veuillez choisir un pseudo'
+                    ]),
+                ],
+            ])
+            ->add('email', EmailType::class, [
+                'label' => 'Adresse e-mail',
+                'constraints' => [
+                    new NotBlank([
+                        'message' => 'Veuillez entrer votre email'
+                    ]),
+                    // Les contraintes Email et UniqueEntity sont dans l'entité
+                ],
+            ])
+            ->add('plainPassword', RepeatedType::class, [
+                'type' => PasswordType::class,
+                'mapped' => false,
+                'attr' => ['autocomplete' => 'new-password'],
+                'invalid_message' => 'Les mots de passe doivent correspondre.',
+                'options' => ['attr' => ['class' => 'password-field']],
+                'required' => true,
+                'first_options'  => ['label' => 'Mot de passe'],
+                'second_options' => ['label' => 'Confirmer le mot de passe'],
+                'constraints' => [
+                    new NotBlank([
+                        'message' => 'Veuillez entrer un mot de passe',
+                    ]),
+                    new Length([
+                        'min' => 6,
+                        'minMessage' => 'Votre mot de passe doit contenir au moins {{ limit }} caractères',
+                        'max' => 4096,
+                    ]),
+                ],
+            ])
         ;
     }
 

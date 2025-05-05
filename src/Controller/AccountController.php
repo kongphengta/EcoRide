@@ -4,13 +4,16 @@ namespace App\Controller;
 
 use App\Form\ProfileFormType;
 use App\Form\PasswordUserType;
+use App\Form\ChangePasswordFormType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
+#[IsGranted('ROLE_USER')]
 final class AccountController extends AbstractController
 {
     #[Route('/profile', name: 'app_profile')]
@@ -20,9 +23,11 @@ final class AccountController extends AbstractController
         if (!$user) {
             return $this->redirectToRoute('app_login');
         }
+        $changePasswordForm = $this->createForm(ChangePasswordFormType::class); // Créer le formulaire
 
         return $this->render('account/profile.html.twig', [
             'user' => $user,
+            'changePasswordForm' => $changePasswordForm->createView(), // Passer la vue du formulaire au template
         ]);
     }
     #[Route('/profile/edit', name: 'app_profile_edit')]
@@ -48,27 +53,39 @@ final class AccountController extends AbstractController
         ]);
     }
 
-    // #[Route('/compte/modifier-mot-de-passe', name: 'app_account_modify_pwd')]
-    // public function password(
-    //     Request $request,
-    //     UserPasswordHasherInterface $passwordHasher,
-    //     EntityManagerInterface $entityManager
-    // ): Response {
+    #[Route('/profile/change-password', name: 'change_password', methods: ['GET', 'POST'])]
+    public function changePasswordAction( // Renommé en changePasswordAction et adapté
+        Request $request,
+        UserPasswordHasherInterface $passwordHasher,
+        EntityManagerInterface $entityManager
+    ): Response {
+        /** @var \App\Entity\User $user */
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->redirectToRoute('app_login');
+        }
 
-    //     $user = $this->getUser();
+        $form = $this->createForm(ChangePasswordFormType::class); // Utilisez ChangePasswordFormType
+        $form->handleRequest($request);
 
-    //     $form = $this->createForm(PasswordUserType::class, $user, [
-    //         'passwordHasher' => $passwordHasher
-    //     ]);
-    //     $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            $currentPassword = $form->get('currentPassword')->getData();
+            $newPassword = $form->get('newPassword')->getData();
 
-    //     if ($form->isSubmitted() && $form->isValid()) {
-    //         $entityManager->flush();
-    //         $this->addFlash('success', 'Votre mot de passe a bien été modifié.');
-    //     }
+            if ($passwordHasher->isPasswordValid($user, $currentPassword)) {
+                $hashedPassword = $passwordHasher->hashPassword($user, $newPassword);
+                $user->setPassword($hashedPassword);
+                $entityManager->flush();
 
-    //     return $this->render('account/password.html.twig', [
-    //         'modifyPwd' => $form->createView()
-    //     ]);
-    // }
+                $this->addFlash('success', 'Votre mot de passe a été modifié avec succès.');
+                return $this->redirectToRoute('app_profile');
+            } else {
+                $this->addFlash('error', 'L\'ancien mot de passe est incorrect.');
+            }
+        }
+
+        return $this->render('account/change_password.html.twig', [ // Adaptez le nom du template
+            'changePasswordForm' => $form->createView(),
+        ]);
+    }
 }

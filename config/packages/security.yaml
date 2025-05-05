@@ -18,16 +18,21 @@ security:
             provider: app_user_provider
             custom_authenticator: App\Security\LoginFormAuthenticator
             entry_point: App\Security\LoginFormAuthenticator
+
             form_login:
+                success_handler: App\Security\LoginSuccessHandler
                 login_path: app_login
                 check_path: app_login
                 username_parameter: email
                 password_parameter: password
+                
+
             logout:
                 path: app_logout
 
     access_control:
         - { path: ^/compte, roles: ROLE_USER }
+        - { path: ^/forgot-password, roles: PUBLIC_ACCESS }
 
 when@test:
     security:
@@ -37,3 +42,8 @@ when@test:
                 cost: 4
                 time_cost: 3
                 memory_cost: 10
+
+parameters:
+    app.mailer_from: 'noreply@ecoride.local'
+    app.mailer_from_name: 'Équipe EcoRide'
+    app.reset_password_token_lifetime: 3600 # 1 heure

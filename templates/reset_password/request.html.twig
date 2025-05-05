@@ -1,0 +1,32 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mot de passe oublié
+{% endblock %}
+
+{% block body %}
+	<h1>Mot de passe oublié ?</h1>
+
+	<p>Veuillez saisir votre adresse e-mail et nous vous enverrons un lien pour réinitialiser votre mot de passe.</p>
+
+	{{ form_start(requestForm) }}
+	{{ form_row(requestForm.email) }}
+
+	<button type="submit" class="btn btn-primary">Envoyer l'e-mail de réinitialisation</button>
+	{{ form_end(requestForm) }}
+
+	<p>
+		<a href="{{ path('app_login') }}">Retour à la connexion</a>
+	</p>
+
+	{% for message in app.flashes('success') %}
+		<div class="alert alert-success">
+			{{ message }}
+		</div>
+	{% endfor %}
+
+	{% for message in app.flashes('info') %}
+		<div class="alert alert-info">
+			{{ message }}
+		</div>
+	{% endfor %}
+{% endblock %}

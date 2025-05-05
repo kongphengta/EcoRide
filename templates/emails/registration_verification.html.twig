@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Confirmez votre adresse e-mail</title>
+		<style>
+			body {
+				font-family: sans-serif;
+			}
+			.button {
+				display: inline-block;
+				padding: 10px 15px;
+				font-size: 16px;
+				color: #ffffff;
+				background-color: #0d6efd; /* Couleur Bootstrap primary */
+				border-radius: 5px;
+				text-decoration: none;
+				border: none;
+			}
+		</style>
+	</head>
+	<body>
+		<p>Bonjour
+			{{ user.firstname|default('Utilisateur') }}
+			!</p>
+
+		<p>Bienvenue sur EcoRide ! Pour finaliser votre inscription et activer votre compte, veuillez cliquer sur le bouton ou le lien ci-dessous :</p>
+
+		<p
+			style="margin: 20px 0;">
+			{# La variable verificationUrl est passée depuis le contrôleur #}
+			<a href="{{ verificationUrl }}" class="button">Confirmer mon adresse e-mail</a>
+		</p>
+
+		{# Optionnel: Ajouter une durée de validité si vous en implémentez une dans le futur #}
+		{# <p>Ce lien est valide pendant X heures.</p> #}
+
+		<p>Si le bouton ne fonctionne pas, vous pouvez copier et coller le lien suivant dans votre navigateur :</p>
+		<p>
+			<a href="{{ verificationUrl }}">{{ verificationUrl }}</a>
+		</p>
+
+		<hr>
+
+		<p>Si vous n'êtes pas à l'origine de cette inscription, veuillez simplement ignorer cet e-mail. Votre compte ne sera pas activé.</p>
+
+		<p>Merci et à bientôt sur EcoRide !</p>
+		<p>
+			<strong>L'équipe EcoRide</strong>
+		</p>
+	</body>
+</html>

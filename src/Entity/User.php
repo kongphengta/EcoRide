@@ -7,11 +7,16 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
-#[ORM\UniqueConstraint(name: 'UNIQ_IDENTIFIER_EMAIL', fields: ['email'])]
+#[ORM\Table(name: '`user`')] // Bonne pratique si 'user' est un mot réservé SQL
+#[UniqueEntity(fields: ['email'], message: 'Il existe déjà un compte avec cet email.')]
+#[UniqueEntity(fields: ['pseudo'], message: 'Ce pseudo est déjà utilisé.')]
+// #[ORM\HasLifecycleCallbacks] // 
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -19,7 +24,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column(length: 180)]
+    #[ORM\Column(length: 180, unique: true)]
+    #[Assert\NotBlank(message: 'Veuillez entrer votre adresse e-mail')]
+    #[Assert\Email(message: 'Veuillez entrer une adresse e-mail valide')]
     private ?string $email = null;
 
     /**
@@ -35,28 +42,58 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $password = null;
 
     #[ORM\Column(length: 128)]
+    #[Assert\NotBlank(message: 'Veuillez entrer votre prénom')]
+    #[Assert\Length(min: 2, max: 128, minMessage: 'Le prénom doit contenir au moins {{ limit }} caractères', maxMessage: 'Le prénom ne peut pas dépasser {{ limit }} caractères')]
     private ?string $firstname = null;
 
     #[ORM\Column(length: 128)]
+    #[Assert\NotBlank(message: 'Veuillez entrer votre nom')]
+    #[Assert\Length(min: 2, max: 128, minMessage: 'Le nom doit contenir au moins {{ limit }} caractères', maxMessage: 'Le nom ne peut pas dépasser {{ limit }} caractères')]
     private ?string $lastname = null;
 
-    #[ORM\Column(length: 50)]
-    private ?string $telephone = null;
+    #[ORM\Column(length: 50, nullable: true)]
+    // #[Assert\NotBlank(message: "Le téléphone est requis.")]
+    #[Assert\Regex(pattern: "/^[0-9\+\-\s\(\)]*$/", message: "Le format du téléphone est invalide.")]
+    private ?string $telephone = null; // Type hint ajusté à ?string
 
-    #[ORM\Column(length: 255)]
-    private ?string $adresse = null;
+    #[ORM\Column(type: 'string', length: 255, nullable: true)] // Pour la fonctionnalité "mot de passe oublié"
+    private ?string $resetToken = null;
 
-    #[ORM\Column(type: Types::DATE_MUTABLE)]
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)] // Pour la fonctionnalité "mot de passe oublié"
+    private ?\DateTimeImmutable $resetTokenCreatedAt = null;
+
+    // Champ rempli dans la 2ème étape (Profil), donc nullable
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $adresse = null; // Type hint ajusté à ?string
+
+    // Champ rempli dans la 2ème étape (Profil), donc nullable
+    #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
+    #[Assert\Type("\DateTimeInterface", message: "La date de naissance doit être une date valide.")] // Ajouté
     private ?\DateTimeInterface $date_naissance = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $photo = null;
+    // Champ rempli dans la 2ème étape (Profil), donc nullable
+    #[ORM\Column(length: 255, nullable: true)]
+    // La validation pour la photo (File type) se fait dans le ProfileFormType ou un service dédié
+    private ?string $photo = null; // Type hint ajusté à ?string
 
-    #[ORM\Column(length: 255)]
+    #[ORM\Column(length: 255, unique: true)]
+    #[Assert\NotBlank(message: "Le pseudo ne peut pas être vide.")]
     private ?string $pseudo = null;
 
-    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    // Initialisé dans le constructeur
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
     private ?\DateTimeInterface $date_inscription = null;
+
+    // --- Champs pour la vérification d'email ---
+    #[ORM\Column(type: 'boolean')]
+    private bool $is_verified = false;
+
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $verification_token = null;
+
+    // --- Champ pour l'état de complétion du profil --- 
+    #[ORM\Column(type: 'boolean')]
+    private bool $is_profile_complete = false; // Initialisé à false par défaut
 
     /**
      * @var Collection<int, Covoiturage>
@@ -91,6 +128,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->ecoRideRoles = new ArrayCollection();
         $this->avisDonnes = new ArrayCollection();
         $this->avisRecus = new ArrayCollection();
+        // Initialiser la date d'inscription lors de la création de l'objet
+        $this->date_inscription = new \DateTime();
     }
 
     public function getId(): ?int
@@ -128,7 +167,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getRoles(): array
     {
         $roles = $this->roles;
-        // guarantee every user at least has ROLE_USER
+        // Guarantie que chaque utilisateur a au moins le rôle ROLE_USER
         $roles[] = 'ROLE_USER';
 
         return array_unique($roles);
@@ -204,6 +243,27 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function getResetToken(): ?string
+    {
+        return $this->resetToken;
+    }
+
+    public function setResetToken(?string $resetToken): self
+    {
+        $this->resetToken = $resetToken;
+        return $this;
+    }
+
+    public function getResetTokenCreatedAt(): ?\DateTimeImmutable
+    {
+        return $this->resetTokenCreatedAt;
+    }
+
+    public function setResetTokenCreatedAt(?\DateTimeImmutable $resetTokenCreatedAt): self
+    {
+        $this->resetTokenCreatedAt = $resetTokenCreatedAt;
+        return $this;
+    }
     public function getAdresse(): ?string
     {
         return $this->adresse;
@@ -261,6 +321,41 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $this->date_inscription = $date_inscription;
 
+        return $this;
+    }
+    public function isVerified(): bool
+    {
+        return $this->is_verified;
+    }
+
+    public function setIsVerified(bool $is_verified): self
+    {
+        $this->is_verified = $is_verified;
+        return $this;
+    }
+
+    // --- Getter/Setter pour is_profile_complete 
+
+    public function isProfileComplete(): bool
+    {
+        return $this->is_profile_complete;
+    }
+
+    public function setIsProfileComplete(bool $is_profile_complete): self
+    {
+        $this->is_profile_complete = $is_profile_complete;
+        return $this;
+    }
+
+
+    public function getVerificationToken(): ?string
+    {
+        return $this->verification_token;
+    }
+
+    public function setVerificationToken(?string $verification_token): self
+    {
+        $this->verification_token = $verification_token;
         return $this;
     }
 
@@ -362,7 +457,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @return Collection<int, Avis>
      */
-    public function getAvis(): Collection
+    public function getAvisRecus(): Collection
     {
         return $this->avisRecus;
     }

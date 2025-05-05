@@ -13,6 +13,7 @@
   },
   "devDependencies": {
     "@symfony/webpack-encore": "^5.1.0",
+    "file-loader": "^6.2.0",
     "webpack-dev-server": "^5.2.1",
     "webpack-notifier": "^1.15.0"
   }

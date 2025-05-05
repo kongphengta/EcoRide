@@ -4,11 +4,6 @@
 	Connexion - EcoRide
 {% endblock %}
 
-{% block stylesheets %}
-	{{ parent() }}
-	<link rel="stylesheet" href="{{ asset('build/css/login.css') }}">
-{% endblock %}
-
 {% block body %}
 	<form method="post">
 		{% if error %}
@@ -31,8 +26,11 @@
 
 		<input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
 
-		<button class="btn btn-lg btn-primary mt-5" type="submit">
-			se connecter
-		</button>
+		<div class="d-flex justify-content-between align-items-center my-5">
+			<button class="btn btn-lg btn-primary" type="submit">
+				se connecter
+			</button>
+			<a href="{{ path('request_password_reset') }}" class="btn btn-link" style="text-decoration:none">Mot de passe oublié ?</a>
+		</div>
 	</form>
 {% endblock %}

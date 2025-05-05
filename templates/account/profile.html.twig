@@ -5,37 +5,73 @@
 
 {% block body %}
 	<div class="container my-5">
-		<h1>Mon Profil</h1>
 
-		<dl class="row">
-			<dt class="col-sm-3">Prénom</dt>
-			<dd class="col-sm-9">{{ user.firstname }}</dd>
+		{% for message in app.flashes('success') %}
+			<div class="alert alert-success text-center">
+				{{ message }}
+			</div>
+		{% endfor %}
 
-			<dt class="col-sm-3">Nom</dt>
-			<dd class="col-sm-9">{{ user.lastname }}</dd>
+		<div class="row">
+			<div class="col-md-6">
+				<h1>Mon Profil</h1>
+				{% for message in app.flashes('error') %}
+					<div class="alert alert-danger">
+						{{ message }}
+					</div>
+				{% endfor %}
 
-			<dt class="col-sm-3">Pseudonyme</dt>
-			<dd class="col-sm-9">{{ user.pseudo }}</dd>
+				{% if app.user.photo %}
+					<img src="{{ asset('uploads/' ~ app.user.photo) }}" alt="Photo de profil" style="max-width: 100px;">
+				{% endif %}
 
-			<dt class="col-sm-3">Adresse e-mail</dt>
-			<dd class="col-sm-9">{{ user.email }}</dd>
+				<dl class="row">
+					<dt class="col-sm-3">Prénom</dt>
+					<dd class="col-sm-9">{{ user.firstname }}</dd>
 
-			<dt class="col-sm-3">Téléphone</dt>
-			<dd class="col-sm-9">{{ user.telephone ? user.telephone : 'Non renseigné' }}</dd>
+					<dt class="col-sm-3">Nom</dt>
+					<dd class="col-sm-9">{{ user.lastname }}</dd>
 
-			<dt class="col-sm-3">Adresse</dt>
-			<dd class="col-sm-9">{{ user.adresse ? user.adresse : 'Non renseignée' }}</dd>
+					<dt class="col-sm-3">Pseudonyme</dt>
+					<dd class="col-sm-9">{{ user.pseudo }}</dd>
 
-			<dt class="col-sm-3">Date de naissance</dt>
-			<dd class="col-sm-9">{{ user.dateNaissance ? user.dateNaissance|date('d/m/Y') : 'Non renseignée' }}</dd>
+					<dt class="col-sm-3">Adresse e-mail</dt>
+					<dd class="col-sm-9">{{ user.email }}</dd>
 
-			<dt class="col-sm-3">Photo</dt>
-			<dd class="col-sm-9">{{ user.photo ? '<img src="' ~ asset('uploads/' ~ user.photo) ~ '" alt="Photo de profil" style="max-width: 100px;">' : 'Non renseignée' }}</dd>
-		</dl>
+					<dt class="col-sm-3">Téléphone</dt>
+					<dd class="col-sm-9">{{ user.telephone ? user.telephone : 'Non renseigné' }}</dd>
 
-		<div class="d-flex gap-5">
-			<a href="{{ path('app_profile_edit') }}" class="btn btn-primary">Modifier mon profil</a>
-			<a href="{{ path('app_logout') }}" class="btn btn-danger">Déconnexion</a>
+					<dt class="col-sm-3">Adresse</dt>
+					<dd class="col-sm-9">{{ user.adresse ? user.adresse : 'Non renseignée' }}</dd>
+
+					<dt class="col-sm-3">Date de naissance</dt>
+					<dd class="col-sm-9">{{ user.dateNaissance ? user.dateNaissance|date('d/m/Y') : 'Non renseignée' }}</dd>
+
+					<dt class="col-sm-3">Photo</dt>
+					<dd class="col-sm-9">{{ user.photo ? '<img src="' ~ asset('uploads/' ~ user.photo) ~ '" alt="Photo de profil" style="max-width: 100px;">' : 'Non renseignée' }}</dd>
+				</dl>
+
+				<div class="d-flex gap-5">
+					<a href="{{ path('app_profile_edit') }}" class="btn btn-primary">Modifier mon profil</a>
+				</div>
+			</div>
+
+			<div class="col-md-6">
+				<h2>Changer mon mot de passe</h2>
+				{{ form_start(changePasswordForm, {'action': path('change_password')}) }}
+				{{ form_row(changePasswordForm.currentPassword) }}
+				{{ form_row(changePasswordForm.newPassword.first) }}
+				{{ form_row(changePasswordForm.newPassword.second) }}
+
+				<button type="submit" class="btn btn-primary">Changer le mot de passe</button>
+				{{ form_end(changePasswordForm) }}
+
+				{% for message in app.flashes('error') %}
+					<div class="alert alert-danger">
+						{{ message }}
+					</div>
+				{% endfor %}
+			</div>
 		</div>
 	</div>
 {% endblock %}
