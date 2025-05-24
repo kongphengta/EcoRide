@@ -17,17 +17,14 @@ use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 final class AccountController extends AbstractController
 {
     #[Route('/profile', name: 'app_profile')]
+    #[IsGranted('ROLE_USER')]
     public function profile(): Response
     {
         $user = $this->getUser();
-        if (!$user) {
-            return $this->redirectToRoute('app_login');
-        }
-        $changePasswordForm = $this->createForm(ChangePasswordFormType::class); // Créer le formulaire
-
+        $changePasswordForm = $this->createForm(ChangePasswordFormType::class); // Utilisez ChangePasswordFormType
         return $this->render('account/profile.html.twig', [
             'user' => $user,
-            'changePasswordForm' => $changePasswordForm->createView(), // Passer la vue du formulaire au template
+            'changePasswordForm' => $changePasswordForm->createView(),
         ]);
     }
     #[Route('/profile/edit', name: 'app_profile_edit')]

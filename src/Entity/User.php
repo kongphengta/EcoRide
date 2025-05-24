@@ -13,10 +13,10 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
-#[ORM\Table(name: '`user`')] // Bonne pratique si 'user' est un mot réservé SQL
+#[ORM\Table(name: '`user`')] // Pour éviter les conflits avec le mot clé "user" de MySQL
 #[UniqueEntity(fields: ['email'], message: 'Il existe déjà un compte avec cet email.')]
 #[UniqueEntity(fields: ['pseudo'], message: 'Ce pseudo est déjà utilisé.')]
-// #[ORM\HasLifecycleCallbacks] // 
+
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -101,6 +101,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Covoiturage::class, mappedBy: 'chauffeur')]
     private Collection $covoiturages;
 
+    /** 
+     * @var Collection<int, Voiture>
+     */
+    #[ORM\OneToMany(targetEntity: Voiture::class, mappedBy: 'proprietaire', cascade: ['persist', 'remove'])]
+    private Collection $voitures;
+
+
     #[ORM\OneToOne(mappedBy: 'user', cascade: ['persist', 'remove'])]
     private ?Configuration $configuration = null;
 
@@ -125,6 +132,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function __construct()
     {
         $this->covoiturages = new ArrayCollection();
+        $this->voitures = new ArrayCollection();
         $this->ecoRideRoles = new ArrayCollection();
         $this->avisDonnes = new ArrayCollection();
         $this->avisRecus = new ArrayCollection();
@@ -383,6 +391,33 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             // set the owning side to null (unless already changed)
             if ($covoiturage->getChauffeur() === $this) {
                 $covoiturage->setChauffeur(null);
+            }
+        }
+
+        return $this;
+    }
+    /**
+     * @return Collection<int, Voiture>
+     */
+    public function getVoitures(): Collection
+    {
+        return $this->voitures;
+    }
+    public function addVoiture(Voiture $voiture): static
+    {
+        if (!$this->voitures->contains($voiture)) {
+            $this->voitures->add($voiture);
+            $voiture->setProprietaire($this);
+        }
+
+        return $this;
+    }
+    public function removeVoiture(Voiture $voiture): static
+    {
+        if ($this->voitures->removeElement($voiture)) {
+            // set the owning side to null (unless already changed)
+            if ($voiture->getProprietaire() === $this) {
+                $voiture->setProprietaire(null);
             }
         }
 

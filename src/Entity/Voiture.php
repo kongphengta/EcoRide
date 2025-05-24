@@ -27,7 +27,7 @@ class Voiture
     #[ORM\Column(length: 50)]
     private ?string $couleur = null;
 
-    #[ORM\Column(length: 50)]
+    #[ORM\Column(length: 50, nullable: true)]
     private ?string $date_premiere_immatriculation = null;
 
     /**
@@ -39,6 +39,10 @@ class Voiture
     #[ORM\ManyToOne(inversedBy: 'voitures')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Marque $marque = null;
+
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'voitures')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?User $proprietaire = null;
 
     public function __construct()
     {
@@ -148,6 +152,17 @@ class Voiture
     public function setMarque(?Marque $marque): static
     {
         $this->marque = $marque;
+
+        return $this;
+    }
+    public function getProprietaire(): ?User
+    {
+        return $this->proprietaire;
+    }
+
+    public function setProprietaire(?User $proprietaire): static
+    {
+        $this->proprietaire = $proprietaire;
 
         return $this;
     }

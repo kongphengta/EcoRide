@@ -7,9 +7,9 @@ use App\Entity\User;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
+use Symfony\Component\HttpFoundation\Session\FlashBagAwareSessionInterface;
 use Symfony\Component\Security\Http\Authentication\AuthenticationSuccessHandlerInterface;
 
 class LoginSuccessHandler implements AuthenticationSuccessHandlerInterface
@@ -23,6 +23,9 @@ class LoginSuccessHandler implements AuthenticationSuccessHandlerInterface
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token): ?Response
     {
+        /**
+         * @var \App\Entity\User | null $user
+         */
         $user = $token->getUser();
 
         if ($user instanceof User) {
@@ -31,8 +34,12 @@ class LoginSuccessHandler implements AuthenticationSuccessHandlerInterface
                 $this->addFlashIfSessionIsFlashBagAware($request, 'info', 'Veuillez compléter votre profil pour continuer.');
                 return new RedirectResponse($this->urlGenerator->generate('app_complete_profile'));
             }
-            return new RedirectResponse($this->urlGenerator->generate('app_home'));
+            // Si le profil est complet, rediriger vers la page de profil
+            return new RedirectResponse($this->urlGenerator->generate('app_profile'));
         }
+
+        // Cas par défaut si $user n'est pas une instance de User (ne devrait pas arriver normalement)
+        // ou si une autre logique l'exigeait. Rediriger vers la page d'accueil.
         return new RedirectResponse($this->urlGenerator->generate('app_home'));
     }
 

@@ -32,16 +32,19 @@ class Covoiturage
     private ?string $lieuArrivee = null;
 
     #[ORM\Column(length: 255)]
-    private ?string $staut = null;
+    private ?string $statut = null;
 
     #[ORM\Column]
-    private ?int $nbPlace = null;
+    private ?int $nbPlaceTotal = null;
 
     #[ORM\Column]
     private ?float $prixPersonne = null;
 
     #[ORM\Column]
-    private ?int $nbPlaceRestante = null;
+    private ?int $nbPlaceRestantes = null;
+
+    #[ORM\Column(length: 255)]
+    private ?string $description = null;
 
     #[ORM\ManyToOne(inversedBy: 'covoiturages')]
     private ?User $chauffeur = null;
@@ -127,26 +130,26 @@ class Covoiturage
         return $this;
     }
 
-    public function getStaut(): ?string
+    public function getStatut(): ?string
     {
-        return $this->staut;
+        return $this->statut;
     }
 
-    public function setStaut(string $staut): static
+    public function setStatut(string $statut): static
     {
-        $this->staut = $staut;
+        $this->statut = $statut;
 
         return $this;
     }
 
-    public function getNbPlace(): ?int
+    public function getNbPlaceTotal(): ?int
     {
-        return $this->nbPlace;
+        return $this->nbPlaceTotal;
     }
 
-    public function setNbPlace(int $nbPlace): static
+    public function setNbPlaceTotal(int $nbPlaceTotal): static
     {
-        $this->nbPlace = $nbPlace;
+        $this->nbPlaceTotal = $nbPlaceTotal;
 
         return $this;
     }
@@ -163,14 +166,24 @@ class Covoiturage
         return $this;
     }
 
-    public function getNbPlaceRestante(): ?int
+    public function getNbPlaceRestantes(): ?int
     {
-        return $this->nbPlaceRestante;
+        return $this->nbPlaceRestantes;
     }
 
-    public function setNbPlaceRestante(int $nbPlaceRestante): static
+    public function setNbPlaceRestantes(int $nbPlaceRestantes): static
     {
-        $this->nbPlaceRestante = $nbPlaceRestante;
+        $this->nbPlaceRestantes = $nbPlaceRestantes;
+
+        return $this;
+    }
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+    public function setDescription(string $description): static
+    {
+        $this->description = $description;
 
         return $this;
     }
@@ -186,6 +199,36 @@ class Covoiturage
 
         return $this;
     }
+    // public function setPseudo(string $pseudo): static
+    // {
+    //     $this->pseudo = $pseudo;
+
+    //     return $this;
+    // }
+    // public function getPrenom(): ?string
+    // {
+    //     return $this->prenom;
+    // }
+    // public function setPrenom(string $prenom): static
+    // {
+    //     $this->prenom = $prenom;
+
+    //     return $this;
+    // }
+    // public function getEmail(): ?string
+    // {
+    //     return $this->email;
+    // }
+    // public function setEmail(string $email): static
+    // {
+    //     $this->email = $email;
+
+    //     return $this;
+    // }    public function getPseudo(): ?string
+    // {
+    //     return $this->pseudo;
+    // }
+
 
     public function getVoiture(): ?Voiture
     {

@@ -1,0 +1,74 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes Voitures
+{% endblock %}
+
+{% block body %}
+	<div class="container mt-4">
+		<h1>Mes Voitures</h1>
+
+		{# Affichage des messages flash (succès, avertissement, etc.) #}
+		{% for label, messages in app.flashes %}
+			{% for message in messages %}
+				<div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
+					{{ message }}
+					<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+				</div>
+			{% endfor %}
+		{% endfor %}
+
+		<p class="my-3">
+			<a href="{{ path('app_voiture_ajouter') }}" class="btn btn-primary">
+				<i class="fas fa-plus-circle me-2"></i>Ajouter une nouvelle voiture
+			</a>
+		</p>
+
+		{% if voitures is not empty %}
+			<div class="table-responsive">
+				<table class="table table-hover align-middle">
+					<thead class="table-light">
+						<tr>
+							<th>Marque</th>
+							<th>Modèle</th>
+							<th>Immatriculation</th>
+							<th>Couleur</th>
+							<th>Énergie</th>
+							<th>1ère Immat.</th>
+							<th class="text-end">Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for voiture in voitures %}
+							<tr>
+								<td>{{ voiture.marque ? voiture.marque.libelle : 'N/A' }}</td>
+								<td>{{ voiture.modele }}</td>
+								<td>{{ voiture.immatriculation }}</td>
+								<td>{{ voiture.couleur|default('N/A') }}</td>
+								<td>{{ voiture.energie|default('N/A') }}</td>
+								<td>{{ voiture.datePremiereImmatriculation ? voiture.datePremiereImmatriculation : 'N/A' }}</td>
+								<td class="text-end">{# Liens pour modifier et supprimer (à implémenter plus tard) #}
+									{# 
+									                            <a href="{{ path('app_voiture_edit', {'id': voiture.id}) }}" class="btn btn-sm btn-outline-secondary me-1" title="Modifier">
+									                                <i class="fas fa-edit"></i>
+									                            </a>
+									                            <form method="post" action="{{ path('app_voiture_delete', {'id': voiture.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette voiture ?');" style="display: inline-block;">
+									                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ voiture.id) }}">
+									                                <button class="btn btn-sm btn-outline-danger" title="Supprimer">
+									                                    <i class="fas fa-trash-alt"></i>
+									                                </button>
+									                            </form>
+									                            #}
+								</td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		{% else %}
+			<div class="alert alert-info" role="alert">
+				<h4 class="alert-heading">Aucune voiture enregistrée</h4>
+				<p>Vous n'avez pas encore ajouté de voiture à votre profil. Cliquez sur le bouton ci-dessus pour en ajouter une.</p>
+			</div>
+		{% endif %}
+	</div>
+{% endblock %}

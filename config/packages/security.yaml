@@ -17,22 +17,22 @@ security:
             lazy: true
             provider: app_user_provider
             custom_authenticator: App\Security\LoginFormAuthenticator
+
+            # form_login:
+            #     login_path: app_login
+            #     check_path: app_login
+            #     success_handler: App\Security\LoginFormAuthenticator
+
             entry_point: App\Security\LoginFormAuthenticator
-
-            form_login:
-                success_handler: App\Security\LoginSuccessHandler
-                login_path: app_login
-                check_path: app_login
-                username_parameter: email
-                password_parameter: password
-                
-
+              
             logout:
                 path: app_logout
+                target: app_home
 
     access_control:
-        - { path: ^/compte, roles: ROLE_USER }
-        - { path: ^/forgot-password, roles: PUBLIC_ACCESS }
+        - { path: ^/admin, roles: ROLE_ADMIN }
+        - { path: ^/profile, roles: ROLE_USER }
+        - { path: ^/covoiturage/new, roles: IS_AUTHENTICATED_FULLY }
 
 when@test:
     security:

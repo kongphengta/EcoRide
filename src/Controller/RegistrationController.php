@@ -191,7 +191,7 @@ class RegistrationController extends AbstractController
             $this->addFlash('success', 'Profil complété avec succès ! Vous pouvez maintenant utiliser toutes les fonctionnalités.');
 
             // --- Redirection vers l'accueil ou le profil ---
-            return $this->redirectToRoute('app_home'); // Ou 'app_profile'
+            return $this->redirectToRoute('app_profile'); // Ou 'app_profile'
         }
 
         return $this->render('registration/complete_profile.html.twig', [

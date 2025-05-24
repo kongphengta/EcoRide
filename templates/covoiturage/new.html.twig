@@ -1,0 +1,59 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Publier un nouveau trajet
+{% endblock %}
+
+{% block body %}
+	<div class="container mt-4">
+		<div class="row justify-content-center">
+			<div class="col-md-8 col-lg-7">
+				<div class="card shadow-sm">
+					<div class="card-header bg-primary text-white">
+						<h1 class="mb-0 h4">
+							<i class="fas fa-route me-2"></i>Publier un nouveau trajet</h1>
+					</div>
+					<div class="card-body">
+						{{ form_start(covoiturageForm, {'attr': {'novalidate': 'novalidate'}}) }}
+						{# Utilisez covoiturageForm #}
+
+						{{ form_row(covoiturageForm.lieuDepart) }}
+						{{ form_row(covoiturageForm.lieuArrivee) }}
+						<div class="row">
+							<div class="col-md-6">
+								{{ form_row(covoiturageForm.dateDepart) }}
+							</div>
+							<div class="col-md-6">
+								{{ form_row(covoiturageForm.heureDepart) }}
+							</div>
+						</div>
+						<div class="row">
+							<div class="col-md-6">
+								{{ form_row(covoiturageForm.dateArrivee) }}
+							</div>
+							<div class="col-md-6">
+								{{ form_row(covoiturageForm.heureArrivee) }}
+							</div>
+						</div>
+						{{ form_row(covoiturageForm.voiture) }}
+						{{ form_row(covoiturageForm.nbPlaceTotal) }}
+						{{ form_row(covoiturageForm.prixPersonne) }}
+						{# Le champ statut est géré par le contrôleur ou peut être caché/défini autrement #}
+						{# Si vous avez un champ description dans CovoiturageType, ajoutez-le ici #}
+						{# {{ form_row(covoiturageForm.description) }} #}
+
+
+							<div class="d-grid gap-2 mt-4"> <button type="submit" class="btn btn-primary btn-lg">
+								<i class="fas fa-paper-plane me-2"></i>Publier le trajet
+							</button>
+							<a href="{{ path('app_covoiturage_index') }}" class="btn btn-outline-secondary">
+								Annuler
+							</a>
+						</div>
+						{{ form_end(covoiturageForm) }}
+						{# Utilisez covoiturageForm #}
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+{% endblock %}
