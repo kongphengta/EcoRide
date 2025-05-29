@@ -3,7 +3,7 @@ name: Deploy to VPS
 on:
   push:
     branches:
-      - master # Ou 'master', ou la branche que vous utilisez pour la production
+      - master # Ou 'main', ou la branche que vous utilisez pour la production
 
 jobs:
   deploy:
@@ -17,63 +17,65 @@ jobs:
     - name: Setup SSH
       uses: webfactory/ssh-agent@v0.9.0
       with:
-        ssh-private-key: ${{ secrets.ACTION_ECORIDE }} # Utilise le nom de secret que vous avez défini
-  
+        ssh-private-key: ${{ secrets.ACTION_ECORIDE }}
+
+    # Debugging the SSH_HOST secret value. This is good for troubleshooting.
     - name: Debug SSH_HOST value
-      # run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"      
+      run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
 
     - name: Add known hosts
       run: |
-          # Vérifie si le secret SSH_HOST est vide
-          # set -e # Décommentez si vous voulez que le script échoue à la première erreur
-          if [ -z "${{ secrets.SSH_HOST }}" ]; then
-          echo "Error: Le secret SSH_HOST est vide ou non défini. ssh-keyscan est ignoré."
-          # Si une clé d'hôte est absolument nécessaire, faites échouer l'action ici :
-          # exit 1 # Décommentez pour faire échouer si SSH_HOST est vide
-          else
+        # Check if the SSH_HOST secret is empty
+        if [ -z "${{ secrets.SSH_HOST }}" ]; then
+          echo "Error: The SSH_HOST secret is empty or undefined. ssh-keyscan is skipped."
+          exit 1 # Make the action fail if SSH_HOST is empty, as it's critical for SSH connection
+        else
           mkdir -p ~/.ssh
-          # chmod 700 ~/.ssh # Optionnel: permissions plus strictes pour le dossier .ssh
-          echo "Tentative de scan de l'hôte : '${{ secrets.SSH_HOST }}'"
-          # Mettre la variable SSH_HOST entre guillemets est important
-          if ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts; then
-          echo "Clé de l'hôte ${{ secrets.SSH_HOST }} ajoutée à known_hosts."
+          chmod 700 ~/.ssh # Recommended: stricter permissions for the .ssh folder
+          echo "Attempting to scan host: '${{ secrets.SSH_HOST }}'"
+          # Add the host key to known_hosts. The -H flag hashes the hostname.
+          # The -T timeout is added for robustness, and -p specifies the port.
+          # Using a subshell to capture exit code for better error handling.
+          if ssh-keyscan -T 5 -p 22 "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null; then
+            echo "Host key for ${{ secrets.SSH_HOST }} added to known_hosts."
           else
-          echo "Avertissement: ssh-keyscan a échoué pour l'hôte ${{ secrets.SSH_HOST }}. La connexion SSH pourrait échouer."
-          # exit 1 # Décommentez pour faire échouer le déploiement si ssh-keyscan échoue
-          
+            echo "Error: ssh-keyscan failed for host ${{ secrets.SSH_HOST }}. SSH connection might fail."
+            exit 1 # Fail the deployment if ssh-keyscan fails
           fi
-          fi
+        fi
 
     - name: Deploy to server
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USER }}
-        key: ${{ secrets.ACTION_ECORIDE }} # Répété ici pour appleboy/ssh-action
-        port: 22 # Port SSH par défaut, changez si besoin
+        key: ${{ secrets.ACTION_ECORIDE }}
+        port: 22 # Default SSH port, change if needed
         script: |
           echo "Connecting to server..."
-          cd ${{ secrets.PROJECT_PATH_ON_SERVER }}
+          cd ${{ secrets.PROJECT_PATH_ON_SERVER }} || { echo "Error: Could not change directory to ${{ secrets.PROJECT_PATH_ON_SERVER }}"; exit 1; }
           
           echo "Pulling latest changes..."
-          git pull origin master # Assurez-vous que 'master' est votre branche de production
+          git pull origin master || { echo "Error: Git pull failed"; exit 1; }
           
           echo "Installing Composer dependencies..."
-          composer install --no-dev --optimize-autoloader --no-interaction
+          # Using --no-interaction is good. --prefer-dist for faster installs.
+          composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist || { echo "Error: Composer install failed"; exit 1; }
           
           echo "Running database migrations..."
-          php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
+          # Using --force for non-interactive environments and --no-interaction
+          php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration --env=prod || { echo "Error: Database migrations failed"; exit 1; }
           
           echo "Clearing Symfony cache..."
-          php bin/console cache:clear --env=prod
+          php bin/console cache:clear --env=prod || { echo "Error: Clearing cache failed"; exit 1; }
           
           echo "Warming up Symfony cache..."
-          php bin/console cache:warmup --env=prod
+          php bin/console cache:warmup --env=prod || { echo "Error: Warming up cache failed"; exit 1; }
 
-          # Si vous utilisez Webpack Encore ou un autre bundler d'assets, ajoutez les commandes ici
+          # If you use Webpack Encore or another asset bundler, add commands here
+          # Example for Node.js assets:
           # echo "Building assets..."
-          # npm install
-          # npm run build
+          # npm install || { echo "Error: npm install failed"; exit 1; }
+          # npm run build || { echo "Error: npm build failed"; exit 1; }
           
           echo "Deployment finished successfully!"
-
