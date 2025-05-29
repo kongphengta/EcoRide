@@ -1,0 +1,57 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches:
+      - master # Ou 'master', ou la branche que vous utilisez pour la production
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.ACTION_ECORIDE }} # Utilise le nom de secret que vous avez défini
+
+    - name: Add known hosts
+      run: ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Deploy to server
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.ACTION_ECORIDE }} # Répété ici pour appleboy/ssh-action
+        port: 22 # Port SSH par défaut, changez si besoin
+        script: |
+          echo "Connecting to server..."
+          cd ${{ secrets.PROJECT_PATH_ON_SERVER }}
+          
+          echo "Pulling latest changes..."
+          git pull origin main # Assurez-vous que 'main' est votre branche de production
+          
+          echo "Installing Composer dependencies..."
+          composer install --no-dev --optimize-autoloader --no-interaction
+          
+          echo "Running database migrations..."
+          php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
+          
+          echo "Clearing Symfony cache..."
+          php bin/console cache:clear --env=prod
+          
+          echo "Warming up Symfony cache..."
+          php bin/console cache:warmup --env=prod
+
+          # Si vous utilisez Webpack Encore ou un autre bundler d'assets, ajoutez les commandes ici
+          # echo "Building assets..."
+          # npm install
+          # npm run build
+          
+          echo "Deployment finished successfully!"
+
