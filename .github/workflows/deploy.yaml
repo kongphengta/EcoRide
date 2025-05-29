@@ -34,7 +34,7 @@ jobs:
           cd ${{ secrets.PROJECT_PATH_ON_SERVER }}
           
           echo "Pulling latest changes..."
-          git pull origin master # Assurez-vous que 'main' est votre branche de production
+          git pull origin master # Assurez-vous que 'master' est votre branche de production
           
           echo "Installing Composer dependencies..."
           composer install --no-dev --optimize-autoloader --no-interaction
