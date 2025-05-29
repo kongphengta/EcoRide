@@ -19,8 +19,8 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.ACTION_ECORIDE }} # Utilise le nom de secret que vous avez défini
   
-    - name: Debug SSH_HOST value
-      run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
+    # - name: Debug SSH_HOST value
+    #   run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"      
 
     - name: Add known hosts
       run: |
