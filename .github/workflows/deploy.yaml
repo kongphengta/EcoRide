@@ -18,11 +18,31 @@ jobs:
       uses: webfactory/ssh-agent@v0.9.0
       with:
         ssh-private-key: ${{ secrets.ACTION_ECORIDE }} # Utilise le nom de secret que vous avez défini
+  
+    - name: Debug SSH_HOST value
+      run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
 
     - name: Add known hosts
       run: |
+          # Vérifie si le secret SSH_HOST est vide
+          # set -e # Décommentez si vous voulez que le script échoue à la première erreur
+          if [ -z "${{ secrets.SSH_HOST }}" ]; then
+          echo "Error: Le secret SSH_HOST est vide ou non défini. ssh-keyscan est ignoré."
+          # Si une clé d'hôte est absolument nécessaire, faites échouer l'action ici :
+          # exit 1 # Décommentez pour faire échouer si SSH_HOST est vide
+          else
           mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+          # chmod 700 ~/.ssh # Optionnel: permissions plus strictes pour le dossier .ssh
+          echo "Tentative de scan de l'hôte : '${{ secrets.SSH_HOST }}'"
+          # Mettre la variable SSH_HOST entre guillemets est important
+          if ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts; then
+          echo "Clé de l'hôte ${{ secrets.SSH_HOST }} ajoutée à known_hosts."
+          else
+          echo "Avertissement: ssh-keyscan a échoué pour l'hôte ${{ secrets.SSH_HOST }}. La connexion SSH pourrait échouer."
+          # exit 1 # Décommentez pour faire échouer le déploiement si ssh-keyscan échoue
+          
+          fi
+          fi
 
     - name: Deploy to server
       uses: appleboy/ssh-action@v1.0.3
