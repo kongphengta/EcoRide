@@ -20,7 +20,12 @@ jobs:
         ssh-private-key: ${{ secrets.ACTION_ECORIDE }} # Utilise le nom de secret que vous avez défini
 
     - name: Add known hosts
-      run: ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+      run: |
+        echo "SSH_HOST value is : [${{ secrets.SSH_HOST }}]"
+        echo "Attemping to scan host..."
+        ssh-keyscan -V -H ${{ secrets.SSH_HOST }}
+        # Une foisque cela fonctionne, décommentez la ligne ci-dessus et commentez les trois lignes précédentes
+        # ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
     - name: Deploy to server
       uses: appleboy/ssh-action@v1.0.3
