@@ -4,7 +4,6 @@ namespace App\Controller;
 
 
 use App\Entity\Covoiturage;
-use App\Entity\Voiture;
 use App\Form\CovoiturageType;
 use App\Repository\VoitureRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -64,7 +63,6 @@ class CovoiturageController extends AbstractController
     public function new(Request $request, EntityManagerInterface $entityManager, VoitureRepository $voitureRepository): Response
     {
         $this->denyAccessUnlessGranted('ROLE_CHAUFFEUR'); // Vérifie si l'utilisateur a le rôle de chauffeur
-
         /** @var \App\Entity\User $user */
         $user = $this->getUser();
 
@@ -82,19 +80,19 @@ class CovoiturageController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             // Assigner l'utilisateur connecté comme chauffeur
             /** @var \App\Entity\User $user */
-            $user = $this->getUser();
+            // $user est déjà défini plus haut
             $covoiturage->setChauffeur($user);
 
             // Définir le statut par défaut si non fourni par le formulaire
             if (!$covoiturage->getStatut()) {
                 $covoiturage->setStatut('Proposé');
             }
-            // Enregistrer le covoiturage dans la base de données
+            // La logique pour nbPlaceRestantes est gérée dans l'entité Covoiturage via setNbPlaceTotal()
+
             $entityManager->persist($covoiturage);
             $entityManager->flush();
             $this->addFlash('success', 'Covoiturage a été publié avec succès !');
 
-            // Rediriger vers la liste des trajets ou le détails du trajet créé
             return $this->redirectToRoute('app_covoiturage_index', [], Response::HTTP_SEE_OTHER);
         }
 
@@ -102,6 +100,9 @@ class CovoiturageController extends AbstractController
             'covoiturageForm' => $form->createView(),
         ]);
     }
+
+
+
     #[Route('/{id}', name: 'app_covoiturage_show', methods: ['GET'])]
     public function show(Covoiturage $covoiturage): Response
     {

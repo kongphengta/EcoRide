@@ -43,7 +43,12 @@ class Covoiturage
     #[ORM\Column]
     private ?int $nbPlaceRestantes = null;
 
-    #[ORM\Column(length: 255)]
+    public function __construct()
+    {
+        $this->nbPlaceRestantes = $this->nbPlaceTotal;
+    }
+
+    #[ORM\Column(length: 255, nullable: true)]
     private ?string $description = null;
 
     #[ORM\ManyToOne(inversedBy: 'covoiturages')]
@@ -151,6 +156,12 @@ class Covoiturage
     {
         $this->nbPlaceTotal = $nbPlaceTotal;
 
+
+        // si nbPlaceRestantes n'est pas défini, on l'initialise avec le nombre total de places
+        if ($this->nbPlaceRestantes === null && $nbPlaceTotal !== null) {
+            $this->setNbPlaceRestantes($nbPlaceTotal);
+        }
+
         return $this;
     }
 
@@ -199,36 +210,6 @@ class Covoiturage
 
         return $this;
     }
-    // public function setPseudo(string $pseudo): static
-    // {
-    //     $this->pseudo = $pseudo;
-
-    //     return $this;
-    // }
-    // public function getPrenom(): ?string
-    // {
-    //     return $this->prenom;
-    // }
-    // public function setPrenom(string $prenom): static
-    // {
-    //     $this->prenom = $prenom;
-
-    //     return $this;
-    // }
-    // public function getEmail(): ?string
-    // {
-    //     return $this->email;
-    // }
-    // public function setEmail(string $email): static
-    // {
-    //     $this->email = $email;
-
-    //     return $this;
-    // }    public function getPseudo(): ?string
-    // {
-    //     return $this->pseudo;
-    // }
-
 
     public function getVoiture(): ?Voiture
     {

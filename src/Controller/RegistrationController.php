@@ -13,19 +13,18 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
-//use Symfony\Component\Mime\Email; // Remplacé par TemplatedEmail
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Csrf\TokenGenerator\TokenGeneratorInterface;
-use Symfony\Contracts\Translation\TranslatorInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 class RegistrationController extends AbstractController
 {
-    private LoggerInterface $logger; // Ajoutez cette propriété
+    private LoggerInterface $logger; // Déclarer le logger
 
-    // Modifiez le constructeur pour injecter le logger
+    // Modifie le constructeur pour injecter le logger
     public function __construct(LoggerInterface $logger)
     {
         $this->logger = $logger;
@@ -38,7 +37,7 @@ class RegistrationController extends AbstractController
         EntityManagerInterface $entityManager,
         MailerInterface $mailer,
         TokenGeneratorInterface $tokenGenerator,
-        UrlGeneratorInterface $urlGenerator
+        UrlGeneratorInterface $urlGenerator // renommé pour clarté
     ): Response {
         if ($this->getUser()) {
             $this->addFlash('info', 'Vous êtes déjà connecté.');
@@ -52,6 +51,7 @@ class RegistrationController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $token = $tokenGenerator->generateToken();
             $user->setVerificationToken($token);
+
             $user->setIsVerified(false);
             $user->setIsProfileComplete(false);
 
@@ -72,36 +72,38 @@ class RegistrationController extends AbstractController
                 UrlGeneratorInterface::ABSOLUTE_URL // Important pour l'email
             );
 
-            // Créer l'email
-            $email = (new TemplatedEmail())
-                ->from(new Address($this->getParameter('app.mailer_from'), $this->getParameter('app.mailer_from_name'))) // Configurez dans services.yaml ou .env
+
+            $verificationEmail = (new TemplatedEmail())
+                ->from(new Address($this->getParameter('app.mailer_from'), $this->getParameter('app.mailer_from_name')))
                 ->to($user->getEmail())
                 ->subject('Confirmez votre adresse e-mail pour EcoRide')
-                ->htmlTemplate('emails/registration_verification.html.twig') // Créez ce template
+                ->htmlTemplate('emails/registration_verification.html.twig') // Chemin vers le template Twig
                 ->context([
                     'user' => $user,
                     'verificationUrl' => $verificationUrl,
-                    // Optionnel: définir une durée de validité du token si nécessaire
                 ]);
 
             try {
-                $mailer->send($email);
+                $mailer->send($verificationEmail);
                 $this->addFlash('success', 'Inscription réussie ! Un email de vérification vous a été envoyé. Veuillez consulter votre boîte de réception pour activer votre compte.');
-            } catch (\Exception $e) {
+            } catch (\Symfony\Component\Mailer\Exception\TransportExceptionInterface $e) {
                 // Log l'erreur exacte !
-                $this->logger->error('Erreur lors de l\'envoi de l\'email de vérification: ' . $e->getMessage(), [
-                    'exception' => $e
+                $this->logger->error('Erreur de transport lors de l\'envoi de l\'email de vérification: ' . $e->getMessage(), [
+                    'exception' => $e,
+                    'user_email' => $user->getEmail()
                 ]);
                 // $logger->error('Erreur envoi email vérification: '.$e->getMessage());
-                $this->addFlash('warning', 'Inscription réussie, mais l\'email de vérification n\'a pas pu être envoyé. Contactez l\'administrateur.');
-                // On pourrait vouloir supprimer l'utilisateur ou permettre une re-génération du token plus tard
+                $this->addFlash('warning', 'Inscription réussie, mais l\'email de vérification n\'a pas pu être envoyé. Contactez l\'administrateur si le problème persiste');
+            } catch (\Exception $e) {
+                // Log l'erreur générale
+                $this->logger->error('Erreur lors de l\'envoi de l\'email de vérification: ' . $e->getMessage(), [
+                    'exception' => $e,
+                    'user_email' => $user->getEmail()
+                ]);
+                $this->addFlash('warning', 'Inscription réussie, mais une erreur technique a empêché l\'envoi de l\'email de vérification. Veuillez contacter l\'administrateur.');
             }
-
-            // --- MODIFIÉ : Ne PAS stocker l'ID en session ici ---
-            // $request->getSession()->set('user_id_to_complete_profile', $user->getId()); // Supprimé
-
-            // --- MODIFIÉ : Redirection vers la page de connexion (ou une page dédiée) ---
-            return $this->redirectToRoute('app_login'); // Ou 'app_home' ou une route 'check_email_page'
+            // Rediriger vers la page de succès d'inscription
+            return $this->redirectToRoute('app_login');
         }
 
         return $this->render('registration/register.html.twig', [
@@ -112,19 +114,18 @@ class RegistrationController extends AbstractController
     // --- Action verifyUserEmail : à réactiver et implémenter ---
     #[Route('/verify/email/{id}/{token}', name: 'app_verify_email')] // Ajout des paramètres id et token
     public function verifyUserEmail(
-        Request $request, // Peut être utile, sinon à supprimer
         EntityManagerInterface $entityManager,
         int $id, // Récupère l'ID depuis l'URL
         string $token // Récupère le token depuis l'URL
-        // UserRepository $userRepository // Injecter si non déjà fait via $entityManager
     ): Response {
         $userRepository = $entityManager->getRepository(User::class);
+        /** @var User|null $user */
         $user = $userRepository->findOneBy(['id' => $id, 'verification_token' => $token]);
 
         // Vérifier si l'utilisateur existe et si le token correspond
         if (null === $user) {
             $this->addFlash('danger', 'Lien de vérification invalide ou expiré.');
-            return $this->redirectToRoute('app_register'); // Ou app_login
+            return $this->redirectToRoute('app_register'); // Rediriger vers la page d'inscription
         }
 
         // Vérifier si le compte est déjà vérifié
@@ -137,7 +138,6 @@ class RegistrationController extends AbstractController
         $user->setIsVerified(true);
         $user->setVerificationToken(null); // Important pour la sécurité et éviter réutilisation
 
-        $entityManager->persist($user); // Pas strictement nécessaire si l'objet est déjà managé, mais ne nuit pas
         $entityManager->flush();
 
         $this->addFlash('success', 'Votre compte a été vérifié avec succès ! Vous pouvez maintenant vous connecter.');
@@ -145,16 +145,9 @@ class RegistrationController extends AbstractController
         return $this->redirectToRoute('app_login');
     }
 
-    #[Route('/inscription/succes', name: 'app_registration_success')]
-    public function registrationSuccess(): Response
-    {
-        // Cette route n'est plus utilisée dans le flux modifié, mais peut être gardée ou supprimée
-        return $this->render('registration/success.html.twig');
-    }
-
     #[Route('/complete/profile', name: 'app_complete_profile')]
-    // #[IsGranted('IS_AUTHENTICATED_FULLY')] // Ajouter une sécurité pour s'assurer que l'utilisateur est connecté
 
+    #[IsGranted('IS_AUTHENTICATED_FULLY')]
     public function completeProfile(Request $request, EntityManagerInterface $entityManager): Response
     {
         // --- Récupérer l'utilisateur connecté ---
@@ -166,14 +159,8 @@ class RegistrationController extends AbstractController
             $this->addFlash('warning', 'Veuillez vous connecter pour compléter votre profil.');
             return $this->redirectToRoute('app_login');
         }
-
-        // --- MODIFIÉ : Plus besoin de récupérer depuis la session ---
-        // $userId = $request->getSession()->get('user_id_to_complete_profile');
-        // ... (logique de session supprimée) ...
-
         // Vérifier si le profil est déjà marqué comme complet
         if ($user->isProfileComplete()) {
-            // $request->getSession()->remove('user_id_to_complete_profile'); // Plus nécessaire
             $this->addFlash('info', 'Votre profil est déjà complet.');
             return $this->redirectToRoute('app_profile'); // Rediriger vers le profil normal ou l'accueil
         }
@@ -185,25 +172,15 @@ class RegistrationController extends AbstractController
             $user->setIsProfileComplete(true);
             $entityManager->flush();
 
-            // --- Session déjà nettoyée car non utilisée ---
-            // $request->getSession()->remove('user_id_to_complete_profile');
-
             $this->addFlash('success', 'Profil complété avec succès ! Vous pouvez maintenant utiliser toutes les fonctionnalités.');
 
             // --- Redirection vers l'accueil ou le profil ---
-            return $this->redirectToRoute('app_profile'); // Ou 'app_profile'
+            return $this->redirectToRoute('app_profile');
         }
 
         return $this->render('registration/complete_profile.html.twig', [
             'profileForm' => $form->createView(),
-            'user' => $user // Passer l'utilisateur au template si nécessaire
+            'user' => $user
         ]);
-    }
-
-    #[Route('/profile/success', name: 'app_profile_success')]
-    public function profileSuccess(): Response
-    {
-        // Cette route n'est plus utilisée dans le flux modifié, mais peut être gardée ou supprimée
-        return $this->render('registration/profile_success.html.twig');
     }
 }

@@ -49,7 +49,7 @@
 					<dt class="col-sm-3">Photo</dt>
 					<dd class="col-sm-9">
 						{% if app.user.photo %}
-							<img src="{{ asset('uploads/' ~ app.isuser.photo)}}" alt="Photo de profil" style="max-width: 100px;">
+							<img src="{{ asset('uploads/' ~ app.user.photo)}}" alt="Photo de profil" style="max-width: 100px;">
 						{% else %}
 							Pas de photo
 						{% endif %}
