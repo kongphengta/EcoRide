@@ -20,8 +20,6 @@ jobs:
 
     - name: Add known hosts
       run: |
-        # Assurez-vous que l'indentation de chaque ligne ici est cohérente.
-        # Par exemple, toutes les lignes de script devraient commencer à la même colonne (8 espaces du bord gauche).
         if [ -z "${{ secrets.SSH_HOST }}" ]; then
           echo "Error: The SSH_HOST secret is empty or undefined. ssh-keyscan is skipped."
           exit 1
