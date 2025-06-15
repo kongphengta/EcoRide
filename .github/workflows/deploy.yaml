@@ -14,68 +14,49 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Setup SSH
-      uses: webfactory/ssh-agent@v0.9.0
-      with:
-        ssh-private-key: ${{ secrets.ACTION_ECORIDE }}
-
-    # Debugging the SSH_HOST secret value. This is good for troubleshooting.
     - name: Debug SSH_HOST value
-      run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
+      run: |
+        echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
 
     - name: Add known hosts
       run: |
-        # Check if the SSH_HOST secret is empty
+        # Assurez-vous que l'indentation de chaque ligne ici est cohérente.
+        # Par exemple, toutes les lignes de script devraient commencer à la même colonne (8 espaces du bord gauche).
         if [ -z "${{ secrets.SSH_HOST }}" ]; then
           echo "Error: The SSH_HOST secret is empty or undefined. ssh-keyscan is skipped."
-          exit 1 # Make the action fail if SSH_HOST is empty, as it's critical for SSH connection
+          exit 1
         else
           mkdir -p ~/.ssh
-          chmod 700 ~/.ssh # Recommended: stricter permissions for the .ssh folder
+          chmod 700 ~/.ssh
           echo "Attempting to scan host: '${{ secrets.SSH_HOST }}'"
-          # Add the host key to known_hosts. The -H flag hashes the hostname.
-          # The -T timeout is added for robustness, and -p specifies the port.
-          # Using a subshell to capture exit code for better error handling.
           if ssh-keyscan -T 5 -p 22 "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null; then
             echo "Host key for ${{ secrets.SSH_HOST }} added to known_hosts."
           else
             echo "Error: ssh-keyscan failed for host ${{ secrets.SSH_HOST }}. SSH connection might fail."
-            exit 1 # Fail the deployment if ssh-keyscan fails
+            exit 1
           fi
         fi
 
     - name: Deploy to server
       uses: appleboy/ssh-action@v1.0.3
       with:
+        # Vérifiez ces lignes en particulier pour les messages d'erreur de type/structure.
+        # Assurez-vous qu'il n'y a pas de guillemets superflus ajoutés manuellement.
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USER }}
-        key: ${{ secrets.ACTION_ECORIDE }}
-        port: 22 # Default SSH port, change if needed
+        key: ${{ secrets.ACTION_ECORIDE }} # La même clé SSH que pour webfactory/ssh-agent
+        port: 22
         script: |
-          echo "Connecting to server..."
-          cd ${{ secrets.PROJECT_PATH_ON_SERVER }} || { echo "Error: Could not change directory to ${{ secrets.PROJECT_PATH_ON_SERVER }}"; exit 1; }
-          
+          set -e # Arrêter le script si une commande echoue
+          cd ${{ secrets.PROJECT_PATH_ON_SERVER }} 
           echo "Pulling latest changes..."
-          git pull origin master || { echo "Error: Git pull failed"; exit 1; }
-          
+          git pull origin master
           echo "Installing Composer dependencies..."
-          # Using --no-interaction is good. --prefer-dist for faster installs.
-          composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist || { echo "Error: Composer install failed"; exit 1; }
-          
+          composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist 
           echo "Running database migrations..."
-          # Using --force for non-interactive environments and --no-interaction
-          php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration --env=prod || { echo "Error: Database migrations failed"; exit 1; }
-          
+          php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration --env=prod 
           echo "Clearing Symfony cache..."
-          php bin/console cache:clear --env=prod || { echo "Error: Clearing cache failed"; exit 1; }
-          
+          php bin/console cache:clear --env=prod
           echo "Warming up Symfony cache..."
-          php bin/console cache:warmup --env=prod || { echo "Error: Warming up cache failed"; exit 1; }
-
-          # If you use Webpack Encore or another asset bundler, add commands here
-          # Example for Node.js assets:
-          # echo "Building assets..."
-          # npm install || { echo "Error: npm install failed"; exit 1; }
-          # npm run build || { echo "Error: npm build failed"; exit 1; }
-          
+          php bin/console cache:warmup --env=prod
           echo "Deployment finished successfully!"

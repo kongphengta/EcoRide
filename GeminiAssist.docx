@@ -508,4 +508,1495 @@ RegistrationController.php
 Avec cette modification, l'e-mail de vérification sera effectivement envoyé. Le reste du code semble correct et prend bien en compte les simplifications que nous avions discutées.
 
 N'hésitez pas si vous avez d'autres questions !
+ 
+Le 29/05/2025
 
+
+roland kongphengta
+encore pire tout en ligne rouge et "fi" ça veut dire quoi, c'est la première fois je vois ça en plus il y en a deux.
+
+
+Gemini
+Bonjour ! Je vois que vous avez des interrogations concernant votre fichier deploy.yaml et notamment le mot-clé fi.
+
+Alors, fi est tout à fait normal dans ce contexte ! Il est utilisé dans les scripts shell (comme ceux que vous avez dans les sections run: ou script: de votre fichier YAML) pour marquer la fin d'un bloc if. C'est l'équivalent de l'accolade fermante } dans beaucoup d'autres langages de programmation. Chaque if doit avoir son fi correspondant.
+
+Concernant les "lignes rouges" que vous voyez, cela indique généralement une erreur de syntaxe dans votre fichier YAML. En examinant votre fichier deploy.yaml, j'ai repéré une petite coquille qui pourrait être la cause de ces erreurs. Il y a un souci d'indentation au niveau de l'étape "Add known hosts".
+
+Voici la correction que je vous propose :
+
+deploy.yaml
+-1
++1
+    - name: Debug SSH_HOST value
+      run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
+
+       - name: Add known hosts
+    - name: Add known hosts
+      run: |
+        # Vérifie si le secret SSH_HOST est vide
+        # set -e # Décommentez si vous voulez que le script échoue à la première erreur
+
+Explication des modifications :
+
+À la ligne 18 (dans votre fichier original), l'étape - name: Add known hosts commençait par un espace superflu avant le tiret -. En YAML, l'indentation est cruciale pour définir la structure du fichier. Cet espace supplémentaire rompait la structure attendue pour une liste d'étapes (steps). J'ai simplement supprimé cet espace pour que l'indentation soit correcte.
+Dans votre script, vous avez deux blocs if, et donc logiquement deux fi pour les clore :
+
+Le premier if [ -z "${{ secrets.SSH_HOST }}" ]; then est fermé par le premier fi.
+Le second if ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts; then (qui est à l'intérieur du else du premier if) est fermé par le second fi.
+J'espère que cela clarifie les choses et résout le problème des lignes rouges ! N'hésitez pas si vous avez d'autres questions.
+
+Rate this answer: 
+Context Sources (4)
+
+roland kongphengta
+s'il vous plaît pouvez-vous contrôler ces codes je pense que j'ai bien modifié mais j'ai toujurs les lignes rouges : name: Deploy to VPS
+
+on: push: branches: - master # Ou 'master', ou la branche que vous utilisez pour la production
+
+jobs: deploy: name: Deploy runs-on: ubuntu-latest
+
+plaintext: 66 lines selected
+
+Gemini
+Bonjour ! Je comprends que vous ayez encore des lignes rouges malgré vos modifications, c'est frustrant !
+
+Après avoir examiné attentivement votre fichier deploy.yaml, la cause la plus probable de ces erreurs persistantes est une petite ligne contenant des espaces superflus qui perturbe la structure YAML. En YAML, l'indentation et la propreté des lignes sont cruciales.
+
+Voici la correction que je vous propose :
+
+deploy.yaml
+-1
++0
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.ACTION_ECORIDE }} # Utilise le nom de secret que vous avez défini
+  
+     - name: Debug SSH_HOST value
+       run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
+ 
+Explication de la modification :
+
+Entre la configuration de ssh-private-key: (ligne 20 dans votre fichier) et l'étape - name: Debug SSH_HOST value (ligne 22), il y avait une ligne (ligne 21) qui contenait uniquement deux espaces : .
+Cette ligne n'est pas vide et n'est pas correctement indentée comme un commentaire ou un élément de la liste steps. Cela casse la séquence des étapes pour l'analyseur YAML, provoquant des erreurs.
+La modification que je propose supprime simplement cette ligne avec les deux espaces. Les lignes vides (sans aucun espace) sont généralement ignorées et ne posent pas de problème, mais une ligne avec des espaces mal placés peut être interprétée comme une tentative de structuration incorrecte.
+Concernant fi : Comme nous en avions discuté, l'utilisation de fi dans vos scripts run: est tout à fait correcte. C'est la syntaxe standard en shell pour terminer un bloc if. Vous en avez deux parce que vous avez deux structures if ... then ... else ... fi imbriquées ou séquentielles dans votre script "Add known hosts".
+
+Petite vérification supplémentaire : Dans votre étape "Add known hosts", vous avez cette ligne : if ssh-keyscan -H "${{ secrets.SSH_HOST }}" &gt;&gt; ~/.ssh/known_hosts; then
+
+Assurez-vous que dans votre fichier réel, vous avez bien >> et non &gt;&gt;. Le &gt;&gt; est une entité HTML pour >> et pourrait causer des problèmes si c'est littéralement ce qui est dans votre script. Le shell attend >> pour la redirection d'ajout. Il est possible que ce soit juste un artefact de copier-coller dans votre demande.
+
+J'espère que cette correction résoudra définitivement vos problèmes de lignes rouges ! N'hésitez pas si vous avez d'autres questions.
+
+Rate this answer: 
+Context Sources (4)
+
+roland kongphengta
+je ne suis vraiment pas bon : mais où il est fichier réel, et >&gt . Le >> c'est unespace dans HTML, j'ai oublié tout ça.
+
+
+Gemini
+Pas de souci, on est tous passés par là en apprenant ! C'est tout à fait normal d'avoir des petits oublis ou des confusions, surtout quand on jongle avec plusieurs langages et syntaxes.
+
+Alors, pour répondre à vos questions :
+
+"où il est fichier réel" : Le fichier sur lequel nous travaillons, et que vous devez modifier, se trouve à cet emplacement sur votre ordinateur : f:\xampp\htdocs\ecoride\.github\workflows\deploy.yaml C'est dans ce fichier que vous devez apporter les corrections.
+
+">&gt . Le >> c'est unespace dans HTML, j'ai oublié tout ça." Vous avez presque raison ! &gt; est effectivement une entité HTML, mais elle représente le signe "supérieur à" (>). Et &gt;&gt; serait la représentation HTML de >>. Cependant, dans le contexte de votre script shell (la partie run: | ...), ce n'est pas du HTML. Le >> est un opérateur de redirection en shell.
+
+> redirige la sortie d'une commande vers un fichier (en écrasant le contenu du fichier s'il existe).
+>> redirige la sortie d'une commande vers un fichier en ajoutant la sortie à la fin du fichier (sans écraser ce qui existe déjà).
+Dans votre script : ssh-keyscan -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts Cela signifie : "Exécute ssh-keyscan et ajoute sa sortie à la fin du fichier ~/.ssh/known_hosts." C'est la bonne syntaxe pour ce que vous voulez faire.
+
+Il est possible que lorsque vous avez copié-collé le code précédemment, ou si votre éditeur a interprété quelque chose, le >> ait été affiché ou transformé en &gt;&gt;. Mais dans votre fichier deploy.yaml réel, il faut bien s'assurer que c'est >>. D'après le code que vous m'avez fourni la dernière fois, il semble que vous ayez bien >> dans le script, ce qui est correct.
+
+Concernant les lignes rouges persistantes :
+
+J'ai réexaminé le dernier code deploy.yaml que vous avez partagé. Il y a toujours cette petite ligne avec des espaces en trop qui perturbe la structure YAML. C'est très probablement la cause de vos lignes rouges.
+
+Voici à nouveau la correction pour cela :
+
+deploy.yaml
+-1
++0
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.ACTION_ECORIDE }} # Utilise le nom de secret que vous avez défini
+  
+     - name: Debug SSH_HOST value
+       run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
+ 
+Explication de la modification :
+
+Regardez entre la fin de l'étape Setup SSH (la ligne ssh-private-key: ...) et le début de l'étape Debug SSH_HOST value. Dans votre fichier, il y a une ligne qui contient uniquement deux espaces : .
+Cette ligne n'est ni un commentaire, ni une étape valide, et sa présence avec une indentation incorrecte casse la structure attendue par YAML pour la liste des steps.
+La correction consiste simplement à supprimer cette ligne contenant les deux espaces.
+Vérifiez bien votre fichier f:\xampp\htdocs\ecoride\.github\workflows\deploy.yaml pour cette ligne spécifique et supprimez-la. Cela devrait résoudre les erreurs de syntaxe YAML (les lignes rouges).
+
+Ne vous découragez pas, la syntaxe YAML est stricte sur l'indentation, et c'est un piège courant au début ! Vous allez y arriver.
+
+Rate this answer: 
+Context Sources (4)
+
+roland kongphengta
+j'ai compris que vous dites que la syntax est bonne mais on s'enfou les lignes rouges ça arrive jusqu'au -name: Add known hosts, je ne sais où est mon erreur.
+
+
+Gemini
+Ah, je comprends votre frustration ! C'est déroutant quand on pense que la syntaxe d'une partie est bonne, mais que les erreurs persistent et semblent pointer ailleurs.
+
+Vous avez raison, la logique de vos scripts shell avec if/fi et la redirection >> est correcte. Le problème des "lignes rouges" qui s'arrêtent avant ou à -name: Add known hosts vient très probablement d'une petite erreur de formatage YAML (indentation ou ligne superflue) avant cette section. En YAML, une petite erreur peut décaler l'interprétation de tout ce qui suit.
+
+L'erreur la plus probable, d'après le fichier que vous avez partagé, est une ligne qui contient uniquement des espaces et qui se trouve entre la fin de votre étape Setup SSH et le début de votre étape Debug SSH_HOST value.
+
+Regardez attentivement votre fichier f:\xampp\htdocs\ecoride\.github\workflows\deploy.yaml à cet endroit précis :
+
+yaml
+    # ... (autres étapes avant)
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.ACTION_ECORIDE }} # Utilise le nom de secret que vous avez défini
+  # <--- C'EST TRÈS PROBABLEMENT CETTE LIGNE QUI POSE PROBLÈME SI ELLE CONTIENT DES ESPACES
+    - name: Debug SSH_HOST value
+      run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
+
+    - name: Add known hosts
+      run: |
+        # ... la suite de votre script
+La ligne que j'ai pointée avec la flèche (# <--- ...) : si cette ligne dans votre fichier n'est pas complètement vide mais contient, par exemple, deux espaces (), cela casse la structure de la liste des steps. YAML s'attend à ce que chaque nouvelle étape commence par - au bon niveau d'indentation. Une ligne avec juste des espaces n'est ni un commentaire, ni une étape valide, ni une partie de l'étape précédente.
+
+Voici la correction qui devrait résoudre ce souci. Elle consiste à supprimer cette ligne si elle contient des espaces inutiles :
+
+deploy.yaml
+-1
++0
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.ACTION_ECORIDE }} # Utilise le nom de secret que vous avez défini
+  
+     - name: Debug SSH_HOST value
+       run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
+ 
+Pourquoi cela cause une erreur jusqu'à "Add known hosts" ?
+
+Quand l'analyseur YAML rencontre cette ligne incorrecte (par exemple, la ligne avec ), il ne sait plus comment interpréter ce qui suit. Il s'attendait à une nouvelle étape (commençant par -) ou à la fin de la liste des étapes. L'erreur est donc signalée, et souvent l'endroit où l'éditeur met la "ligne rouge" est là où la structure devient incohérente pour lui, ce qui peut être un peu après l'erreur réelle. Dans votre cas, il semble qu'il arrive à traiter (ou ignorer) Debug SSH_HOST value mais que la confusion est telle qu'il signale l'erreur de manière plus évidente lorsqu'il essaie d'interpréter -name: Add known hosts.
+
+Vérifiez minutieusement cette partie de votre fichier. Supprimez toute ligne qui ne contiendrait que des espaces entre ces deux étapes. Une ligne complètement vide (sans aucun caractère) est généralement acceptable, mais une ligne avec des espaces ne l'est pas dans ce contexte.
+
+J'espère vraiment que c'est la clé du problème cette fois-ci ! Tenez-moi au courant.
+
+Rate this answer: 
+Context Sources (4)
+
+roland kongphengta
+on va faire un test.
+
+
+Gemini
+D'accord, faisons un test ! C'est une excellente idée pour isoler le problème.
+
+Je suis convaincu que les "lignes rouges" qui persistent jusqu'à -name: Add known hosts sont dues à une petite erreur de formatage YAML juste avant, qui perturbe l'analyseur.
+
+La coupable la plus probable est toujours cette ligne qui contient uniquement des espaces entre l'étape Setup SSH et l'étape Debug SSH_HOST value. En YAML, l'indentation et la structure sont reines, et une telle ligne peut tout dérégler.
+
+Voici à nouveau la correction précise. S'il vous plaît, vérifiez attentivement votre fichier f:\xampp\htdocs\ecoride\.github\workflows\deploy.yaml et assurez-vous que cette modification est bien appliquée :
+
+deploy.yaml
+-1
++0
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.ACTION_ECORIDE }} # Utilise le nom de secret que vous avez défini
+  
+     - name: Debug SSH_HOST value
+       run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
+ 
+Pourquoi cette petite ligne est-elle si problématique ?
+
+Dans la section steps:, YAML s'attend à une liste d'éléments.
+Chaque élément de cette liste doit commencer par un tiret et un espace (-) au bon niveau d'indentation.
+Une ligne qui contient uniquement des espaces (comme dans l'exemple) n'est pas un élément de liste valide, ni un commentaire, ni une continuation de l'élément précédent.
+L'analyseur YAML "trébuche" sur cette ligne, ne sait plus comment interpréter la suite, et signale une erreur. L'endroit où l'erreur est visuellement indiquée (la ligne rouge) peut parfois être un peu après l'erreur réelle, là où la structure devient manifestement incohérente pour l'analyseur.
+Pour notre test :
+
+Appliquez scrupuleusement la modification ci-dessus à votre fichier deploy.yaml (c'est-à-dire, supprimez la ligne qui contient uniquement des espaces entre les étapes Setup SSH et Debug SSH_HOST value).
+Sauvegardez le fichier.
+Regardez si les lignes rouges disparaissent dans votre éditeur.
+Si elles disparaissent, essayez de "commiter" et "pousser" ce changement vers votre dépôt GitHub pour voir si l'action se déclenche correctement.
+Tenez-moi au courant du résultat de ce test ! On va y arriver.
+
+Rate this answer: 
+Context Sources (4)
+
+roland kongphengta
+j'ai une erreur mais ça va ce n'est pas la même erreur : Annotations 1 error Invalid workflow file: .github/workflows/deploy.yaml#L23 You have an error in your yaml syntax on line 23
+
+
+Gemini
+Ah, je vois que vous avez une nouvelle erreur, mais cette fois avec un numéro de ligne précis ! C'est une bonne piste. L'erreur "Invalid workflow file: .github/workflows/deploy.yaml#L23 - You have an error in your yaml syntax on line 23" indique un souci de syntaxe YAML à la ligne 23.
+
+En examinant à nouveau votre fichier deploy.yaml (celui que vous avez fourni dans le contexte), la cause la plus probable de cette erreur est toujours la même petite ligne mal placée qui perturbe la structure YAML. Même si l'erreur est signalée à la ligne 23, le problème initial se situe probablement un peu avant.
+
+Voici pourquoi et comment corriger cela :
+
+Dans votre fichier deploy.yaml, à la ligne 21 (juste après la configuration de ssh-private-key: et avant - name: Debug SSH_HOST value), il y a une ligne qui semble contenir uniquement deux espaces :
+
+yaml
+# ... (lignes précédentes)
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.ACTION_ECORIDE }} # Utilise le nom de secret que vous avez défini
+  # <--- CETTE LIGNE (ligne 21 dans le fichier complet) est le problème si elle contient des espaces
+    - name: Debug SSH_HOST value # (ligne 22)
+      run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'" # (ligne 23 - où l'erreur est signalée)
+# ... (suite)
+Cette ligne 21 avec des espaces () n'est pas une instruction YAML valide à cet endroit. Elle casse la séquence attendue des étapes (steps). Lorsque l'analyseur YAML rencontre cette ligne incorrecte, il peut se "perdre" et signaler l'erreur un peu plus loin, au moment où la structure devient manifestement incohérente pour lui (ici, à la ligne 23 lorsqu'il essaie d'interpréter run: dans un contexte déjà faussé).
+
+La solution reste donc de supprimer cette ligne contenant uniquement des espaces.
+
+Voici la modification sous forme de diff :
+
+deploy.yaml
+-1
++0
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.ACTION_ECORIDE }} # Utilise le nom de secret que vous avez défini
+  
+     - name: Debug SSH_HOST value
+       run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
+ 
+Explication du diff :
+
+Le diff cible la section autour de la ligne 18 de votre fichier.
+La ligne - (qui représente la ligne 21 de votre fichier complet, contenant deux espaces) est supprimée.
+Cela rétablit la structure correcte de la liste des steps, où chaque étape commence par - avec l'indentation appropriée.
+Même si l'erreur est maintenant pointée spécifiquement à la ligne 23, la cause fondamentale est très probablement cette ligne 21. En la supprimant, la syntaxe YAML devrait redevenir valide, et l'erreur à la ligne 23 devrait disparaître.
+
+Essayez d'appliquer cette correction. Je suis optimiste que cela résoudra le problème de syntaxe !
+
+Rate this answer: 
+Context Sources (4)
+
+roland kongphengta
+je vois que c'est là ou j'ai des traits rouges : run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
+
+deploy.yaml: 1 lines selected
+deploy.yaml: 3 lines selected
+
+Gemini
+C'est une observation très utile ! Si les traits rouges apparaissent spécifiquement autour de run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'" et juste avant - name: Add known hosts, cela confirme presque à coup sûr que le problème de syntaxe YAML se situe juste avant cette section.
+
+En YAML, une petite erreur d'indentation ou une ligne mal placée peut décaler toute l'interprétation de ce qui suit. L'éditeur signale alors l'erreur là où la structure devient incohérente pour lui, même si la cause racine est un peu plus haut.
+
+Le coupable le plus probable est toujours cette ligne qui contient uniquement des espaces et qui se trouve entre la fin de votre étape Setup SSH et le début de votre étape Debug SSH_HOST value.
+
+Regardez attentivement votre fichier f:\xampp\htdocs\ecoride\.github\workflows\deploy.yaml à cet endroit précis :
+
+yaml
+    # ... (autres étapes avant)
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.ACTION_ECORIDE }} # Utilise le nom de secret que vous avez défini
+  # <--- C'EST CETTE LIGNE QUI POSE PROBLÈME SI ELLE CONTIENT DES ESPACES
+    - name: Debug SSH_HOST value
+      run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'" # Traits rouges ici ou après
+
+    - name: Add known hosts
+      # ... la suite
+La ligne que j'ai pointée avec la flèche (# <--- ...) : si cette ligne dans votre fichier n'est pas complètement vide mais contient, par exemple, deux espaces (), cela casse la structure de la liste des steps.
+
+Voici la correction qui devrait résoudre ce souci. Elle consiste à supprimer cette ligne si elle contient des espaces inutiles :
+
+deploy.yaml
+-1
++0
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.ACTION_ECORIDE }} # Utilise le nom de secret que vous avez défini
+  
+     - name: Debug SSH_HOST value
+       run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
+ 
+En supprimant cette ligne avec les espaces superflus, la structure YAML de votre liste steps devrait redevenir correcte, et les traits rouges devraient disparaître de la ligne run: echo ... et des suivantes.
+
+Essayez cette modification, je suis confiant que c'est la clé !
+
+Rate this answer: 
+Context Sources (4)
+
+roland kongphengta
+Nested mappings are not allowed in compact mappingsYAML ça vous dit quoi ce message ?
+
+
+Gemini
+Ce message d'erreur YAML, "Nested mappings are not allowed in compact mappings", signifie que l'analyseur YAML a rencontré un problème de structure dans votre fichier. Essentiellement, il a trouvé une tentative d'imbriquer une structure complexe (comme une nouvelle paire clé-valeur ou une liste) à un endroit où il s'attendait à une valeur simple, souvent dans un format qu'il considère comme "compact" (par exemple, une définition clé-valeur qui devrait être simple et directe).
+
+Cela se produit généralement à cause de :
+
+Une indentation incorrecte : Une ligne est mal indentée, ce qui fait croire à l'analyseur qu'elle fait partie d'une structure précédente de manière incorrecte.
+Des caractères inattendus : Souvent un côlon (:) mal placé qui fait croire à l'analyseur que vous commencez une nouvelle paire clé-valeur à l'intérieur de la valeur d'une autre.
+Des lignes vides avec des espaces : Une ligne qui semble vide mais contient des espaces peut perturber la structure attendue, surtout si son indentation est incorrecte.
+En regardant votre fichier f:\xampp\htdocs\ecoride\.github\workflows\deploy.yaml, les causes les plus probables sont des lignes qui contiennent uniquement des espaces et qui cassent la structure de vos steps.
+
+J'ai identifié deux lignes dans votre fichier qui posent probablement problème :
+
+Une ligne contenant uniquement deux espaces, située juste après la section with: de votre étape Setup SSH et avant l'étape Debug SSH_HOST value. Cette ligne est fortement mal indentée et casse la séquence des étapes.
+Une ligne vide mais avec des espaces d'indentation, située juste après la commande run: de votre étape Debug SSH_HOST value.
+Voici une suggestion pour corriger ces points :
+
+deploy.yaml
+-2
++0
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.ACTION_ECORIDE }} # Utilise le nom de secret que vous avez défini
+  
+    - name: Debug SSH_HOST value
+      run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
+      
+     - name: Add known hosts
+       run: |
+           # Vérifie si le secret SSH_HOST est vide
+Explication des modifications :
+
+La ligne qui contenait (deux espaces) après le bloc with: de l'étape Setup SSH a été supprimée. Cette ligne était à un niveau d'indentation incorrect (2 espaces) par rapport à la liste des steps (qui attend des éléments commençant par - à 4 espaces d'indentation). Cela rompait la structure de la liste des étapes.
+La ligne qui contenait (six espaces) après la commande run: de l'étape Debug SSH_HOST value a été supprimée. Bien que les lignes vides soient généralement ignorées, une ligne vide avec une indentation peut parfois prêter à confusion pour l'analyseur si elle n'est pas gérée correctement dans le contexte d'un scalaire (comme la valeur de run). La supprimer assure la propreté.
+En corrigeant ces problèmes d'indentation et ces lignes superflues, la structure YAML de votre fichier devrait redevenir cohérente, et l'erreur "Nested mappings are not allowed in compact mappings" devrait disparaître. L'analyseur YAML ne devrait plus interpréter ces lignes comme des tentatives de créer des "mappings" (paires clé-valeur) imbriqués ou mal formés.
+
+Rate this answer: 
+Context Sources (4)
+
+roland kongphengta
+je ne sais vraiment pas comment faire à part tout supprimer et remettre des codes bien propre.
+
+
+Gemini
+Je comprends tout à fait votre frustration ! Les erreurs de syntaxe YAML peuvent être particulièrement déroutantes, surtout quand on a l'impression d'avoir tout essayé. Avant de tout supprimer, je pense que nous pouvons identifier et corriger le problème.
+
+Le message d'erreur "Nested mappings are not allowed in compact mappings" (Les mappages imbriqués ne sont pas autorisés dans les mappages compacts) est un indice clé. Il signifie que l'analyseur YAML a trouvé une structure qui ressemble à une tentative d'imbriquer une nouvelle paire clé-valeur (un "mapping") à un endroit où il s'attendait à une valeur simple, ou que l'indentation est incorrecte, lui faisant croire à une telle imbrication.
+
+En examinant attentivement votre fichier f:\xampp\htdocs\ecoride\.github\workflows\deploy.yaml, je vois deux petites lignes qui sont très probablement la cause de cette erreur. Ce sont des lignes qui contiennent uniquement des espaces et qui perturbent la structure attendue par YAML.
+
+Voici les corrections que je vous propose :
+
+deploy.yaml
+-3
++1
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.ACTION_ECORIDE }} # Utilise le nom de secret que vous avez défini
+  
+    - name: Debug SSH_HOST value
+      run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"      
+
+      run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
+     - name: Add known hosts
+       run: |
+           # Vérifie si le secret SSH_HOST est vide
+
+Explication des modifications :
+
+Suppression de la ligne avec deux espaces (ligne 15 dans votre fichier original) :
+
+Juste après ssh-private-key: ${{ secrets.ACTION_ECORIDE }}, vous aviez une ligne qui contenait uniquement deux espaces ().
+Cette ligne n'est pas correctement indentée pour être une nouvelle étape (qui devrait commencer par - avec 4 espaces d'indentation) et n'est pas non plus une continuation valide de la section with:. Elle casse la structure de la liste des steps.
+Suppression de la ligne vide avec des espaces (ligne 18 dans votre fichier original) :
+
+Après run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'", vous aviez une ligne qui, bien que visuellement vide, contenait des espaces d'indentation.
+Bien que les lignes complètement vides (sans aucun espace) soient généralement ignorées, une ligne avec des espaces peut parfois prêter à confusion pour l'analyseur YAML, surtout si son indentation ne correspond à rien de structurellement attendu. La supprimer assure la propreté et évite toute ambiguïté.
+Pourquoi ces lignes causent-elles l'erreur "Nested mappings..." ?
+
+L'analyseur YAML est très strict sur l'indentation et la structure. Quand il rencontre une ligne comme (deux espaces) là où il s'attend à une nouvelle étape (commençant par - et indentée correctement), il peut l'interpréter à tort comme une tentative de créer une structure imbriquée de manière incorrecte, d'où le message d'erreur.
+
+Je vous encourage vivement à appliquer ces deux petites suppressions. Souvent, ce sont ces détails d'espacement et d'indentation qui sont la source des problèmes en YAML.
+
+Ne vous découragez pas, vous êtes très proche de la solution ! Ces erreurs sont courantes quand on apprend à manipuler YAML.
+
+Rate this answer: 
+Context Sources (4)
+
+roland kongphengta
+en faisant ça il est toujours là le problème : uses: webfactory/ssh-agent@v0.9.0 with: ssh-private-key: ${{ secrets.ACTION_ECORIDE }} # Utilise le nom de secret que vous avez défini
+
+plaintext: 7 lines selected
+
+Gemini
+Je comprends, c'est vraiment frustrant quand on a l'impression de faire les bonnes modifications et que le problème persiste ! Les erreurs de syntaxe YAML peuvent être très pointilleuses, surtout avec l'indentation et les espaces.
+
+En regardant la section que vous montrez et le fichier deploy.yaml complet, les "traits rouges" ou les erreurs de syntaxe YAML proviennent très probablement de lignes qui ne devraient pas être là ou qui sont mal formatées, cassant la structure attendue de la liste des steps.
+
+Voici les points précis qui posent problème dans la version actuelle de votre fichier f:\xampp\htdocs\ecoride\.github\workflows\deploy.yaml et comment les corriger :
+
+Ligne avec des espaces superflus après ssh-private-key: Juste après la ligne ssh-private-key: ${{ secrets.ACTION_ECORIDE }}, il y a une ligne qui contient uniquement deux espaces (). Cette ligne n'est pas une étape valide et casse la séquence.
+Espaces superflus à la fin de la commande run: La ligne run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'" a des espaces à la fin après le guillemet fermant. Bien que cela ne casse pas toujours YAML, c'est une mauvaise pratique et peut parfois prêter à confusion.
+Ligne vide (potentiellement avec des espaces) après la commande run: Après cette commande run, il y a une ligne vide. Si cette ligne vide contient des espaces, elle peut aussi perturber l'analyseur YAML.
+Voici la correction sous forme de diff pour nettoyer cette section :
+
+deploy.yaml
+-3
++1
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.ACTION_ECORIDE }} # Utilise le nom de secret que vous avez défini
+  
+    - name: Debug SSH_HOST value
+      run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"      
+
+      run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
+     - name: Add known hosts
+       run: |
+           # Vérifie si le secret SSH_HOST est vide
+
+Explication des modifications :
+
+-: La ligne qui contenait uniquement deux espaces () après la définition de ssh-private-key: a été supprimée.
+run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'": Les espaces superflus à la fin de cette ligne ont été supprimés.
+La ligne vide qui suivait cette commande run a également été supprimée pour assurer la propreté.
+En appliquant ces changements, la structure de vos steps devrait être correcte :
+
+yaml
+    # ...
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.ACTION_ECORIDE }} # Pas de ligne avec des espaces ici
+    - name: Debug SSH_HOST value
+      run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'" # Pas d'espaces en trop à la fin, pas de ligne vide après
+    - name: Add known hosts
+      run: |
+        # ... votre script ...
+    # ...
+Chaque étape (- name: ...) doit être correctement indentée sous steps:. Les lignes qui ne respectent pas cette structure ou qui contiennent des caractères inattendus (comme des lignes avec uniquement des espaces à un mauvais niveau d'indentation) provoquent des erreurs de syntaxe YAML.
+
+Assurez-vous également que dans votre fichier réel, vous n'avez pas de lignes dupliquées ou mal indentées comme celles que vous avez incluses dans votre dernier message (par exemple, le run: echo... supplémentaire et le - name: Add known hosts mal indenté). Le diff que je vous ai fourni devrait vous aider à obtenir la structure correcte pour cette section.
+
+J'espère que cela vous aidera à résoudre définitivement ce problème !
+
+Rate this answer: 
+Context Sources (4)
+
+roland kongphengta
+Nested mappings are not allowed in compact mappingsYAML Incorrect type. Expected "string".yaml-schema: GitHub Workflow Runs command-line programs using the operating system's shell. If you do not provide a name, the step name will default to the text specified in the run command. (et tout ça).
+
+
+Gemini
+Bonjour ! Je vois que vous rencontrez des erreurs de syntaxe YAML dans votre fichier de workflow GitHub, et c'est effectivement frustrant quand on essaie de faire fonctionner les choses. Analysons ensemble ces messages d'erreur :
+
+"Nested mappings are not allowed in compact mappingsYAML" (Les mappages imbriqués ne sont pas autorisés dans les mappages compacts) : Cette erreur signifie que l'analyseur YAML a trouvé une structure qui ressemble à une tentative d'imbriquer une nouvelle paire clé-valeur (un "mapping") à un endroit où il s'attendait à une valeur simple, ou plus généralement, que l'indentation est incorrecte, lui faisant croire à une telle imbrication. C'est souvent causé par une ligne mal indentée ou une ligne superflue qui casse la structure attendue.
+
+"Incorrect type. Expected "string".yaml-schema: GitHub Workflow" (Type incorrect. "string" attendu) pour la directive run: Cette erreur indique que la valeur fournie pour la clé run n'est pas interprétée comme une chaîne de caractères (ou un bloc de chaînes de caractères multilignes) comme l'exige le schéma des workflows GitHub. Cela peut être une conséquence directe de l'erreur de structure précédente ou d'un formatage incorrect de la valeur de run elle-même (par exemple, des caractères inattendus ou une mauvaise gestion des lignes).
+
+En examinant attentivement votre fichier f:\xampp\htdocs\ecoride\.github\workflows\deploy.yaml (celui que vous avez indiqué comme étant celui que vous regardez), j'ai identifié les causes probables de ces erreurs :
+
+Une ligne contenant uniquement des espaces : Juste après la ligne ssh-private-key: ${{ secrets.ACTION_ECORIDE }}, il y a une ligne qui contient uniquement deux espaces (). Cette ligne n'est pas un commentaire, ni une partie valide de la section with:, ni une nouvelle étape correctement formatée. Son indentation (2 espaces) est incohérente avec la structure des steps (qui attendent des éléments commençant par - à 4 espaces d'indentation). C'est la cause principale de l'erreur "Nested mappings...".
+Des espaces superflus à la fin d'une commande run : La ligne run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'" contient des espaces après le guillemet fermant. Bien que cela ne soit pas toujours bloquant, cela peut perturber l'analyseur et contribuer à l'erreur "Incorrect type".
+Voici la correction que je vous propose pour votre fichier f:\xampp\htdocs\ecoride\.github\workflows\deploy.yaml :
+
+deploy.yaml
+-3
++1
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.ACTION_ECORIDE }} # Utilise le nom de secret que vous avez défini
+  
+    - name: Debug SSH_HOST value
+      run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"      
+
+      run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
+     - name: Add known hosts
+       run: |
+           # Vérifie si le secret SSH_HOST est vide
+
+Explication des modifications :
+
+Ligne 17 (dans votre fichier original) : La ligne qui contenait uniquement deux espaces () juste après la section with: de l'étape Setup SSH a été supprimée. Cette ligne rompait la structure de la liste des steps.
+Ligne 19 (dans votre fichier original) : Les espaces superflus à la fin de la commande run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'" ont été supprimés. La ligne est maintenant run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'".
+J'ai également supprimé une ligne vide qui semblait être présente après cette commande run dans certains de vos extraits précédents, pour assurer la propreté. Si elle n'était pas là, tant mieux.
+En appliquant ces corrections, la structure YAML de votre fichier devrait redevenir valide :
+
+Chaque étape (- name: ...) sera correctement indentée sous steps:.
+Il n'y aura plus de lignes parasites pour perturber l'analyseur.
+La valeur de run: sera une chaîne de caractères correctement formatée.
+Cela devrait résoudre les deux erreurs que vous rencontrez. N'oubliez pas que la syntaxe YAML est très sensible à l'indentation et aux espaces superflus.
+
+Concernant le fi dans vos scripts shell, comme nous l'avions déjà évoqué, c'est tout à fait correct et nécessaire pour fermer vos blocs if.
+
+J'espère que cela vous aidera à faire fonctionner votre workflow !
+
+Rate this answer: 
+Context Sources (4)
+
+roland kongphengta
+et cette erreur : Annotations 1 error Error every step must define a uses or run key. je fais expret de commenter cette ligne pour voir les erreures.
+
+deploy.yaml: 1 lines selected
+
+Gemini
+Bonjour ! C'est une excellente démarche de commenter des lignes pour comprendre les messages d'erreur. Cela aide beaucoup à cerner le fonctionnement et les exigences de la syntaxe.
+
+L'erreur que vous rencontrez maintenant, "every step must define a uses or run key" (chaque étape doit définir une clé uses ou run), est très claire et directement liée au fait que vous avez commenté la ligne run: dans votre étape "Debug SSH_HOST value".
+
+En YAML pour les workflows GitHub, chaque élément de la liste steps: est une étape d'exécution. Pour être valide, une étape doit spécifier :
+
+Soit une clé uses:, qui indique une action à utiliser (par exemple, actions/checkout@v4).
+Soit une clé run:, qui contient une commande ou un script à exécuter directement dans le shell de l'exécuteur.
+Dans votre cas, l'étape :
+
+yaml
+    - name: Debug SSH_HOST value
+      # run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
+a bien un name, mais comme la ligne run: est commentée, elle n'a ni uses: ni run: actif. C'est pourquoi GitHub vous signale cette erreur.
+
+De plus, en examinant à nouveau votre fichier f:\xampp\htdocs\ecoride\.github\workflows\deploy.yaml, il y a toujours cette petite ligne contenant uniquement deux espaces qui traîne et qui a probablement causé vos erreurs YAML précédentes ("Nested mappings...", "Incorrect type..."). Elle se situe juste après la section with: de votre étape "Setup SSH". Même si l'erreur actuelle est différente, il est crucial de corriger cette ligne pour avoir un fichier YAML globalement sain.
+
+Voici les corrections que je vous propose pour rendre votre étape "Debug SSH_HOST value" de nouveau fonctionnelle et pour nettoyer la petite scorie YAML persistante :
+
+deploy.yaml
+-3
++1
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.ACTION_ECORIDE }} # Utilise le nom de secret que vous avez défini
+  
+    - name: Debug SSH_HOST value
+      # run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"      
+
+      run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
+     - name: Add known hosts
+       run: |
+           # Vérifie si le secret SSH_HOST est vide
+
+Explication des modifications :
+
+Ligne 21 (dans votre fichier original) : La ligne qui contenait uniquement deux espaces () juste après la section with: de l'étape Setup SSH a été supprimée. Cette ligne rompait la structure de la liste des steps et était la cause probable de vos erreurs YAML précédentes.
+Ligne 23 (dans votre fichier original) : La ligne run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'" a été décommentée. J'ai également supprimé les espaces superflus qui se trouvaient à la fin de cette ligne lorsqu'elle était commentée. Ainsi, l'étape "Debug SSH_HOST value" a de nouveau une instruction run: valide.
+Avec ces modifications :
+
+L'erreur "every step must define a uses or run key" disparaîtra car l'étape "Debug SSH_HOST value" aura bien sa clé run:.
+Les problèmes de syntaxe YAML sous-jacents dus à la ligne avec des espaces superflus seront également corrigés.
+Si votre intention était de désactiver temporairement l'étape "Debug SSH_HOST value", la meilleure façon de le faire sans générer d'erreur de syntaxe de workflow est de commenter toute l'étape, y compris son name: :
+
+yaml
+    # - name: Debug SSH_HOST value
+    #   run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
+Ou, si vous souhaitez la supprimer complètement, supprimez ces deux lignes.
+
+J'espère que cela clarifie la situation et vous aide à avancer !
+
+Rate this answer: 
+Context Sources (4)
+
+roland kongphengta
+oui, mais comment savoir où manque des espaces ou il n'y en n'a pas assez ?
+
+deploy.yaml: 1 lines selected
+
+Gemini
+C'est une excellente question, et c'est souvent là que le bât blesse avec YAML ! Savoir où manquent des espaces ou s'il y en a trop (ou pas assez) est crucial. Voici quelques principes et astuces pour vous aider :
+
+Les Principes Fondamentaux de l'Indentation YAML :
+
+L'indentation définit la structure : En YAML, ce n'est pas juste pour faire joli. L'indentation indique comment les éléments sont imbriqués les uns dans les autres (parent/enfant) et comment ils sont groupés (listes, dictionnaires/mappings).
+Cohérence des espaces : Utilisez toujours le même nombre d'espaces pour chaque niveau d'indentation. Le plus courant est 2 espaces, parfois 4. N'utilisez jamais de tabulations, car leur largeur peut varier et casser la structure. La plupart des éditeurs peuvent être configurés pour insérer des espaces lorsque vous appuyez sur la touche Tab.
+Listes (-) : Les éléments d'une même liste doivent commencer par un tiret (-) et être au même niveau d'indentation.
+Mappings (clé: valeur) : Les paires clé-valeur qui appartiennent au même "objet" (mapping) doivent avoir la même indentation. Si une valeur est elle-même un mapping ou une liste, ses éléments enfants seront indentés davantage.
+Comment Repérer les Problèmes dans Votre Fichier deploy.yaml :
+
+En regardant votre fichier f:\xampp\htdocs\ecoride\.github\workflows\deploy.yaml, il y a un problème d'indentation très spécifique qui a causé vos erreurs YAML précédentes, et il est toujours présent :
+
+yaml
+    # ...
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.ACTION_ECORIDE }} # Utilise le nom de secret que vous avez défini
+  # <--- CETTE LIGNE EST LE PROBLÈME PRINCIPAL
+    - name: Debug SSH_HOST value
+      # run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
+    # ...
+La ligne problématique : La ligne juste après ssh-private-key: ... contient actuellement deux espaces ().
+Les étapes de votre workflow (celles qui commencent par - name: ...) sont indentées de quatre espaces par rapport au début de la ligne steps:.
+Cette ligne avec deux espaces est donc moins indentée que les étapes elles-mêmes. Elle n'est ni une nouvelle étape (elle ne commence pas par -), ni une partie de la section with: (elle est moins indentée). Elle casse complètement la structure de votre liste steps. Cette ligne doit être supprimée.
+Concernant l'erreur actuelle : "every step must define a uses or run key"
+
+Cette erreur est due au fait que vous avez commenté la ligne run: dans l'étape "Debug SSH_HOST value" :
+
+yaml
+    - name: Debug SSH_HOST value
+      # run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
+Pour qu'une étape soit valide, elle doit avoir soit une clé uses: (pour utiliser une action externe) soit une clé run: (pour exécuter une commande). En commentant run:, l'étape n'a plus ni l'un ni l'autre.
+
+Corrections Proposées :
+
+Supprimer la ligne mal indentée.
+Décommenter la ligne run: pour que l'étape "Debug SSH_HOST value" soit à nouveau valide (ou commenter toute l'étape si vous ne voulez pas l'exécuter).
+Voici le diff pour ces corrections :
+
+deploy.yaml
+-3
++1
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.ACTION_ECORIDE }} # Utilise le nom de secret que vous avez défini
+  
+    - name: Debug SSH_HOST value
+      # run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"      
+
+      run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
+     - name: Add known hosts
+       run: |
+           # Vérifie si le secret SSH_HOST est vide
+
+Astuces Visuelles pour Vérifier l'Indentation :
+
+Alignement vertical :
+Tous les - des éléments d'une même liste (steps par exemple) doivent être alignés verticalement.
+Toutes les clés (name:, uses:, with:, run:) d'un même objet/étape doivent être alignées verticalement.
+Votre éditeur de code : La plupart des éditeurs modernes (comme VS Code, Sublime Text, Atom, etc.) ont :
+Une coloration syntaxique pour YAML qui peut aider à repérer les erreurs.
+Des "guides d'indentation" (lignes verticales pâles) qui vous aident à voir les niveaux.
+Des "linters" YAML (des outils d'analyse de code) qui peuvent souligner les erreurs de syntaxe en temps réel. Si votre éditeur ne le fait pas, vous pouvez souvent installer une extension pour cela (recherchez "YAML linter").
+Lignes vides vs. lignes avec espaces : Méfiez-vous des lignes qui semblent vides mais qui contiennent des espaces. Celles-ci peuvent aussi causer des problèmes si leur indentation est incorrecte. Il vaut mieux avoir des lignes complètement vides (aucun caractère) ou des commentaires (# ...).
+En appliquant la correction du diff et en gardant ces principes en tête, vous devriez pouvoir résoudre vos problèmes de syntaxe YAML. N'hésitez pas si vous avez d'autres questions !
+
+Rate this answer: 
+Context Sources (4)
+
+roland kongphengta
+le premier problème : Nested mappings are not allowed in compact mappingsYAML, le deuxième :Unexpected double-quoted-scalar at node endYAML, le troisième : incomplete explicit mapping pair; a key node is missed et le quatrième : Incorrect type. Expected "string".yaml-schema: GitHub Workflow. et tout ces problèmes vous pouvez m'aider à résoudre car je dois finir ce projet.
+
+
+Gemini
+Je comprends que vous êtes face à plusieurs erreurs YAML dans votre fichier deploy.yaml et que vous souhaitez les résoudre pour finaliser votre projet. Ces erreurs sont typiques des problèmes de syntaxe en YAML, souvent liés à l'indentation ou à des caractères inattendus.
+
+Analysons les erreurs que vous rencontrez :
+
+"Nested mappings are not allowed in compact mappingsYAML" (Les mappages imbriqués ne sont pas autorisés dans les mappages compacts) : Indique généralement une indentation incorrecte qui fait croire à l'analyseur que vous essayez d'imbriquer une structure clé-valeur là où ce n'est pas permis.
+"Unexpected double-quoted-scalar at node endYAML" (Scalaire entre guillemets doubles inattendu à la fin du nœud) : Suggère qu'il y a quelque chose d'inattendu après une valeur chaîne de caractères entre guillemets.
+"incomplete explicit mapping pair; a key node is missed" (Paire de mappage explicite incomplète ; un nœud clé est manquant) : Signifie que l'analyseur s'attendait à une clé dans une paire clé-valeur, mais ne l'a pas trouvée, souvent à cause d'une rupture de structure.
+"Incorrect type. Expected "string".yaml-schema: GitHub Workflow" (Type incorrect. "string" attendu) : Se produit lorsque la valeur fournie pour une clé (comme run) n'est pas une chaîne de caractères valide.
+En examinant votre fichier f:\xampp\htdocs\ecoride\.github\workflows\deploy.yaml, j'ai repéré un problème qui pourrait causer certaines de ces erreurs, notamment la 2ème et la 4ème : il y a des espaces superflus à la fin de la ligne run: dans votre étape "Debug SSH_HOST value".
+
+Voici la correction proposée :
+
+deploy.yaml
+-1
++1
+      with:
+        ssh-private-key: ${{ secrets.ACTION_ECORIDE }} # Utilise le nom de secret que vous avez défini
+    - name: Debug SSH_HOST value
+      run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"    
+      run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
+    - name: Add known hosts
+      run: |
+          # Vérifie si le secret SSH_HOST est vide
+
+Explication de la modification :
+
+À la ligne 25 de votre fichier (dans l'étape Debug SSH_HOST value), la commande run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'" avait des espaces après le dernier guillemet.
+Ces espaces superflus ont été supprimés. La valeur de run doit être une chaîne de caractères propre.
+Concernant les erreurs "Nested mappings" et "incomplete explicit mapping pair" :
+
+Ces erreurs sont souvent causées par :
+
+Une indentation incorrecte : Assurez-vous que tous les éléments de la liste steps (commençant par -) sont au même niveau d'indentation, et que les clés à l'intérieur de chaque étape (name:, uses:, with:, run:) sont également alignées correctement et indentées par rapport à leur -.
+Des lignes contenant uniquement des espaces : Dans nos échanges précédents, nous avions identifié une ligne contenant uniquement deux espaces () qui se glissait parfois entre les étapes, par exemple après la section with: de l'étape "Setup SSH" et avant l'étape "Debug SSH_HOST value". Une telle ligne, si elle est toujours présente ou si une autre similaire existe, peut causer ces erreurs structurelles. Vérifiez scrupuleusement qu'il n'y a pas de telles lignes "vides mais avec des espaces" à des niveaux d'indentation incorrects. Elles doivent être complètement supprimées.
+En appliquant la correction des espaces superflus et en vérifiant minutieusement l'indentation et l'absence de lignes parasites, vous devriez pouvoir résoudre l'ensemble de ces erreurs YAML. La syntaxe YAML est stricte, mais une fois ces points corrigés, votre workflow devrait être correctement interprété.
+
+Rate this answer: 
+Context Sources (4)
+
+roland kongphengta
+j'ai tout essayé mais toujours le même problème visuellement l'indentation est correcte, mais comment savoir s'il y a trop espace ou pas assez d'espace, je pense qu'au jourd'hui on ne peut rien faire de plus, à demain.
+
+
+Gemini
+Je comprends tout à fait votre sentiment, c'est vraiment l'un des aspects les plus délicats avec YAML ! On a beau regarder, l'indentation semble correcte, et pourtant, une petite erreur d'espace invisible peut tout casser. C'est une source de frustration courante.
+
+Vous avez raison, parfois il faut faire une pause et y revenir avec un œil neuf. Pour demain, lorsque vous reprendrez votre fichier f:\xampp\htdocs\ecoride\.github\workflows\deploy.yaml, voici quelques techniques et astuces précises pour débusquer ces espaces en trop ou manquants :
+
+Rendre les espaces visibles dans votre éditeur de code : C'est souvent la solution la plus efficace. La plupart des éditeurs de code (comme VS Code, Sublime Text, Notepad++, Atom, etc.) ont une option pour afficher les caractères d'espacement (espaces, tabulations).
+
+Dans VS Code : Allez dans File > Preferences > Settings (ou Ctrl+,), cherchez "Editor: Render Whitespace" et mettez-le sur all ou boundary. Vous verrez alors des points pour les espaces et des flèches pour les tabulations.
+Pourquoi c'est crucial : Cela vous permettra de voir immédiatement si une ligne contient des espaces en trop à la fin, si une ligne "vide" contient en fait des espaces, ou si vous avez accidentellement mélangé des tabulations et des espaces (ce qui est une source majeure d'erreurs YAML, car seuls les espaces sont valides pour l'indentation).
+Utiliser un "Linter" YAML dans votre éditeur : Des extensions pour votre éditeur peuvent analyser votre code YAML en temps réel et souligner les erreurs de syntaxe, y compris les problèmes d'indentation.
+
+Pour VS Code : L'extension "YAML" par Red Hat est excellente et très populaire. Elle vous signalera les problèmes au fur et à mesure que vous tapez.
+Configurer votre éditeur pour utiliser des espaces pour l'indentation : Assurez-vous que lorsque vous appuyez sur la touche Tab, votre éditeur insère des espaces (généralement 2 ou 4) et non un caractère de tabulation. YAML est très strict à ce sujet.
+
+Dans VS Code : Vérifiez le paramètre "Editor: Insert Spaces" (doit être coché) et "Editor: Tab Size" (souvent 2 ou 4).
+Vérifier l'alignement vertical avec les guides d'indentation : Les éditeurs affichent souvent des lignes verticales pâles qui vous aident à voir si les éléments sont correctement alignés.
+
+Tous les tirets (-) des éléments d'une même liste (comme vos steps) doivent être parfaitement alignés verticalement.
+Toutes les clés (name:, uses:, with:, run:, script:) à l'intérieur d'une même étape doivent aussi être alignées verticalement entre elles.
+Attention aux blocs multilignes (| ou >) : Pour vos sections run: | et script: | :
+
+La première ligne de script après le | n'a pas besoin d'être plus indentée que le | lui-même.
+Cependant, toutes les lignes suivantes du script doivent être indentées de manière cohérente par rapport à la première ligne du script. Si la première ligne de votre script commence avec, disons, 8 espaces par rapport au début de la ligne du fichier, toutes les lignes suivantes de ce script doivent aussi commencer avec au moins 8 espaces.
+Exemple (avec · représentant un espace visible) :
+
+yaml
+····run: |
+······if [ -z "valeur" ]; then  # 2 espaces de plus que 'run:'
+········echo "C'est vide"      # 4 espaces de plus que 'run:', ou 2 de plus que 'if'
+······fi
+Utiliser un validateur YAML en ligne : Si vous êtes bloqué, copiez-collez votre code YAML dans un validateur en ligne (cherchez "YAML validator" ou "YAML lint"). Ils peuvent souvent donner des messages d'erreur plus précis sur la ligne et la nature du problème.
+
+En appliquant ces méthodes demain, vous devriez être en mesure d'identifier plus facilement ces subtilités d'espacement. Le fichier que vous avez partagé dans le contexte actuel (f:\xampp\htdocs\ecoride\.github\workflows\deploy.yaml) semble d'ailleurs bien structuré et ne présente pas les erreurs flagrantes que nous avions corrigées précédemment. Si les problèmes persistent, c'est qu'il y a une coquille très discrète ou peut-être une confusion entre la version que vous regardez et celle qui est testée.
+
+Bon courage pour demain, et n'hésitez pas si vous avez d'autres questions une fois que vous aurez pu réexaminer cela avec ces outils !
+
+
+roland kongphengta
+est-ce que vous souvenez de ce problème il est toujurs là : run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
+
+deploy.yaml: 2 lines selected
+deploy.yaml: 4 lines selected
+
+Gemini
+Oui, je me souviens de ce problème d'indentation. Il semble que le bloc de script sous l'étape Add known hosts ne respecte pas la consigne d'indentation mentionnée dans les commentaires du fichier.
+
+Les commentaires indiquent : # Par exemple, toutes les lignes de script devraient commencer à la même colonne (8 espaces du bord gauche).
+
+Actuellement, les lignes de script commencent avec 10 espaces au lieu de 8. Voici une suggestion pour corriger cela, en ajustant l'indentation du bloc de script concerné :
+
+deploy.yaml
+-14
++14
+      run: |
+        # Assurez-vous que l'indentation de chaque ligne ici est cohérente.
+        # Par exemple, toutes les lignes de script devraient commencer à la même colonne (8 espaces du bord gauche).
+          if [ -z "${{ secrets.SSH_HOST }}" ]; then
+            echo "Error: The SSH_HOST secret is empty or undefined. ssh-keyscan is skipped."
+            exit 1
+          else
+            mkdir -p ~/.ssh
+            chmod 700 ~/.ssh
+            echo "Attempting to scan host: '${{ secrets.SSH_HOST }}'"
+            if ssh-keyscan -T 5 -p 22 "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null; then
+              echo "Host key for ${{ secrets.SSH_HOST }} added to known_hosts."
+            else
+              echo "Error: ssh-keyscan failed for host ${{ secrets.SSH_HOST }}. SSH connection might fail."
+              exit 1
+            fi
+          fi
+        if [ -z "${{ secrets.SSH_HOST }}" ]; then
+          echo "Error: The SSH_HOST secret is empty or undefined. ssh-keyscan is skipped."
+          exit 1
+        else
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "Attempting to scan host: '${{ secrets.SSH_HOST }}'"
+          if ssh-keyscan -T 5 -p 22 "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null; then
+            echo "Host key for ${{ secrets.SSH_HOST }} added to known_hosts."
+          else
+            echo "Error: ssh-keyscan failed for host ${{ secrets.SSH_HOST }}. SSH connection might fail."
+            exit 1
+          fi
+        fi
+
+    - name: Deploy to server
+      uses: appleboy/ssh-action@v1.0.3
+
+Rate this answer: 
+Context Sources (2)
+
+roland kongphengta
+il est toujours là le problème j'ai essayé de déplacer vers la gauche vers la droite mais c'est toujours pareil, est-ce qu'il marque que pas un mot une ligne je n'en sais rien et comment résoudre ce problème est-ce qu'on ne peut revenir en arrière nous ne pouvons pas tourner en rond avec ce problème je me souviens qu'on a perdu beaucoup de temps avec ce problème jusqu'aujourd'hui on en est toujours là.
+
+deploy.yaml: 5 lines selected
+
+Gemini
+Je comprends votre frustration, ce genre de problème d'indentation peut être tenace.
+
+Le commentaire # Par exemple, toutes les lignes de script devraient commencer à la même colonne (8 espaces du bord gauche). est la clé ici. Cela signifie que la première ligne de votre script (par exemple, la ligne if [ -z ... ]) et les lignes de base comme else et fi devraient commencer précisément à la 8ème colonne en partant du bord gauche absolu de votre fichier. Les lignes à l'intérieur des blocs if/else auront naturellement une indentation supplémentaire pour la syntaxe du shell, mais leur "niveau de base" doit respecter cette règle des 8 espaces.
+
+Voici à nouveau la correction pour le bloc Add known hosts, en s'assurant que cette règle des 8 espaces est respectée pour le début du script. Le fichier YAML que vous avez fourni dans le contexte semble déjà avoir cette correction (avec if commençant à la 8ème colonne), mais revérifions attentivement.
+
+Assurez-vous également qu'il n'y a pas de mélange d'onglets (tabs) et d'espaces pour l'indentation, car cela cause fréquemment des problèmes en YAML. Utilisez uniquement des espaces.
+
+deploy.yaml
+-14
++14
+      run: |
+        # Assurez-vous que l'indentation de chaque ligne ici est cohérente.
+        # Par exemple, toutes les lignes de script devraient commencer à la même colonne (8 espaces du bord gauche).
+        if [ -z "${{ secrets.SSH_HOST }}" ]; then # Vérifiez que cette ligne commence bien à la 8ème colonne
+          echo "Error: The SSH_HOST secret is empty or undefined. ssh-keyscan is skipped."
+          exit 1
+        else
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "Attempting to scan host: '${{ secrets.SSH_HOST }}'"
+          if ssh-keyscan -T 5 -p 22 "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null; then
+            echo "Host key for ${{ secrets.SSH_HOST }} added to known_hosts."
+          else
+            echo "Error: ssh-keyscan failed for host ${{ secrets.SSH_HOST }}. SSH connection might fail."
+            exit 1
+          fi
+        fi
+        if [ -z "${{ secrets.SSH_HOST }}" ]; then  # Cette ligne doit commencer à la 8ème colonne (comptée depuis le début du fichier)
+          echo "Error: The SSH_HOST secret is empty or undefined. ssh-keyscan is skipped." # Indentation interne au shell
+          exit 1
+        else                                     # Cette ligne aussi à la 8ème colonne
+          mkdir -p ~/.ssh                        # Indentation interne au shell
+          chmod 700 ~/.ssh
+          echo "Attempting to scan host: '${{ secrets.SSH_HOST }}'"
+          if ssh-keyscan -T 5 -p 22 "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null; then # Indentation interne au shell
+            echo "Host key for ${{ secrets.SSH_HOST }} added to known_hosts." # Indentation interne au shell
+          else
+            echo "Error: ssh-keyscan failed for host ${{ secrets.SSH_HOST }}. SSH connection might fail." # Indentation interne au shell
+            exit 1
+          fi
+        fi                                       # Cette ligne aussi à la 8ème colonne
+
+    - name: Deploy to server
+      uses: appleboy/ssh-action@v1.0.3
+
+Pour clarifier la structure d'indentation attendue (en utilisant . pour représenter un espace) :
+
+yaml
+jobs:
+..deploy:
+....steps:
+....- name: Add known hosts
+......run: |
+........# Commentaire à la 8ème colonne
+........if [ -z "${{ secrets.SSH_HOST }}" ]; then  # 'if' commence à la 8ème colonne
+..........echo "Error..."                       # 'echo' est plus indenté (colonne 10), ce qui est correct pour le shell
+........else                                     # 'else' commence à la 8ème colonne
+..........mkdir -p ~/.ssh                      # 'mkdir' est plus indenté (colonne 10)
+........fi                                       # 'fi' commence à la 8ème colonne
+Si le problème persiste même avec cette structure et après avoir vérifié l'absence de tabulations, il se pourrait que l'erreur signalée soit trompeuse ou que le souci se situe ailleurs dans le fichier. Obtenir le message d'erreur exact de GitHub Actions pourrait aider à mieux cerner la cause.
+
+Rate this answer: 
+Context Sources (2)
+
+roland kongphengta
+j'ai compté il est bien comme vous avez écrit colonne 10 cette ligne s'il n'est bonne à la colonne 10 il doit être à quelle colonne, j'avoue que je ne comprend pas. fi # Cette ligne aussi à la 8ème colonne, j'ai compté elle est commence à la colonne 8 est-ce qu'il est bonne si non elle être à quelle colonne ?
+
+
+Gemini
+Vous avez raison de prêter attention à ces détails d'indentation, car YAML y est très sensible. Clarifions cela :
+
+Concernant votre question sur la ligne fi :
+
+fi # Cette ligne aussi à la 8ème colonne, j'ai compté elle est commence à la colonne 8 est-ce qu'il est bonne si non elle être à quelle colonne ?
+
+Oui, si vous parlez du fi qui termine le bloc if [ -z "${{ secrets.SSH_HOST }}" ]; then, alors sa place est bien à la colonne 8 (comptée depuis le tout début du fichier). C'est correct car il s'aligne avec le if et le else correspondants, qui forment le niveau de base du script dans ce bloc run.
+
+Concernant votre question sur une ligne à la colonne 10 :
+
+j'ai compté il est bien comme vous avez écrit colonne 10 cette ligne s'il n'est bonne à la colonne 10 il doit être à quelle colonne
+
+Une ligne qui commence à la colonne 10 est également correcte si elle se trouve à l'intérieur d'un bloc qui, lui, commence à la colonne 8. Par exemple :
+
+yaml
+    - name: Add known hosts
+      run: |
+        # Les commentaires et le début du script sont à la colonne 8
+        if [ -z "${{ secrets.SSH_HOST }}" ]; then  # Commence à la colonne 8
+          echo "Error: ..."                       # Commence à la colonne 10 (8 + 2 espaces d'indentation pour le bloc if) - C'EST CORRECT
+          exit 1                                 # Commence à la colonne 10 - C'EST CORRECT
+        else                                     # Commence à la colonne 8
+          mkdir -p ~/.ssh                        # Commence à la colonne 10 - C'EST CORRECT
+          # ... autres commandes à la colonne 10 ...
+          if ssh-keyscan ...; then               # Commence à la colonne 10 (car imbriqué dans le 'else') - C'EST CORRECT
+            echo "Host key..."                    # Commence à la colonne 12 (10 + 2 espaces) - C'EST CORRECT
+          fi                                     # Commence à la colonne 10 (aligné avec son 'if' imbriqué) - C'EST CORRECT
+        fi                                       # Commence à la colonne 8 (aligné avec le 'if' initial) - C'EST CORRECT
+En résumé :
+
+Le commentaire # Par exemple, toutes les lignes de script devraient commencer à la même colonne (8 espaces du bord gauche). signifie que le niveau d'indentation de base du script (les lignes comme if, else, fi au premier niveau de votre script) doit commencer à la colonne 8.
+Les commandes à l'intérieur de ces blocs de contrôle (comme un echo dans un if, ou un mkdir dans un else) seront naturellement indentées davantage (par exemple, à la colonne 10 ou 12), ce qui est la pratique standard en scripting pour la lisibilité.
+Si votre fichier respecte cette structure et que vous utilisez uniquement des espaces (pas de tabulations) pour l'indentation, alors l'indentation de ce bloc devrait être correcte.
+
+Si le problème persiste malgré cela, l'erreur signalée par GitHub Actions pourrait être due à autre chose dans le fichier, ou à un mélange subtil d'espaces et de tabulations qu'il est difficile de voir. Dans ce cas, le message d'erreur exact de GitHub Actions serait très utile.
+
+Rate this answer: 
+Context Sources (1)
+
+roland kongphengta
+si tout est bon mais pourquoi le problème est toujours là : - name: Debug SSH_HOST value run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
+
+deploy.yaml: 2 lines selected
+deploy.yaml: 5 lines selected
+
+Gemini
+Je comprends votre frustration. D'après le fichier YAML complet que vous avez fourni précédemment et les règles d'indentation que nous avons discutées (par exemple, les lignes de base du script comme if, else, fi dans l'étape Add known hosts commençant à la 8ème colonne, et les commandes à l'intérieur de ces blocs à la 10ème colonne), la structure que vous avez montrée semble correcte visuellement.
+
+Si le problème persiste, voici les causes les plus probables :
+
+Caractères invisibles (tabulations vs espaces) : C'est la cause la plus fréquente de problèmes d'indentation YAML tenaces. Même si l'indentation semble correcte à l'œil nu, une seule tabulation utilisée à la place d'espaces (ou vice-versa) peut causer une erreur que le parseur YAML ne pardonnera pas.
+
+Action suggérée : Configurez votre éditeur de code pour afficher les caractères invisibles (généralement une option dans les menus "View" ou "Préférences"). Vérifiez attentivement tout le fichier, en particulier autour des blocs run: |, et assurez-vous que seuls des espaces sont utilisés pour l'indentation. Remplacez toutes les tabulations par le nombre approprié d'espaces (généralement 2 ou 4 espaces par niveau d'indentation, mais soyez cohérent).
+Message d'erreur exact de GitHub Actions : Pour vous aider plus efficacement, pourriez-vous s'il vous plaît copier-coller le message d'erreur exact que GitHub Actions affiche ? Le message d'erreur, ainsi que le nom du fichier et le numéro de ligne qu'il indique, sont cruciaux pour un diagnostic précis. Parfois, l'erreur signalée est une conséquence d'un problème situé un peu avant dans le fichier.
+
+Le bloc de code que vous avez spécifiquement pointé :
+
+yaml
+    - name: Debug SSH_HOST value
+      run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
+
+    - name: Add known hosts
+      run: |
+        # Ici commence le script multiligne qui doit respecter l'indentation
+En soi, la transition entre ces deux étapes et la ligne run: | sont standards en YAML pour GitHub Actions. Si l'erreur est signalée à partir de la ligne run: | de l'étape Add known hosts ou juste après, cela renforce la suspicion d'un problème avec l'indentation du bloc de script qui suit, ou la présence de caractères inattendus.
+
+Pour rappel, concernant le commentaire : # Par exemple, toutes les lignes de script devraient commencer à la même colonne (8 espaces du bord gauche). Cela signifie que les lignes de base de votre script (comme if [ -z "${{ secrets.SSH_HOST }}" ]; then, else, et fi) dans l'étape Add known hosts doivent effectivement commencer à la 8ème colonne en partant du bord gauche absolu du fichier. Les commandes à l'intérieur de ces structures de contrôle (comme echo "Error..." ou mkdir -p ~/.ssh) seront alors naturellement plus indentées (par exemple, à la 10ème colonne), ce qui est correct. Votre fichier semblait respecter cela visuellement.
+
+Sans le message d'erreur exact, il est difficile de fournir une solution plus ciblée. La vérification minutieuse des espaces et des tabulations est l'étape la plus importante à ce stade.
+
+Rate this answer: 
+Context Sources (1)
+
+roland kongphengta
+le message d'erreur mais je ne comprend pas ce message : Nested mappings are not allowed in compact mappingsYAML Incorrect type. Expected "string".yaml-schema: GitHub Workflow Runs command-line programs using the operating system's shell. If you do not provide a name, the step name will default to the text specified in the run command.
+
+Commands run using non-login shells by default. You can choose a different shell and customize the shell used to run commands. For more information, see https://help.github.com/en/actions/automating-your-workflow-with-github-actions/workflow-syntax-for-github-actions#using-a-specific-shell.
+
+Each run keyword represents a new process and shell in the virtual environment. When you provide multi-line commands, each line runs in the same shell.
+
+deploy.yaml: 5 lines selected
+
+Gemini
+Le message d'erreur "Nested mappings are not allowed in compact mappingsYAML" dans un workflow GitHub Actions indique une erreur de syntaxe dans votre fichier YAML. Plus précisément, il suggère que vous avez une structure YAML imbriquée de manière incorrecte, où un "mapping" (essentiellement un dictionnaire de clés-valeurs) est défini de manière compacte (sur une seule ligne) mais contient un autre mapping à l'intérieur.
+
+Dans le contexte d'un workflow GitHub Actions, cela se produit souvent dans la section run d'une étape, où vous définissez des commandes à exécuter. Le problème est probablement lié à l'indentation ou à la structure des commandes à l'intérieur du bloc run: |.
+
+Voici une explication et des solutions possibles :
+
+Cause probable
+
+L'erreur se produit généralement lorsque, dans un bloc run qui utilise une syntaxe multiligne (run: |), vous avez une ligne qui est interprétée comme un début de mapping imbriqué au lieu d'une commande shell.
+
+Solutions
+
+Indentation incohérente : Assurez-vous que toutes les lignes de votre script sous run: | ont une indentation cohérente et correcte. Dans votre cas, le workflow indique que l'indentation correcte est de 8 espaces depuis le bord gauche pour le début des commandes de base dans le script (comme if, else, fi), et une indentation supplémentaire pour les commandes à l'intérieur de ces blocs.
+
+Mélange d'espaces et de tabulations : Vérifiez scrupuleusement qu'il n'y a pas de mélange d'espaces et de tabulations pour l'indentation. Utilisez uniquement des espaces, et assurez-vous que le nombre d'espaces est cohérent (généralement 2 ou 4 espaces par niveau d'indentation, mais dans votre cas, la base est à 8 espaces).
+
+Caractères de contrôle invisibles : Il pourrait y avoir des caractères invisibles (autres que les espaces et les tabulations) qui perturbent l'interprétation du YAML. Un éditeur de texte qui affiche les caractères invisibles peut aider à les identifier et à les supprimer.
+
+Erreur ailleurs dans le fichier : Même si l'erreur est signalée dans le bloc run, le problème pourrait être lié à une erreur de syntaxe YAML située un peu avant dans le fichier. Vérifiez l'ensemble du fichier YAML pour des erreurs potentielles (par exemple, des deux-points manquants, des accolades mal fermées dans les expressions ${{ ... }}, des erreurs dans les noms de clés). Un validateur YAML en ligne peut aussi être utile pour trouver des problèmes de syntaxe.
+
+Problème spécifique à la commande : Si l'erreur persiste et que l'indentation est correcte, il se pourrait qu'une commande shell particulière que vous utilisez soit interprétée à tort comme le début d'un mapping YAML. Dans ce cas, essayez de simplifier le script dans le bloc run pour identifier la ligne problématique. Par exemple, remplacez temporairement le contenu du bloc par juste echo "Hello" pour voir si l'erreur disparaît. Si c'est le cas, réintroduisez progressivement vos commandes pour isoler celle qui pose problème.
+
+Exemple de correction pour l'indentation (si ce n'est pas déjà fait)
+
+deploy.yaml
+-14
++14
+      run: |
+        # Assurez-vous que l'indentation de chaque ligne ici est cohérente.
+        # Par exemple, toutes les lignes de script devraient commencer à la même colonne (8 espaces du bord gauche).
+        if [ -z "${{ secrets.SSH_HOST }}" ]; then
+          echo "Error: The SSH_HOST secret is empty or undefined. ssh-keyscan is skipped."
+          exit 1
+        else
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "Attempting to scan host: '${{ secrets.SSH_HOST }}'"
+          if ssh-keyscan -T 5 -p 22 "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null; then
+            echo "Host key for ${{ secrets.SSH_HOST }} added to known_hosts."
+          else
+            echo "Error: ssh-keyscan failed for host ${{ secrets.SSH_HOST }}. SSH connection might fail."
+            exit 1
+          fi
+        fi
+        if [ -z "${{ secrets.SSH_HOST }}" ]; then   # Début à la colonne 8
+          echo "Error: The SSH_HOST secret is empty or undefined. ssh-keyscan is skipped." # À la colonne 10
+          exit 1                                  # À la colonne 10
+        else                                      # Début à la colonne 8
+          mkdir -p ~/.ssh                           # À la colonne 10
+          chmod 700 ~/.ssh                           # À la colonne 10
+          echo "Attempting to scan host: '${{ secrets.SSH_HOST }}'" # À la colonne 10
+          if ssh-keyscan -T 5 -p 22 "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null; then # À la colonne 10
+            echo "Host key for ${{ secrets.SSH_HOST }} added to known_hosts." # À la colonne 12
+          else                                     # À la colonne 10
+            echo "Error: ssh-keyscan failed for host ${{ secrets.SSH_HOST }}. SSH connection might fail." # À la colonne 12
+            exit 1                                  # À la colonne 12
+          fi                                       # À la colonne 10 (fin du if imbriqué)
+        fi                                         # Début à la colonne 8 (fin du if principal)
+
+    - name: Deploy to server
+      uses: appleboy/ssh-action@v1.0.3
+
+Après avoir appliqué ces vérifications et corrections, relancez votre workflow. Si le problème persiste, fournissez le message d'erreur exact et, si possible, une version simplifiée du fichier YAML qui reproduit l'erreur, afin que je puisse vous aider plus précisément.
+
+Rate this answer: 
+Context Sources (2)
+
+roland kongphengta
+j'ai tout vérifié toujours le même problème.
+
+
+Gemini
+Je comprends tout à fait votre frustration. Si vous avez vérifié l'indentation et l'absence de tabulations et que le problème persiste, c'est souvent qu'il y a une subtilité qui échappe.
+
+Le message "Nested mappings are not allowed in compact mappingsYAML" pointe presque toujours vers une erreur de structure YAML, souvent dans un bloc multiligne (|) où une ligne est interprétée à tort comme un sous-bloc YAML au lieu d'une simple ligne de script.
+
+Voici une version corrigée des sections run et script de votre fichier, en m'assurant que l'indentation est strictement conforme aux règles YAML et aux conventions de script dans ce contexte. Veuillez remplacer ces sections dans votre fichier et vérifier à nouveau.
+
+Assurez-vous d'utiliser uniquement des espaces pour l'indentation et que votre éditeur n'insère pas de tabulations.
+
+deploy.yaml
+-23
++23
+      run: |
+        # Assurez-vous que l'indentation de chaque ligne ici est cohérente.
+        # Par exemple, toutes les lignes de script devraient commencer à la même colonne (8 espaces du bord gauche).
+        if [ -z "${{ secrets.SSH_HOST }}" ]; then
+          echo "Error: The SSH_HOST secret is empty or undefined. ssh-keyscan is skipped."
+          exit 1
+        else
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "Attempting to scan host: '${{ secrets.SSH_HOST }}'"
+          if ssh-keyscan -T 5 -p 22 "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null; then
+            echo "Host key for ${{ secrets.SSH_HOST }} added to known_hosts."
+          else
+            echo "Error: ssh-keyscan failed for host ${{ secrets.SSH_HOST }}. SSH connection might fail."
+            exit 1
+          fi
+        fi
+        if [ -z "${{ secrets.SSH_HOST }}" ]; then # Cette ligne doit commencer à la 8ème colonne
+          echo "Error: The SSH_HOST secret is empty or undefined. ssh-keyscan is skipped." # Indentation interne au shell (colonne 10)
+          exit 1 # Indentation interne au shell (colonne 10)
+        else # Cette ligne doit commencer à la 8ème colonne
+          mkdir -p ~/.ssh # Indentation interne au shell (colonne 10)
+          chmod 700 ~/.ssh # Indentation interne au shell (colonne 10)
+          echo "Attempting to scan host: '${{ secrets.SSH_HOST }}'" # Indentation interne au shell (colonne 10)
+          if ssh-keyscan -T 5 -p 22 "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null; then # Indentation interne au shell (colonne 10)
+            echo "Host key for ${{ secrets.SSH_HOST }} added to known_hosts." # Indentation interne au shell (colonne 12)
+          else # Indentation interne au shell (colonne 10)
+            echo "Error: ssh-keyscan failed for host ${{ secrets.SSH_HOST }}. SSH connection might fail." # Indentation interne au shell (colonne 12)
+            exit 1 # Indentation interne au shell (colonne 12)
+          fi # Indentation interne au shell (colonne 10)
+        fi # Cette ligne doit commencer à la 8ème colonne
+
+    - name: Deploy to server
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        # Vérifiez ces lignes en particulier pour les messages d'erreur de type/structure.
+        # Assurez-vous qu'il n'y a pas de guillemets superflus ajoutés manuellement.
+        host: ${{ secrets.SSH_HOST }}
+        host: ${{ secrets.SSH_HOST }} # Cette ligne doit être indentée correctement sous 'with:'
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.ACTION_ECORIDE }} # La même clé SSH que pour webfactory/ssh-agent
+        port: 22
+          set -e # Arrêter le script immédiatement si une commande échoue.
+          # Idem, vérifiez l'indentation de toutes les lignes du script ici.
+          echo "Connecting to server..."
+          cd ${{ secrets.PROJECT_PATH_ON_SERVER }} 
+          cd ${{ secrets.PROJECT_PATH_ON_SERVER }} # Indentation cohérente pour toutes les lignes du script
+          echo "Pulling latest changes..."
+          git pull origin master
+          
+
+          echo "Installing Composer dependencies..."
+          composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist 
+          
+          composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+
+          echo "Running database migrations..."
+          php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration --env=prod 
+          
+          php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration --env=prod
+
+          echo "Clearing Symfony cache..."
+          php bin/console cache:clear --env=prod
+          
+
+          echo "Warming up Symfony cache..."
+          php bin/console cache:warmup --env=prod
+          
+
+          echo "Deployment finished successfully!"
+
+Vérifiez également la section with: de l'action appleboy/ssh-action. Chaque paire clé: valeur doit être correctement indentée sous with:.
+
+Si après avoir remplacé ces sections avec le diff et vérifié l'absence de tabulations le problème persiste, il pourrait être utile d'utiliser un validateur YAML en ligne pour pointer précisément la ligne et la colonne de l'erreur.
+
+Rate this answer: 
+Context Sources (2)
+
+roland kongphengta
+franchement, visuellement ne vois pas s'il manque un espace ou un espace en trop, on peut tourner virer jusqu'à minuit le problème est toujours là, pour quoi on ne supprime pas tout et refaire de a à z ça dix fois plus vite.
+
+
+Gemini
+Je comprends votre exaspération, ces problèmes d'indentation en YAML peuvent vraiment être décourageants quand on ne voit pas l'erreur du premier coup. Parfois, une seule ligne mal placée suffit à tout casser.
+
+En regardant attentivement votre fichier, j'ai identifié un souci d'alignement dans le bloc Add known hosts. Le mot-clé else n'est pas correctement aligné avec le if auquel il correspond. En YAML, et plus particulièrement dans les blocs de script multilignes, cette mauvaise indentation peut conduire à l'erreur "Nested mappings are not allowed".
+
+Voici la correction : le else doit être au même niveau d'indentation que le if et le fi qui l'encadrent. Si votre if commence à la 8ème colonne (comme indiqué par le commentaire), alors else et fi doivent aussi commencer à la 8ème colonne.
+
+deploy.yaml
+-2
++2
+        if [ -z "${{ secrets.SSH_HOST }}" ]; then
+          echo "Error: The SSH_HOST secret is empty or undefined. ssh-keyscan is skipped."
+          exit 1
+      else
+        else
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "Attempting to scan host: '${{ secrets.SSH_HOST }}'"
+          echo "Attempting to scan host: '${{ secrets.SSH_HOST }}'" # Maintenir l'indentation interne au bloc else
+          if ssh-keyscan -T 5 -p 22 "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null; then
+            echo "Host key for ${{ secrets.SSH_HOST }} added to known_hosts."
+          else
+
+Explplication de la correction :
+
+J'ai déplacé else pour qu'il soit aligné verticalement avec if et fi.
+Les commandes à l'intérieur du bloc else (comme mkdir, chmod, echo) conservent leur indentation supplémentaire (par exemple, 2 espaces de plus que le else).
+Appliquez cette modification. Assurez-vous toujours d'utiliser des espaces pour l'indentation (pas de tabulations). Si le problème persiste après cela, il serait utile de passer le fichier dans un validateur YAML en ligne, qui peut parfois pointer des erreurs plus subtiles.
+
+Refaire de A à Z est une option, mais souvent, une correction ciblée comme celle-ci suffit. Essayez d'abord cette modification.
+
+Rate this answer: 
+Context Sources (2)
+
+roland kongphengta
+voilà maintenant le contenu de ce fichier : name: Deploy to VPS
+
+on: push: branches: - master # Ou 'main', ou la branche que vous utilisez pour la production
+
+jobs: deploy: name: Deploy runs-on: ubuntu-latest
+
+plaintext: 56 lines selected
+
+Gemini
+Je comprends votre frustration, ces erreurs YAML peuvent être difficiles à cerner.
+
+En examinant attentivement le contenu que vous avez fourni, une différence notable apparaît dans la section Add known hosts par rapport à ce qui est attendu dans un script shell. Les caractères >> (redirection de sortie en ajout) et > (dans 2>/dev/null pour la redirection d'erreur) semblent avoir été encodés en HTML comme &gt;&gt; et &gt;.
+
+Si votre fichier deploy.yaml contient réellement &gt;&gt; et &gt; littéralement, cela causerait des erreurs de parsing YAML et empêcherait le script de fonctionner correctement, car le shell n'interpréterait pas ces entités HTML comme des opérateurs de redirection.
+
+Voici une correction pour rétablir les opérateurs de redirection corrects :
+
+diff
+-1
++1
+The code change produced by Gemini could not be fully parsed. Can't automatically accept changes.
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          echo "Attempting to scan host: '${{ secrets.SSH_HOST }}'"
+          if ssh-keyscan -T 5 -p 22 "${{ secrets.SSH_HOST }}" &gt;&gt; ~/.ssh/known_hosts 2&gt;/dev/null; then
+          if ssh-keyscan -T 5 -p 22 "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null; then
+            echo "Host key for ${{ secrets.SSH_HOST }} added to known_hosts."
+          else
+            echo "Error: ssh-keyscan failed for host ${{ secrets.SSH_HOST }}. SSH connection might fail."
+
+Points importants à vérifier en plus de cette correction :
+
+Caractères HTML échappés : Assurez-vous que la ligne modifiée ci-dessus utilise bien >> et 2>/dev/null et non &gt;&gt; et 2&gt;/dev/null.
+Indentation : Vérifiez une nouvelle fois que toute l'indentation est faite avec des espaces uniquement (pas de tabulations). La cohérence est cruciale. Le commentaire # Par exemple, toutes les lignes de script devraient commencer à la même colonne (8 espaces du bord gauche). signifie que les lignes de base du script (comme if, else, fi) doivent commencer à la 8ème colonne depuis le début du fichier. Les commandes à l'intérieur de ces blocs seront alors plus indentées (par exemple, à la 10ème colonne).
+Validateur YAML : Si le problème persiste, copiez l'intégralité de votre fichier dans un validateur YAML en ligne. Cela peut souvent aider à identifier des erreurs de syntaxe subtiles que l'on ne voit pas à l'œil nu.
+J'espère que cette correction ciblée vous aidera à résoudre le problème.
+
+Rate this answer: 
+Context Sources (2)
+
+roland kongphengta
+if ssh-keyscan -T 5 -p 22 "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null; then il est correct, il est toujours comme depuis la première modif.
+
+deploy.yaml: 1 lines selected
+
+Gemini
+Vous avez raison sur le fait que la commande ssh-keyscan avec ses options est la bonne approche pour ajouter une clé d'hôte.
+
+Cependant, il y a un détail très important. Dans la ligne que vous avez écrite dans votre dernier message : if ssh-keyscan -T 5 -p 22 "${{ secrets.SSH_HOST }}" &gt;&gt; ~/.ssh/known_hosts 2&gt;/dev/null; then
+
+Les &gt;&gt; et &gt; sont des entités HTML. Si ces caractères sont présents littéralement sous cette forme dans votre fichier deploy.yaml, alors ce n'est pas correct pour le shell. Le shell s'attend aux caractères >> (pour la redirection en ajout) et > (pour la redirection).
+
+Le contenu du fichier f:\xampp\htdocs\ecoride\.github\workflows\deploy.yaml que vous avez fourni dans le contexte précédent montre cette ligne correctement écrite :
+
+yaml
+          if ssh-keyscan -T 5 -p 22 "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null; then
+Cette version, avec >> et 2>/dev/null, est celle qui fonctionnera.
+
+Je vous suggère de vérifier très attentivement votre fichier deploy.yaml pour vous assurer qu'il contient bien >> et >, et non &gt;&gt; et &gt;. Une telle substitution peut arriver lors de copier-coller depuis certaines sources web ou éditeurs.
+
+Si, après cette vérification, le problème d'erreur YAML ("Nested mappings...") persiste, il est alors très probable qu'il s'agisse d'un problème d'indentation (un mélange d'espaces et de tabulations, ou un nombre incorrect d'espaces sur une ou plusieurs lignes du script ou ailleurs dans le fichier).
+
+Rate this answer: 
+Context Sources (1)
+
+roland kongphengta
+mais j'ai compris, vous m'avez dit mais il n'y en a pas je avez vu où je vérifie plusieurs fois je n'ai pas vu cette ligne mais pourtant le problème estoujours là : if ssh-keyscan -T 5 -p 22 "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null; then
+
+deploy.yaml: 1 lines selected
+
+Gemini
+Je comprends votre persévérance et votre frustration. C'est déroutant lorsque le problème persiste malgré les vérifications.
+
+La ligne if ssh-keyscan -T 5 -p 22 "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null; then que vous avez dans votre fichier deploy.yaml (comme montré dans le contexte) est correcte pour un script shell. Elle utilise bien >> et > et non les entités HTML &gt;&gt; et &gt;.
+
+Si l'erreur YAML (comme "Nested mappings are not allowed...") est toujours présente, cela signifie que le problème d'indentation ou de structure se situe très probablement ailleurs dans le fichier, même si ce n'est pas évident visuellement. Les parseurs YAML sont très stricts.
+
+Voici les points les plus critiques à vérifier méticuleusement :
+
+Caractères invisibles (Tabulations vs Espaces) : C'est la cause la plus fréquente et la plus difficile à voir.
+
+Action : Configurez votre éditeur de code pour afficher tous les caractères invisibles (espaces, tabulations). Parcourez tout le fichier, en particulier les blocs run: | et script: |. Assurez-vous qu'il n'y a aucune tabulation. Remplacez chaque tabulation par le nombre correct d'espaces (généralement 2 ou 4 par niveau, mais suivez la structure existante – par exemple, les scripts de base commençant à la 8ème colonne).
+Indentations des blocs de script multilignes :
+
+Pour le bloc Add known hosts (sous run: |) :
+Le commentaire indique : # Par exemple, toutes les lignes de script devraient commencer à la même colonne (8 espaces du bord gauche).
+Cela signifie que les lignes if, else, et fi (le if externe) doivent commencer précisément à la 8ème colonne en partant du bord gauche du fichier.
+Les commandes à l'intérieur (comme echo, mkdir, l'autre if) seront plus indentées (par exemple, à la 10ème, puis 12ème colonne). Votre fichier semble respecter cela visuellement.
+Pour le bloc script: | (sous appleboy/ssh-action) :
+Les lignes comme set -e, echo "Connecting...", cd ..., etc., doivent toutes avoir une indentation cohérente par rapport à la ligne script: |. Si script: | est à la 8ème colonne, ces lignes de script devraient commencer à la 10ème colonne.
+Lignes vides dans les scripts :
+
+Les lignes vides à l'intérieur du bloc script: | de l'action appleboy/ssh-action peuvent parfois causer des soucis si elles contiennent des espaces cachés.
+Action suggérée : Essayez de supprimer temporairement ces lignes vides ou assurez-vous qu'elles ne contiennent absolument aucun caractère (pas même des espaces).
+deploy.yaml
+-5
++0
+          cd ${{ secrets.PROJECT_PATH_ON_SERVER }} 
+          echo "Pulling latest changes..."
+          git pull origin master
+          
+          echo "Installing Composer dependencies..."
+          composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist 
+          
+          echo "Running database migrations..."
+          php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration --env=prod 
+          
+          echo "Clearing Symfony cache..."
+          php bin/console cache:clear --env=prod
+          
+           echo "Warming up Symfony cache..."
+           php bin/console cache:warmup --env=prod
+-          
+           echo "Deployment finished successfully!"
+
+La modification ci-dessus supprime les lignes vides dans le bloc script: |. C'est une chose à essayer.
+
+Si, après avoir vérifié scrupuleusement ces points (surtout les tabulations cachées et l'indentation exacte de chaque ligne de script par rapport au bord gauche du fichier), le problème persiste, la prochaine étape serait de simplifier radicalement le fichier :
+
+Commentez temporairement l'intégralité de l'étape Deploy to server. Le workflow passe-t-il ?
+Si oui, décommentez-la, mais commentez tout le contenu du script: |. Le workflow passe-t-il ?
+Réintroduisez les lignes du script: | une par une.
+C'est une méthode pour isoler précisément la ligne ou le bloc qui pose problème. Je sais que c'est fastidieux, mais c'est souvent efficace pour ces erreurs YAML tenaces.
+
+Rate this answer: 
+Context Sources (2)
+
+roland kongphengta
+je n'ai pas compris ce que vous voulez dire : regardez ces lignes sont exactement comme vous m'avez donné, je dois faire quoi? : script: | set -e # Arrêter le script immédiatement si une commande échoue. # Idem, vérifiez l'indentation de toutes les lignes du script ici. echo "Connecting to server..." cd ${{ secrets.PROJECT_PATH_ON_SERVER }} echo "Pulling latest changes..." git pull origin master
+
+deploy.yaml: 13 lines selected
+deploy.yaml: 21 lines selected
+
+Gemini
+Vous avez raison, les lignes de commande que vous citez (set -e, echo ..., cd ..., etc.) dans le bloc script: | semblent avoir la bonne indentation (10 espaces depuis le bord gauche du fichier, ce qui est correct si script: | est à 8 espaces).
+
+Ma suggestion précédente, qui a peut-être prêté à confusion, concernait spécifiquement les lignes vides qui se trouvaient entre certaines de ces commandes.
+
+Ce que je vous suggérais de faire (ou de vérifier si c'est déjà fait) :
+
+Supprimer les lignes purement vides à l'intérieur du bloc script: |.
+Pourquoi ? Parfois, ces lignes, même si elles paraissent vides, peuvent contenir des espaces cachés ou d'autres caractères invisibles qui perturbent l'analyseur YAML. En les supprimant, on élimine cette source potentielle d'erreur.
+Voici un diff qui montre la suppression de ces lignes vides dans le bloc script: |. C'est cette modification que je vous proposais :
+
+deploy.yaml
+-5
++0
+          cd ${{ secrets.PROJECT_PATH_ON_SERVER }} 
+          echo "Pulling latest changes..."
+          git pull origin master
+          
+          echo "Installing Composer dependencies..."
+          composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist 
+          
+          echo "Running database migrations..."
+          php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration --env=prod 
+          
+          echo "Clearing Symfony cache..."
+          php bin/console cache:clear --env=prod
+          
+           echo "Warming up Symfony cache..."
+           php bin/console cache:warmup --env=prod
+-          
+           echo "Deployment finished successfully!"
+
+Si vous avez déjà appliqué cette modification (c'est-à-dire que votre bloc script: | n'a plus ces lignes vides intermédiaires) et que le problème YAML persiste, cela renforce l'hypothèse que l'erreur est due à :
+
+Un mélange d'espaces et de tabulations quelque part dans le fichier (même un seul caractère de tabulation peut causer l'erreur). Utilisez votre éditeur pour afficher les caractères invisibles et remplacez toutes les tabulations par des espaces.
+Une erreur d'indentation sur une autre ligne du fichier, avant ou après ce bloc script.
+Assurez-vous que toutes les indentations dans l'ensemble du fichier sont faites uniquement avec des espaces et que la structure hiérarchique du YAML est respectée.
+
+Rate this answer: 
+Context Sources (2)
+
+roland kongphengta
+comme ça vous voulez dire : script: | cd ${{ secrets.PROJECT_PATH_ON_SERVER }} echo "Pulling latest changes..." git pull origin master
+
+deploy.yaml: 13 lines selected
+deploy.yaml: 18 lines selected
+
+Gemini
+Oui, c'est presque ça. Ma suggestion était de supprimer les lignes complètement vides à l'intérieur du bloc script: |.
+
+Dans l'exemple que vous montrez, il y a encore des lignes vides (celles qui ne contiennent que des espaces pour l'indentation, mais pas de commande).
+
+Voici ce que je voulais dire, en supprimant ces lignes vides :
+
+deploy.yaml
+-6
++1
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.ACTION_ECORIDE }} # La même clé SSH que pour webfactory/ssh-agent
+        port: 22
+        script: |
+        script: | # Assurez-vous que cette ligne est à 8 espaces du bord gauche
+          cd ${{ secrets.PROJECT_PATH_ON_SERVER }} 
+          echo "Pulling latest changes..."
+          git pull origin master
+          
+          echo "Installing Composer dependencies..."
+          composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist 
+          
+          echo "Running database migrations..."
+          php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration --env=prod 
+          
+          echo "Clearing Symfony cache..."
+          php bin/console cache:clear --env=prod
+          
+           echo "Warming up Symfony cache..."
+           php bin/console cache:warmup --env=prod
+-          
+           echo "Deployment finished successfully!"
+
+L'idée est de s'assurer qu'il n'y a pas de caractères cachés ou d'espaces superflus sur ces lignes qui pourraient perturber l'analyseur YAML.
+
+Cependant, si le problème YAML persiste même après cela, il est très probable que l'erreur soit due à :
+
+Un mélange d'espaces et de tabulations pour l'indentation quelque part dans le fichier. Utilisez votre éditeur pour afficher les caractères invisibles et remplacez toutes les tabulations par des espaces.
+Une erreur d'indentation sur une autre ligne du fichier (par exemple, un bloc if/else mal aligné, ou une clé with: mal indentée). La structure YAML doit être rigoureusement respectée.
+Rate this answer: 
+Context Sources (2)
+
+roland kongphengta
+oui, il a 8 espace et maintenant. Le problème est toujours là.
+
+
+Gemini
+C'est bien que la ligne script: | soit correctement indentée à 8 espaces. Si le problème persiste, il est très probable qu'il s'agisse soit :
+
+De caractères de tabulation utilisés pour l'indentation au lieu d'espaces (ou un mélange des deux) quelque part dans le fichier. C'est la cause la plus fréquente et la plus difficile à voir.
+D'une indentation incorrecte des lignes à l'intérieur du bloc script: | ou des lignes vides qui posent problème.
+Voici une suggestion pour modifier le bloc script: | en supprimant les lignes vides intermédiaires. Ces lignes, même si elles semblent vides, peuvent parfois contenir des espaces ou des tabulations qui perturbent l'analyse YAML.
+
+deploy.yaml
+-5
++0
+        script: |
+          cd ${{ secrets.PROJECT_PATH_ON_SERVER }}
+          echo "Pulling latest changes..."
+          git pull origin master
+          
+          echo "Installing Composer dependencies..."
+          composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+          
+          echo "Running database migrations..."
+          php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration --env=prod
+          
+          echo "Clearing Symfony cache..."
+          php bin/console cache:clear --env=prod
+          
+           echo "Warming up Symfony cache..."
+           php bin/console cache:warmup --env=prod
+-          
+           echo "Deployment finished successfully!"
+Après avoir appliqué cette modification, la chose la plus importante à faire est de vérifier méticuleusement tout le fichier deploy.yaml pour vous assurer qu'aucune tabulation n'est utilisée pour l'indentation. Utilisez uniquement des espaces. Configurez votre éditeur de code pour afficher les caractères invisibles (espaces et tabulations) afin de faciliter cette vérification. Une seule tabulation cachée peut causer l'erreur "Nested mappings are not allowed".
+
+Rate this answer: 
+Context Sources (2)
+
+roland kongphengta
+comme ça vous voulez dire : script: | cd ${{ secrets.PROJECT_PATH_ON_SERVER }} echo "Pulling latest changes..." git pull origin master echo "Installing Composer dependencies..." composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist echo "Running database migrations..." php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration --env=prod echo "Clearing Symfony cache..." php bin/console cache:clear --env=prod echo "Warming up Symfony cache..." php bin/console cache:warmup --env=prod echo "Deployment finished successfully!"
+
+deploy.yaml: 13 lines selected
+
+Gemini
+Oui, c'est exactement ça que je voulais dire pour le bloc script: | – sans les lignes vides intermédiaires.
+
+Si le problème persiste même avec cette structure et après avoir vérifié que la ligne script: | est bien à 8 espaces du bord gauche et les commandes à l'intérieur à 10 espaces, alors les causes les plus probables sont :
+
+Présence de caractères de tabulation (TAB) au lieu d'espaces pour l'indentation : C'est la cause la plus fréquente et la plus difficile à voir. YAML est très strict : l'indentation doit être faite uniquement avec des espaces. Un seul caractère de tabulation caché quelque part dans le fichier peut provoquer l'erreur "Nested mappings are not allowed".
+
+Action impérative : Configurez votre éditeur de code pour afficher les caractères invisibles (espaces et tabulations). Examinez chaque ligne de votre fichier deploy.yaml. Si vous voyez des symboles indiquant des tabulations (souvent une flèche → ou un symbole similaire), remplacez-les par le nombre correct d'espaces.
+Erreur d'indentation ailleurs dans le fichier : L'erreur YAML peut être déclenchée par une incohérence d'indentation sur une autre ligne, même si elle semble correcte à première vue.
+
+Prochaine étape suggérée : Utiliser un validateur YAML en ligne
+
+Puisque l'inspection visuelle ne suffit pas, je vous recommande vivement de :
+
+Copier l'intégralité du contenu de votre fichier f:\xampp\htdocs\ecoride\.github\workflows\deploy.yaml.
+Coller ce contenu dans un validateur YAML en ligne (par exemple, cherchez "YAML validator" sur Google, des sites comme yamllint.com ou jsonformatter.org/yaml-validator sont souvent utilisés).
+Le validateur devrait vous indiquer précisément la ligne (et parfois le caractère) où se situe l'erreur de syntaxe YAML.
+Cela devrait vous aider à localiser la source exacte du problème.
+
+Rate this answer: 
+Context Sources (1)
+
+roland kongphengta
+le résultat : Nested mappings are not allowed in compact mappings at line 18, column 12 Unexpected double-quoted-scalar at node end at line 18, column 69
+
+
+Gemini
+L'erreur "Nested mappings are not allowed in compact mappings at line 18, column 12" indique que l'analyseur YAML interprète incorrectement la valeur de la clé run à la ligne 18. Au lieu de la voir comme une simple chaîne de caractères, il essaie de l'interpréter comme un dictionnaire (mapping) imbriqué, ce qui n'est pas permis dans ce format compact.
+
+L'erreur se produit à la colonne 12, qui correspond au début de la commande echo. Cela suggère que echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'" n'est pas traité comme une chaîne unique.
+
+Pour résoudre ce problème, il est préférable d'utiliser un bloc scalaire YAML pour la commande run, ce qui clarifie son interprétation en tant que chaîne de caractères, même si elle est sur une seule ligne.
+
+Voici la modification suggérée :
+
+deploy.yaml
+-1
++2
+      uses: actions/checkout@v4
+
+    - name: Debug SSH_HOST value
+      run: echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
+      run: |
+        echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'"
+
+    - name: Add known hosts
+      run: |
+
+Dans cette modification :
+
+run: echo "..." est remplacé par run: |.
+La commande echo "SSH_HOST secret value is: '${{ secrets.SSH_HOST }}'" est placée sur la ligne suivante, indentée de deux espaces supplémentaires par rapport à run: | (donc 8 espaces depuis le début de la ligne, si run: | est à 6 espaces).
+Cela devrait résoudre l'ambiguïté d'analyse YAML. La deuxième erreur "Unexpected double-quoted-scalar at node end" est probablement une conséquence de la première et devrait disparaître également.
+
+Rate this answer: 
+Context Sources (1)
+
+roland kongphengta
+milles fois merci voilà maintenant le problème n'est plus là.
+
+
+Gemini
+C'est une excellente nouvelle ! Je suis ravi d'apprendre que le problème est résolu.
+
+Parfois, la syntaxe YAML peut être un peu capricieuse, et un petit ajustement comme celui que nous avons fait pour la commande run peut faire toute la différence.
+
+N'hésitez pas si vous avez d'autres questions à l'avenir !
