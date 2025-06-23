@@ -12,9 +12,9 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v4 # Fetches your code into the runner
+      uses: actions/checkout@v4
       with:
-        fetch-depth: 0 # Important for rsync to detect changes between deployments
+        fetch-depth: 0 # Important pour rsync pour détecter les changements
 
     - name: Deploy files to server via rsync
       uses: easingthemes/ssh-deploy@v5.0.0
@@ -22,9 +22,19 @@ jobs:
         SSH_PRIVATE_KEY: ${{ secrets.ACTION_ECORIDE }}
         REMOTE_HOST: ${{ secrets.SSH_HOST }}
         REMOTE_USER: ${{ secrets.SSH_USER }}
-        SOURCE: "./" # The source directory on the runner
-        TARGET: ${{ secrets.PROJECT_PATH_ON_SERVER }} # The destination directory on the server
-        EXCLUDE: "/.git/, /node_modules/, /.github/" # Exclude unnecessary files from transfer
+        SOURCE: "./"
+        TARGET: ${{ secrets.PROJECT_PATH_ON_SERVER }}
+        # Exclure les fichiers et dossiers qui ne doivent pas être déployés
+        # ou qui sont gérés directement sur le serveur.
+        EXCLUDE: |
+          /.git/
+          /node_modules/
+          /.github/
+          /vendor/
+          /var/
+          .env
+          .env.local
+          .env.*.local
 
     - name: Run post-deployment commands
       uses: appleboy/ssh-action@v1.0.3
@@ -33,27 +43,30 @@ jobs:
         username: ${{ secrets.SSH_USER }}
         key: ${{ secrets.ACTION_ECORIDE }}
         port: 22
-        # This script now only runs commands on the server after the files are copied.
         script: |
-          set -e # Stop script on first error
+          set -e # Arrêter le script à la première erreur
           cd ${{ secrets.PROJECT_PATH_ON_SERVER }}
 
+          # Compile les variables d'environnement pour une performance optimale en production.
+          echo "Compiling environment variables for production..."
+          composer dump-env prod
+
           echo "Installing Composer dependencies..."
-          composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist
+          composer install --no-dev --optimize-autoloader --no-interaction
 
           echo "Running database migrations..."
-          php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration --env=prod
+          php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
 
           echo "Clearing Symfony cache..."
-          php bin/console cache:clear --env=prod
+          php bin/console cache:clear
 
           echo "Warming up Symfony cache..."
-          php bin/console cache:warmup --env=prod
+          php bin/console cache:warmup
 
-          # A common issue with Symfony is file permissions for the var/ directory.
-          # The web server user (e.g., www-data) needs write access.
-          # Uncomment and adapt the following lines if you face permission issues.
-          # echo "Fixing permissions..."
-          # sudo chown -R www-data:www-data var
+          # --- CORRECTION DES PERMISSIONS ---
+          # Donne la propriété du dossier var/ à l'utilisateur du serveur web (www-data).
+          # C'est l'étape la plus importante pour corriger les erreurs 500.
+          echo "Fixing permissions for var/ directory..."
+          sudo chown -R www-data:www-data var
 
           echo "Deployment finished successfully!"
