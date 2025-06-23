@@ -44,6 +44,8 @@ jobs:
         port: 22
         script: |
           set -e # Arrêter le script si une commande echoue
+          ssh-keyscan -p 22 -H github.com >> ~/.ssh/known_hosts
+          
           cd ${{ secrets.PROJECT_PATH_ON_SERVER }} 
           echo "Pulling latest changes..."
           # Use fetch and reset to avoid conflicts with local changes on the server
