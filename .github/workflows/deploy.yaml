@@ -21,34 +21,34 @@ jobs:
     - name: Add known hosts
       run: |
         if [ -z "${{ secrets.SSH_HOST }}" ]; then
-          echo "Error: The SSH_HOST secret is empty or undefined. ssh-keyscan is skipped."
+          echo "SSH_HOST secret is not set. Aborting."
           exit 1
+        fi
+        mkdir -p ~/.ssh
+        chmod 700 ~/.ssh
+        echo "Attempting to scan host: '${{ secrets.SSH_HOST }}'"
+        # Increased timeout to 10s and removed stderr redirection to see potential errors
+        if ssh-keyscan -T 10 -p 22 -H "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts; then
+          echo "Host key for ${{ secrets.SSH_HOST }} added to known_hosts."
         else
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
-          echo "Attempting to scan host: '${{ secrets.SSH_HOST }}'"
-          if ssh-keyscan -T 5 -p 22 "${{ secrets.SSH_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null; then
-            echo "Host key for ${{ secrets.SSH_HOST }} added to known_hosts."
-          else
-            echo "Error: ssh-keyscan failed for host ${{ secrets.SSH_HOST }}. SSH connection might fail."
-            exit 1
-          fi
+          echo "Error: ssh-keyscan failed for host ${{ secrets.SSH_HOST }}. SSH connection might fail."
+          exit 1
         fi
 
     - name: Deploy to server
       uses: appleboy/ssh-action@v1.0.3
       with:
-        # Vérifiez ces lignes en particulier pour les messages d'erreur de type/structure.
-        # Assurez-vous qu'il n'y a pas de guillemets superflus ajoutés manuellement.
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USER }}
-        key: ${{ secrets.ACTION_ECORIDE }} # La même clé SSH que pour webfactory/ssh-agent
+        key: ${{ secrets.ACTION_ECORIDE }}
         port: 22
         script: |
           set -e # Arrêter le script si une commande echoue
           cd ${{ secrets.PROJECT_PATH_ON_SERVER }} 
           echo "Pulling latest changes..."
-          git pull origin master
+          # Use fetch and reset to avoid conflicts with local changes on the server
+          git fetch origin master
+          git reset --hard origin/master
           echo "Installing Composer dependencies..."
           composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist 
           echo "Running database migrations..."
@@ -57,4 +57,13 @@ jobs:
           php bin/console cache:clear --env=prod
           echo "Warming up Symfony cache..."
           php bin/console cache:warmup --env=prod
+          # A common issue with Symfony is file permissions for the var/ directory.
+          # The web server user (e.g., www-data) needs write access.
+          # Uncomment and adapt the following lines if you face permission issues.
+          # You might need to grant sudo access to your SSH user for this.
+          # echo "Fixing permissions..."
+          # sudo chown -R www-data:www-data var
+          # Or using ACLs (if installed: sudo apt-get install acl)
+          # sudo setfacl -R -m u:www-data:rwX -m u:$(whoami):rwX var
+          # sudo setfacl -dR -m u:www-data:rwX -m u:$(whoami):rwX var
           echo "Deployment finished successfully!"
