@@ -26,15 +26,7 @@ jobs:
         TARGET: ${{ secrets.PROJECT_PATH_ON_SERVER }}
         # Exclure les fichiers et dossiers qui ne doivent pas être déployés
         # ou qui sont gérés directement sur le serveur.
-        EXCLUDE: |
-          /.git/
-          /node_modules/
-          /.github/
-          /vendor/
-          /var/
-          .env
-          .env.local
-          .env.*.local
+        EXCLUDE: ".git/, node_modules/, .github/, vendor/, var/, .env, .env.local, .env.*.local"
 
     - name: Run post-deployment commands
       uses: appleboy/ssh-action@v1.0.3
