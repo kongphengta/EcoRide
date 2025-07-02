@@ -30,7 +30,7 @@ class Avis
     #[ORM\JoinColumn(nullable: false)]
     private ?User $auteur = null;
 
-    // Un avis conserne UN SEUL utilisateur (le receveur)
+    // Un avis concerne UN SEUL utilisateur (le receveur)
     #[ORM\ManyToOne(inversedBy: 'avisRecus')]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $receveur = null;
