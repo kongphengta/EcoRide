@@ -124,7 +124,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @var Collection<int, Avis>
      */
-    #[ORM\ManyToMany(targetEntity: Avis::class, mappedBy: 'auteur', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: Avis::class, mappedBy: 'auteur', orphanRemoval: true)]
     private Collection $avisDonnes;
 
     /**
