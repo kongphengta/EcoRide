@@ -71,10 +71,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Assert\Type("\DateTimeInterface", message: "La date de naissance doit être une date valide.")] // Ajouté
     private ?\DateTimeInterface $date_naissance = null;
 
-    // Champ rempli dans la 2ème étape (Profil), donc nullable
+    // le nom du fichier de la photo de profil, nullable
     #[ORM\Column(length: 255, nullable: true)]
-    // La validation pour la photo (File type) se fait dans le ProfileFormType ou un service dédié
-    private ?string $photo = null; // Type hint ajusté à ?string
+    private ?string $photo = null;
+
+    // Le sexe de l'utilisateur, pour l'avatar par défaut
+    #[ORM\Column(length: 10, nullable: true)]
+    #[Assert\Choice(choices: ['Homme', 'Femme', 'Autre'], message: 'Veuillez sélectionner un genre valide.')]
+    private ?string $sexe = null;
 
     #[ORM\Column(length: 255, unique: true)]
     #[Assert\NotBlank(message: "Le pseudo ne peut pas être vide.")]
@@ -120,13 +124,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     /**
      * @var Collection<int, Avis>
      */
-    #[ORM\ManyToMany(targetEntity: Avis::class, inversedBy: 'users')]
+    #[ORM\ManyToMany(targetEntity: Avis::class, mappedBy: 'auteur', orphanRemoval: true)]
     private Collection $avisDonnes;
 
     /**
      * @var Collection<int, Avis>
      */
-    #[ORM\ManyToMany(targetEntity: Avis::class, mappedBy: 'receveurs')]
+    #[ORM\OneToMany(targetEntity: Avis::class, mappedBy: 'receveur', orphanRemoval: true)]
     private Collection $avisRecus;
 
     public function __construct()
@@ -308,6 +312,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function getSexe(): ?string
+    {
+        return $this->sexe;
+    }
+
+    public function setSexe(?string $sexe): static
+    {
+        $this->sexe = $sexe;
+
+        return $this;
+    }
+
     public function getPseudo(): ?string
     {
         return $this->pseudo;
@@ -477,6 +493,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if (!$this->avisDonnes->contains($avisDonne)) {
             $this->avisDonnes->add($avisDonne);
+            $avisDonne->setAuteur($this);
         }
 
         return $this;
@@ -484,7 +501,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function removeAvisDonne(Avis $avisDonne): static
     {
-        $this->avisDonnes->removeElement($avisDonne);
+        if ($this->avisDonnes->removeElement($avisDonne)) {
+            // set the owning side to null (unless already changed)
+            if ($avisDonne->getAuteur() === $this) {
+                $avisDonne->setAuteur(null);
+            }
+        }
 
         return $this;
     }
@@ -501,7 +523,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         if (!$this->avisRecus->contains($avisRecu)) {
             $this->avisRecus->add($avisRecu);
-            $avisRecu->addReceveur($this);
+            $avisRecu->setReceveur($this);
         }
 
         return $this;
@@ -510,7 +532,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function removeAvisRecu(Avis $avisRecu): static
     {
         if ($this->avisRecus->removeElement($avisRecu)) {
-            $avisRecu->removeReceveur($this);
+            // set the owning side to null (unless already changed)
+            if ($avisRecu->getReceveur() === $this) {
+                $avisRecu->setReceveur(null);
+            }
         }
 
         return $this;

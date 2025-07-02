@@ -22,31 +22,23 @@ class Avis
     #[ORM\Column]
     private ?int $note = null;
 
-    #[ORM\Column(length: 255)]
-    private ?string $statut = null;
+    #[ORM\Column]
+    private ?\DateTimeImmutable $dateCreation = null;
 
-    /**
-     * @var Collection<int, User>
-     */
-    #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'avisDonnes')]
-    private Collection $users;
+    // un avis est écrit par UN SEUL utilisateur (l'auteur)
+    #[ORM\ManyToOne(inversedBy: 'avisDonnes')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?User $auteur = null;
 
-    /**
-     * @var Collection<int, User>
-     */
-    #[ORM\ManyToMany(targetEntity: User::class)]
-    private Collection $receveurs;
-
-    // /**
-    //  * @var Collection<int, User>
-    //  */
-    // #[ORM\ManyToMany(targetEntity: User::class, inversedBy: 'avisRecus')]
-    // private Collection $receveurs;
+    // Un avis conserne UN SEUL utilisateur (le receveur)
+    #[ORM\ManyToOne(inversedBy: 'avisRecus')]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?User $receveur = null;
 
     public function __construct()
     {
-        $this->users = new ArrayCollection();
-        $this->receveurs = new ArrayCollection();
+        // Initialisation de la date de création à l'instant présent
+        $this->dateCreation = new \DateTimeImmutable();
     }
 
     public function getId(): ?int
@@ -78,65 +70,37 @@ class Avis
         return $this;
     }
 
-    public function getStatut(): ?string
+    public function getDateCreation(): ?\DateTimeImmutable
     {
-        return $this->statut;
+        return $this->dateCreation;
     }
 
-    public function setStatut(string $statut): static
+    public function setDateCreation(\DateTimeImmutable $dateCreation): static
     {
-        $this->statut = $statut;
+        $this->dateCreation = $dateCreation;
+
+        return $this;
+    }
+    public function getAuteur(): ?User
+    {
+        return $this->auteur;
+    }
+
+    public function setAuteur(?User $auteur): static
+    {
+        $this->auteur = $auteur;
 
         return $this;
     }
 
-    /**
-     * @return Collection<int, User>
-     */
-    public function getUsers(): Collection
+    public function getReceveur(): ?User
     {
-        return $this->users;
+        return $this->receveur;
     }
 
-    public function addUser(User $user): static
+    public function setReceveur(?User $receveur): static
     {
-        if (!$this->users->contains($user)) {
-            $this->users->add($user);
-            $user->addAvisDonne($this);
-        }
-
-        return $this;
-    }
-
-    public function removeUser(User $user): static
-    {
-        if ($this->users->removeElement($user)) {
-            $user->removeAvisDonne($this);
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, User>
-     */
-    public function getReceveurs(): Collection
-    {
-        return $this->receveurs;
-    }
-
-    public function addReceveur(User $receveur): static
-    {
-        if (!$this->receveurs->contains($receveur)) {
-            $this->receveurs->add($receveur);
-        }
-
-        return $this;
-    }
-
-    public function removeReceveur(User $receveur): static
-    {
-        $this->receveurs->removeElement($receveur);
+        $this->receveur = $receveur;
 
         return $this;
     }

@@ -1,0 +1,6 @@
+# Gérer automatiquement les fins de ligne.
+# Les fichiers texte seront stockés avec des fins de ligne LF (style Unix) dans le dépôt.
+# Ils seront convertis en fins de ligne natives (CRLF sur Windows) lors du checkout.
+* text=auto eol=lf
+
+.sh eol=lf
