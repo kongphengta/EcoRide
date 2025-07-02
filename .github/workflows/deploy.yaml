@@ -58,12 +58,8 @@ jobs:
           echo "Warming up Symfony cache..."
           php bin/console cache:warmup
 
-          # --- CORRECTION DES PERMISSIONS ---
-          # Donne la propriété du dossier var/ à l'utilisateur du serveur web (www-data).
-          # C'est l'étape la plus importante pour corriger les erreurs 500.
-          echo "Fixing permissions for var/ directory..."
-          sudo chown -R www-data:www-data var
-          # corrige les permissions pour les dossiers qui ont d'être écrits par le serveur web
+          # corrige les permissions pour les dossiers qui ont besoin d'être écrits par le serveur web
+          echo "Fixing permissions for public/d'être écrits par le serveur web
           echo "Fixing permissions for var/ and public/build directories..."
           sudo chown -R www-data:www-data var public/build
 

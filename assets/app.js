@@ -7,11 +7,12 @@ import './bootstrap.js';
  * which should already be in your base.html.twig.
  */
 import './styles/app.css';
+import './styles/profile.css';
 import $ from 'jquery'; // Import jQuery
 import 'bootstrap'; // Import Bootstrap JavaScript
 global.$ = global.jQuery = $; // Make jQuery available globally
 console.log('This log comes from assets/app.js - welcome to AssetMapper! 🎉');
 
-import './styles/profile.css';
+
 
 
