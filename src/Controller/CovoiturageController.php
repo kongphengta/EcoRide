@@ -116,31 +116,50 @@ class CovoiturageController extends AbstractController
             'covoiturage' => $covoiturage,
         ]);
     }
-    #[Route('/profile/become-driver', name: 'app_profile_become_driver', methods: ['POST'])]
-    #[IsGranted('ROLE_USER')]
-    public function becomeDriver(Request $request, EntityManagerInterface $entityManager): Response
+
+    #[Route('/{id}/edit', name: 'app_covoiturage_edit', methods: ['GET', 'POST'])]
+    #[IsGranted('ROLE_CHAUFFEUR')]
+    public function edit(Request $request, Covoiturage $covoiturage, EntityManagerInterface $entityManager): Response
     {
-        /** @var \App\Entity\User $user */
-        $user = $this->getUser();
-        // Sécurité : Vérifier le token CSRF
-        if ($this->isCsrfTokenValid('become_driver' . $user->getId(), $request->request->get('_token'))) {
-            if (!in_array('ROLE_CHAUFFEUR', $user->getRoles(), true)) {
-                $roles = $user->getRoles();
-                // Ajouter le rôle chauffeur
-                $roles[] = 'ROLE_CHAUFFEUR';
-                $user->setRoles(array_unique($roles)); // Pour éviter les doublons
-                // Mettre à jour l'utilisateur dans la base de données
-                $entityManager->persist($user);
-                $entityManager->flush();
-                $this->addFlash('success', ' Félicitations ! Vous êtes maintenant enregistré comme chauffeur.');
-            } else {
-                // Si l'utilisateur a déjà le rôle chauffeur, on peut choisir de rediriger ou d'afficher un message
-                $this->addFlash('info', 'Vous êtes déjà un chauffeur.');
-            }
-        } else {
-            // Si le token CSRF n'est pas valide, on peut choisir de rediriger ou d'afficher un message
-            $this->addFlash('error', 'Requête invalide pour devenir chauffeur.');
+        // Sécurité : Vérifier que l'utilisateur connecté est bien le chauffeur du covoiturage
+        if ($this->getUser() !== $covoiturage->getChauffeur()) {
+            throw $this->createAccessDeniedException('Vous n\'êtes pas autorisé à modifier ce covoiturage.');
         }
-        return $this->redirectToRoute('app_profile');
+
+        $form = $this->createForm(CovoiturageType::class, $covoiturage);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Le covoiturage a été mis à jour avec succès.');
+
+            return $this->redirectToRoute('app_profile_my_covoiturages', [], Response::HTTP_SEE_OTHER);
+        }
+
+        return $this->render('covoiturage/edit.covoiturage.html.twig', [
+            'covoiturage' => $covoiturage,
+            'covoiturageForm' => $form->createView(),
+        ]);
+    }
+
+    #[Route('/{id}', name: 'app_covoiturage_delete', methods: ['POST'])]
+    #[IsGranted('ROLE_CHAUFFEUR')]
+    public function delete(Request $request, Covoiturage $covoiturage, EntityManagerInterface $entityManager): Response
+    {
+        // Sécurité : Vérifier que l'utilisateur connecté est bien le chauffeur du covoiturage
+        if ($this->getUser() !== $covoiturage->getChauffeur()) {
+            throw $this->createAccessDeniedException('Vous n\'êtes pas autorisé à supprimer ce covoiturage.');
+        }
+
+        // Sécurité : Vérifier le token CSRF pour se protéger contre les attaques
+        if ($this->isCsrfTokenValid('delete' . $covoiturage->getId(), $request->request->get('_token'))) {
+            $entityManager->remove($covoiturage);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Le covoiturage a été supprimé.');
+        }
+
+        return $this->redirectToRoute('app_profile_my_covoiturages', [], Response::HTTP_SEE_OTHER);
     }
 }

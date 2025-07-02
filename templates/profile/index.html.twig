@@ -1,0 +1,116 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mon Profil -
+	{{ user.pseudo }}
+{% endblock %}
+
+{% block body %}
+	<div class="container mt-5">
+		<div class="row">
+			<div class="col-md-4">
+				<div class="card shadow-sm">
+					<div
+						class="card-body text-center">
+						{# Affiche une photo si elle existe, sinon un avatar généré avec les initiales #}
+						<img src="{% if user.photo %} {{ asset('uploads/photos/' ~ user.photo) }} {% elseif user.sexe == 'Homme' %} {{ asset('images/avatar_homme.png') }} {% elseif user.sexe == 'Femme' %} {{ asset('images/avatar_femme.png') }} {% else %} {{ 'https://ui-avatars.com/api/?name=' ~ user.firstname|url_encode ~ '+' ~ user.lastname|url_encode ~ '&background=random&size=150' }} {% endif %}" alt="Photo de profil" class="img-fluid rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+						<h4 class="card-title">{{ user.pseudo }}</h4>
+						<p class="text-muted">{{ user.firstname }}
+							{{ user.lastname }}</p>
+					</div>
+					<ul class="list-group list-group-flush">
+						<li class="list-group-item">
+							<strong>Email :</strong>
+							{{ user.email }}</li>
+						<li class="list-group-item">
+							<strong>Téléphone :</strong>
+							{{ user.telephone ?: 'Non renseigné' }}</li>
+						<li class="list-group-item">
+							<strong>Date de naissance :</strong>
+							{{ user.dateNaissance ? user.dateNaissance|date('d/m/Y') : 'Non renseignée' }}</li>
+						<li class="list-group-item">
+							<strong>Membre depuis :</strong>
+							{{ user.date_inscription | time_diff}}</li>
+					</ul>
+				</div>
+			</div>
+			<div class="col-md-8">
+				<h2>Bienvenue sur votre profil,
+					{{ user.pseudo }}
+					!</h2>
+				<p>Gérez vos informations personnelles, vos véhicules et vos trajets.</p>
+
+				<div class="card shadow-sm">
+					<div class="card-header">
+						Actions rapides
+					</div>
+					<div class="card-body">
+						<a href="{{ path('app_profile_edit') }}" class="btn btn-primary mb-2">Modifier mes informations</a>
+						<a href="{{ path('app_profile_change_password') }}" class="btn btn-secondary mb-2">Changer mon mot de passe</a>
+						<hr>
+
+						{% if 'ROLE_CHAUFFEUR' in user.roles %}
+							<a href="{{ path('app_voiture_index') }}" class="btn btn-info mb-2">Gérer mes voitures</a>
+							<a href="{{ path('app_covoiturage_new') }}" class="btn btn-success mb-2">Proposer un covoiturage</a>
+						{% else %}
+							<p>Devenez chauffeur pour pouvoir ajouter des voitures et proposer des trajets.</p>
+							<form method="post" action="{{ path('app_profile_become_driver') }}" onsubmit="return confirm('Voulez-vous vraiment devenir chauffeur ?');" class="d-inline">
+								<input type="hidden" name="_token" value="{{ csrf_token('become_driver' ~ user.id) }}">
+								<button type="submit" class="btn btn-success">Devenir Chauffeur</button>
+							</form>
+						{% endif %}
+					</div>
+				</div>
+
+				<div class="card shadow-sm mt-4">
+					<div class="card-header">
+						Mes activités
+					</div>
+					<div class="card-body">
+						<a href="{{ path('app_profile_my_covoiturages') }}" class="btn btn-outline-primary">Voir mes covoiturages proposés</a>
+						{# On pourra ajouter plus tard un lien vers les réservations de l'utilisateur #}
+					</div>
+				</div>
+				{# Section pour afficher les avis reçus #}
+				<div class="card shadow-sm mt-4">
+					<div class="card-header">
+						Avis reçus ({{ user.avisRecus|length }})
+					</div>
+					<div class="card-body">
+						{% if user.avisRecus is not empty %}
+							{# On trie les avis pour afficher les plus récents en premier #}
+							{% for avis in user.avisRecus|sort((a, b) => b.dateCreation <=> a.dateCreation) %}
+								<div
+									class="mb-3">
+									{# Je suppose ici que votre entité Avis a les propriétés : note, commentaire, auteur (relation User) et dateCreation #}
+									<strong>Note :</strong>
+									<span class="text-warning">
+										{% for i in 1..5 %}
+											{% if i <= avis.note %}
+												<i class="bi bi-star-fill"></i>
+												{# Étoile pleine #}
+											{% else %}
+												<i class="bi bi-star"></i>
+												{# Étoile vide #}
+											{% endif %}
+										{% endfor %}
+									</span>
+									<p class="mt-1 fst-italic">"{{ avis.commentaire }}"</p>
+									<small class="text-muted">
+										Laissé par
+										<strong>{{ avis.auteur.pseudo }}</strong>
+										le
+										{{ avis.dateCreation|date('d/m/Y') }}
+									</small>
+								</div>
+								{% if not loop.last %}<hr>
+								{% endif %}
+							{% endfor %}
+						{% else %}
+							<p class="text-muted">Vous n'avez pas encore reçu d'avis.</p>
+						{% endif %}
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div></div>{% endblock %}

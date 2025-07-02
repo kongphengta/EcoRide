@@ -1,0 +1,30 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier le covoiturage
+{% endblock %}
+
+{% block body %}
+	<div class="container mt-5">
+		<div class="row justify-content-center">
+			<div class="col-md-8">
+				<div class="card shadow-sm">
+					<div class="card-header">
+						<h1 class="h3 mb-0">Modifier le covoiturage de
+							{{ covoiturage.lieuDepart }}
+							à
+							{{ covoiturage.lieuArrivee }}</h1>
+					</div>
+					<div class="card-body">
+						{{ form_start(covoiturageForm) }}
+						{{ form_widget(covoiturageForm) }}
+						<button class="btn btn-primary mt-3 w-100">Mettre à jour</button>
+						{{ form_end(covoiturageForm) }}
+					</div>
+				</div>
+				<div class="text-center mt-3">
+					<a href="{{ path('app_profile_my_covoiturages') }}">Retour à la liste</a>
+				</div>
+			</div>
+		</div>
+	</div>
+{% endblock %}

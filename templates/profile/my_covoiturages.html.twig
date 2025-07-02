@@ -1,0 +1,76 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes covoiturages proposés
+{% endblock %}
+
+{% block body %}
+	<div class="container mt-5">
+		<div class="d-flex justify-content-between align-items-center mb-4">
+			<h1 class="h3">Mes covoiturages proposés</h1>
+			<a href="{{ path('app_covoiturage_new') }}" class="btn btn-primary">Proposer un nouveau covoiturage</a>
+		</div>
+
+		<div class="card shadow-sm">
+			<div class="card-body">
+				{% if covoiturages is not empty %}
+					<div class="table-responsive">
+						<table class="table table-hover">
+							<thead>
+								<tr>
+									<th>Départ</th>
+									<th>Arrivée</th>
+									<th>Date de départ</th>
+									<th>Places restantes</th>
+									<th>Prix</th>
+									<th>Statut</th>
+									<th>Actions</th>
+								</tr>
+							</thead>
+							<tbody>
+								{% for covoiturage in covoiturages %}
+									<tr>
+										<td>{{ covoiturage.lieuDepart }}</td>
+										<td>{{ covoiturage.lieuArrivee }}</td>
+										<td>{{ covoiturage.dateDepart|date('d/m/Y') }}
+											à
+											{{ covoiturage.heureDepart }}</td>
+										<td>{{ covoiturage.nbPlaceRestantes }}
+											/
+											{{ covoiturage.nbPlaceTotal }}</td>
+										<td>{{ covoiturage.prixPersonne }}
+											€</td>
+										<td>
+											<span class="badge bg-info">{{ covoiturage.statut }}</span>
+										</td>
+										<td>
+											<a href="{{ path('app_covoiturage_show', {'id': covoiturage.id}) }}" class="btn btn-sm btn-outline-info" title="Voir les détails">
+												<i class="bi bi-eye"></i>
+											</a>
+											<a href="{{ path('app_covoiturage_edit', {'id': covoiturage.id}) }}" class="btn btn-sm btn-outline-primary" title="Modifier">
+												<i class="bi bi-pencil-square"></i>
+											</a>
+											<form method="post" action="{{ path('app_covoiturage_delete', {'id': covoiturage.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce covoiturage ?');" class="d-inline">
+												<input type="hidden" name="_token" value="{{ csrf_token('delete' ~ covoiturage.id) }}">
+												<button class="btn btn-sm btn-outline-danger" title="Supprimer">
+													<i class="bi bi-trash"></i>
+												</button>
+											</form>
+										</td>
+									</tr>
+								{% endfor %}
+							</tbody>
+						</table>
+					</div>
+				{% else %}
+					<div class="alert alert-info text-center">
+						<p class="mb-0">Vous n'avez encore proposé aucun covoiturage.</p>
+						<a href="{{ path('app_covoiturage_new') }}" class="alert-link">Pourquoi ne pas en créer un maintenant ?</a>
+					</div>
+				{% endif %}
+			</div>
+		</div>
+		<div class="text-center mt-3">
+			<a href="{{ path('app_profile') }}">Retour au profil</a>
+		</div>
+	</div>
+{% endblock %}
