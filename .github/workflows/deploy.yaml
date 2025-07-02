@@ -26,7 +26,7 @@ jobs:
         TARGET: ${{ secrets.PROJECT_PATH_ON_SERVER }}
         # Exclure les fichiers et dossiers qui ne doivent pas être déployés
         # ou qui sont gérés directement sur le serveur.
-        EXCLUDE: ".git/, node_modules/, .github/, vendor/, var/, .env, .env.local, .env.*.local"
+        EXCLUDE: ".git/, node_modules/, .github/, vendor/, var/, public/build/, .env, .env.local, .env.*.local"
 
     - name: Run post-deployment commands
       uses: appleboy/ssh-action@v1.0.3
@@ -46,6 +46,12 @@ jobs:
           echo "Installing Composer dependencies..."
           composer install --no-dev --optimize-autoloader --no-interaction
 
+          echo "Installing Node.js dependencies..."
+          npm install
+
+          echo "Building frontend assets for production..."
+          npm run build
+
           echo "Running database migrations..."
           php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
 
@@ -57,5 +63,8 @@ jobs:
           # C'est l'étape la plus importante pour corriger les erreurs 500.
           echo "Fixing permissions for var/ directory..."
           sudo chown -R www-data:www-data var
+          # corrige les permissions pour les dossiers qui ont d'être écrits par le serveur web
+          echo "Fixing permissions for var/ and public/build directories..."
+          sudo chown -R www-data:www-data var public/build
 
           echo "Deployment finished successfully!"

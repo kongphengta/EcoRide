@@ -12,8 +12,29 @@
 					<div
 						class="card-body text-center">
 						{# Affiche une photo si elle existe, sinon un avatar généré avec les initiales #}
-						<img src="{% if user.photo %} {{ asset('uploads/photos/' ~ user.photo) }} {% elseif user.sexe == 'Homme' %} {{ asset('images/avatar_homme.png') }} {% elseif user.sexe == 'Femme' %} {{ asset('images/avatar_femme.png') }} {% else %} {{ 'https://ui-avatars.com/api/?name=' ~ user.firstname|url_encode ~ '+' ~ user.lastname|url_encode ~ '&background=random&size=150' }} {% endif %}" alt="Photo de profil" class="img-fluid rounded-circle mb-3" style="width: 150px; height: 150px; object-fit: cover;">
+						<img src="{% if user.photo %} {{ asset('uploads/photos/' ~ user.photo) }} {% elseif user.sexe == 'Homme' %} {{ asset('images/avatar_homme.png') }} {% elseif user.sexe == 'Femme' %} {{ asset('images/avatar_femme.png') }} {% else %} {{ 'https://ui-avatars.com/api/?name=' ~ user.firstname|url_encode ~ '+' ~ user.lastname|url_encode ~ '&background=random&size=150' }} {% endif %}" alt="Photo de profil" class="img-fluid rounded-circle mb-3 profile-picture">
 						<h4 class="card-title">{{ user.pseudo }}</h4>
+						{# Affichage de la note moyenne avec des étoiles #}
+						{% set averageRating = user.averageRating %}
+						{% if user.avisRecus|length > 0 %}
+							<div class="mb-2">
+								<span class="text-warning">
+									{% for i in 1..5 %}
+										{% if i <= averageRating %}
+											<i class="bi bi-star-fill"></i>
+											{# Étoile pleine #}
+										{% elseif i > averageRating and (i - 1) < averageRating %}
+											<i class="bi bi-star-half"></i>
+											{# Demi-étoile #}
+										{% else %}
+											<i class="bi bi-star"></i>
+											{# Étoile vide #}
+										{% endif %}
+									{% endfor %}
+								</span>
+								<small class="text-muted">({{ averageRating|number_format(1, ',') }}/5)</small>
+							</div>
+						{% endif %}
 						<p class="text-muted">{{ user.firstname }}
 							{{ user.lastname }}</p>
 					</div>

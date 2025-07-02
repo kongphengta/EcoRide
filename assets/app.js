@@ -11,3 +11,7 @@ import $ from 'jquery'; // Import jQuery
 import 'bootstrap'; // Import Bootstrap JavaScript
 global.$ = global.jQuery = $; // Make jQuery available globally
 console.log('This log comes from assets/app.js - welcome to AssetMapper! 🎉');
+
+import './styles/profile.css';
+
+

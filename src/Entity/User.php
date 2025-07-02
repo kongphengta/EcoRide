@@ -540,4 +540,24 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
         return $this;
     }
+    /**
+     * Calcule la note moyenne des avis reçus par l'utilisateur.
+     *
+     * @return float La note moyenne, ou 0.0 s'il n'y a pas d'avis.
+     */
+    public function getAverageRating(): float
+    {
+        $avisRecus = $this->getAvisRecus();
+
+        if ($avisRecus->isEmpty()) {
+            return 0.0;
+        }
+
+        $totalNotes = 0;
+        foreach ($avisRecus as $avis) {
+            $totalNotes += $avis->getNote();
+        }
+
+        return round($totalNotes / $avisRecus->count(), 1);
+    }
 }
