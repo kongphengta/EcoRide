@@ -52,12 +52,10 @@ Encore
         config.useBuiltIns = 'usage';
         config.corejs = '3.38';
     })
-
     .copyFiles({
-        from: './assets/images', // Le dossier source
-        // to: 'images/[path][name].[hash:8].[ext]', // Optionnel: pour garder le sous-dossier 'images' dans build/
-        // pattern: /\.(png|jpg|jpeg|gif|svg)$/ // Optionnel: pour ne copier que certains types
-    });
+       from: './assets/images',
+        to: 'images/[path][name].[ext]'
+    })
 
     // enables Sass/SCSS support
     //.enableSassLoader()
