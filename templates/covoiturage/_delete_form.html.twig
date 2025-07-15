@@ -1,0 +1,6 @@
+<form method="post" action="{{ path('app_covoiturage_delete', {'id': covoiturage.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette annonce ? Cette action est irréversible.');" style="display: inline-block;">
+	<input type="hidden" name="_token" value="{{ csrf_token('delete' ~ covoiturage.id) }}">
+	<button class="btn btn-sm btn-danger">
+		<i class="bi bi-trash"></i>
+		Supprimer</button>
+</form>

@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\Role;
 use App\Entity\User;
 use App\Form\ProfileFormType;
 use App\Form\ChangePasswordFormType;
@@ -118,14 +119,19 @@ class ProfileController extends AbstractController
 
         // Sécurité : Vérifier le token CSRF
         if ($this->isCsrfTokenValid('become_driver' . $user->getId(), $request->request->get('_token'))) {
+            // La méthode getRoles() mise à jour fonctionne toujours ici
             if (!in_array('ROLE_CHAUFFEUR', $user->getRoles(), true)) {
-                $roles = $user->getRoles();
-                $roles[] = 'ROLE_CHAUFFEUR';
-                $user->setRoles(array_unique($roles));
+                // Récupérer le rôle "Chauffeur" depuis la base de données
+                $roleChauffeur = $entityManager->getRepository(Role::class)->findOneBy(['libelle' => 'ROLE_CHAUFFEUR']);
 
-                $entityManager->flush();
-
-                $this->addFlash('success', 'Félicitations ! Vous êtes maintenant enregistré comme chauffeur.');
+                if ($roleChauffeur) {
+                    $user->addEcoRideRole($roleChauffeur);
+                    $entityManager->flush();
+                    $this->addFlash('success', 'Félicitations ! Vous êtes maintenant enregistré comme chauffeur.');
+                } else {
+                    // Gérer le cas où le rôle n'existe pas, ce qui serait une erreur de configuration
+                    $this->addFlash('danger', 'Une erreur de configuration est survenue. Le rôle chauffeur est introuvable.');
+                }
             } else {
                 $this->addFlash('info', 'Vous êtes déjà un chauffeur.');
             }

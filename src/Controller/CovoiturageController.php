@@ -6,6 +6,7 @@ namespace App\Controller;
 use App\Entity\Covoiturage;
 use App\Form\CovoiturageType;
 use App\Repository\VoitureRepository;
+use App\Repository\CovoiturageRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,7 +18,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 class CovoiturageController extends AbstractController
 {
     #[Route('/', name: 'app_covoiturage_index', methods: ['GET'])]
-    public function index(Request $request, EntityManagerInterface $entityManager): Response
+    public function index(Request $request, CovoiturageRepository $covoiturageRepository): Response
     {
         $depart = $request->query->get('depart');
         $arrivee = $request->query->get('arrivee');
@@ -35,19 +36,14 @@ class CovoiturageController extends AbstractController
             ['label' => 'Accueil', 'url' => $this->generateUrl('app_home')],
             ['label' => 'Covoiturages', 'url' => $this->generateUrl('app_covoiturage_index')],
         ];
-        $covoiturageRepository = $entityManager->getRepository(Covoiturage::class);
 
-        // if ($depart && $arrivee && $date) { // Condition trop restrictive
-        if ($depart || $arrivee || $date) { // Si au moins un critère est fourni
-            // Assurez-vous que la méthode s'appelle bien searchCovoiturages et qu'elle existe dans votre Repository
-            // J'utilise 'searchCovoiturages' comme dans ma suggestion précédente. Si c'est 'searchCovoiturage', ajustez.
+        // Si au moins un critère de recherche est fourni, on utilise la méthode de recherche.
+        if ($depart || $arrivee || $date) {
             $covoiturages = $covoiturageRepository->searchCovoiturages($depart, $arrivee, $date);
             $breadcrumb[] = ['label' => 'Résultats de recherche', 'url' => $this->generateUrl('app_covoiturage_index', $request->query->all())];
         } else {
-            // Si aucun critère n'est fourni, récupérer tous les covoiturages, triés par date de départ
-            // $covoiturages = $covoiturageRepository->findAll(['dateDepart' => 'ASC']); // findAll n'accepte pas de paramètres de tri comme ça
-            $covoiturages = $covoiturageRepository->findBy([], ['dateDepart' => 'ASC']);
-            // $breadcrumb[] = ['label' => 'Tous les covoiturages', 'url' => $this->generateUrl('app_covoiturage_index')]; // Optionnel, déjà dans le breadcrumb initial
+            // si non, on affiche tous les covoiturages à venir, triés par date.
+            $covoiturages = $covoiturageRepository->findUpcoming('ASC');
         }
         return $this->render('covoiturage/index.html.twig', [
             'breadcrumb' => $breadcrumb,
@@ -137,7 +133,7 @@ class CovoiturageController extends AbstractController
             return $this->redirectToRoute('app_profile_my_covoiturages', [], Response::HTTP_SEE_OTHER);
         }
 
-        return $this->render('covoiturage/edit.covoiturage.html.twig', [
+        return $this->render('covoiturage/edit.html.twig', [
             'covoiturage' => $covoiturage,
             'covoiturageForm' => $form->createView(),
         ]);

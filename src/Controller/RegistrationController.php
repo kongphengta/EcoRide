@@ -6,13 +6,11 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Form\RegistrationFormType;
 use App\Form\ProfileFormType;
+use App\Service\EmailService;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\Mime\Address;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -35,7 +33,7 @@ class RegistrationController extends AbstractController
         Request $request,
         UserPasswordHasherInterface $userPasswordHasher,
         EntityManagerInterface $entityManager,
-        MailerInterface $mailer,
+        EmailService $emailService,
         TokenGeneratorInterface $tokenGenerator,
         UrlGeneratorInterface $urlGenerator // renommé pour clarté
     ): Response {
@@ -72,35 +70,13 @@ class RegistrationController extends AbstractController
                 UrlGeneratorInterface::ABSOLUTE_URL // Important pour l'email
             );
 
+            // Utilisation du service d'email
+            $emailSent = $emailService->sendVerificationEmail($user, $verificationUrl);
 
-            $verificationEmail = (new TemplatedEmail())
-                ->from(new Address($this->getParameter('app.mailer_from'), $this->getParameter('app.mailer_from_name')))
-                ->to($user->getEmail())
-                ->subject('Confirmez votre adresse e-mail pour EcoRide')
-                ->htmlTemplate('emails/registration_verification.html.twig') // Chemin vers le template Twig
-                ->context([
-                    'user' => $user,
-                    'verificationUrl' => $verificationUrl,
-                ]);
-
-            try {
-                $mailer->send($verificationEmail);
+            if ($emailSent) {
                 $this->addFlash('success', 'Inscription réussie ! Un email de vérification vous a été envoyé. Veuillez consulter votre boîte de réception pour activer votre compte.');
-            } catch (\Symfony\Component\Mailer\Exception\TransportExceptionInterface $e) {
-                // Log l'erreur exacte !
-                $this->logger->error('Erreur de transport lors de l\'envoi de l\'email de vérification: ' . $e->getMessage(), [
-                    'exception' => $e,
-                    'user_email' => $user->getEmail()
-                ]);
-                // $logger->error('Erreur envoi email vérification: '.$e->getMessage());
-                $this->addFlash('warning', 'Inscription réussie, mais l\'email de vérification n\'a pas pu être envoyé. Contactez l\'administrateur si le problème persiste');
-            } catch (\Exception $e) {
-                // Log l'erreur générale
-                $this->logger->error('Erreur lors de l\'envoi de l\'email de vérification: ' . $e->getMessage(), [
-                    'exception' => $e,
-                    'user_email' => $user->getEmail()
-                ]);
-                $this->addFlash('warning', 'Inscription réussie, mais une erreur technique a empêché l\'envoi de l\'email de vérification. Veuillez contacter l\'administrateur.');
+            } else {
+                $this->addFlash('warning', 'Inscription réussie, mais une erreur technique a empêché l\'envoi de l\'email de vérification. Veuillez contacter un administrateur.');
             }
             // Rediriger vers la page de succès d'inscription
             return $this->redirectToRoute('app_login');
@@ -120,7 +96,7 @@ class RegistrationController extends AbstractController
     ): Response {
         $userRepository = $entityManager->getRepository(User::class);
         /** @var User|null $user */
-        $user = $userRepository->findOneBy(['id' => $id, 'verification_token' => $token]);
+        $user = $userRepository->findOneBy(['id' => $id, 'verificationToken' => $token]);
 
         // Vérifier si l'utilisateur existe et si le token correspond
         if (null === $user) {

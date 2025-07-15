@@ -2,17 +2,15 @@
 
 namespace App\Controller;
 
-use App\Form\ResetPasswordFormType;
 use App\Form\ResetPasswordRequestFormType;
-use Psr\Log\LoggerInterface;
+use App\Form\ResetPasswordFormType;
 use App\Repository\UserRepository;
+use App\Service\EmailService;
+use Psr\Log\LoggerInterface;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bridge\Twig\Mime\TemplatedEmail;
-use Symfony\Component\Mime\Address;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Security\Csrf\TokenGenerator\TokenGeneratorInterface;
@@ -23,7 +21,7 @@ class ResetPasswordController extends AbstractController
     public function request(
         Request $request,
         UserRepository $userRepository,
-        MailerInterface $mailer,
+        EmailService $emailService,
         TokenGeneratorInterface $tokenGenerator,
         EntityManagerInterface $entityManager,
         LoggerInterface $logger
@@ -42,26 +40,12 @@ class ResetPasswordController extends AbstractController
                 $entityManager->persist($user);
                 $entityManager->flush();
 
-                try {
-                    $logger->debug('Tentative d\'envoi de l\'e-mail', ['channel' => 'mailer']);
-
-                    $email = (new TemplatedEmail())
-                        ->from(new Address(
-                            $this->getParameter('app.mailer_from'),
-                            $this->getParameter('app.mailer_from_name')
-                        ))
-                        ->to($user->getEmail())
-                        ->subject('Votre demande de réinitialisation de mot de passe')
-                        ->htmlTemplate('emails/reset_password.html.twig')
-                        ->context([
-                            'resetToken' => $token,
-                            'tokenLifetimeInMinutes' => $this->getParameter('app.reset_password_token_lifetime') / 60,
-                        ]);
-
-                    $mailer->send($email);
-                } catch (\Exception $e) {
-                    $logger->error('Erreur lors de l\'envoi de l\'e-mail : ' . $e->getMessage(), ['channel' => 'mailer']);
-                }
+                // Utilisation du service d'email
+                $emailService->sendPasswordResetEmail(
+                    $user,
+                    $token,
+                    $this->getParameter('app.reset_password_token_lifetime') / 60
+                );
             }
 
             $this->addFlash('success', 'Si un compte correspond à votre adresse e-mail, un lien pour réinitialiser votre mot de passe vous a été envoyé.');

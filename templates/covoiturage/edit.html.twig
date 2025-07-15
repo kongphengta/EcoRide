@@ -1,0 +1,34 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier le Covoiturage
+{% endblock %}
+
+{% block body %}
+	<div class="container my-5">
+		<h1>Modifier mon annonce de covoiturage</h1>
+
+		{# Affiche le formulaire de modification du covoiturage #}
+		{{ form_start(covoiturageForm) }}
+		{{ form_widget(covoiturageForm) }}
+		<div class="d-flex justify-content-between align-items-center mt-4">
+			<button type="submit" class="btn btn-primary">
+				<i class="bi bi-save me-2"></i>Mettre à jour
+			</button>
+
+			{# Lien pour revenir en arrière #}
+			<a href="{{ path('app_profile_my_covoiturages') }}" class="btn btn-secondary">
+				<i class="bi bi-arrow-left"></i>
+				Retour à mes covoiturages
+			</a>
+		</div>
+		{{ form_end(covoiturageForm) }}
+
+		<hr
+		class="my-4">
+
+		{# Formulaire séparé pour la suppression, pour la sécurité (CSRF) #}
+		<h2 class="h4 mt-4 text-danger">Supprimer l'annonce</h2>
+		<p>Cette action est irréversible.</p>
+		{{ include('covoiturage/_delete_form.html.twig') }}
+	</div>
+{% endblock %}

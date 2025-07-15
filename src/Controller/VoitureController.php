@@ -11,24 +11,17 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted; // Pour la sécurité
 
-// #[Route('/voiture')]
+#[Route('/voiture')]
 class VoitureController extends AbstractController
 {
-    #[Route('/voiture', name: 'app_voiture_index', methods: ['GET'])]
+    #[Route('', name: 'app_voiture_index', methods: ['GET'])]
     #[IsGranted('ROLE_USER')] // seul un utilisateur connecté peut voir ses voitures
     public function index(EntityManagerInterface $entityManager): Response
     {
-        // Récupérer l'utilisateur connecté
-        $user = $this->getUser();
-        if (!$user) {
-            // Gérer le cas où l'utilisateur n'est pas connecté, bien que IsGranted devrait le faire
-            return $this->redirectToRoute('app_login');
-        }
-
         // Récupérer les voitures de l'utilisateur connecté
         $voitures = $entityManager
             ->getRepository(Voiture::class)
-            ->findBy(['proprietaire' => $user]);
+            ->findBy(['proprietaire' => $this->getUser()]);
 
         return $this->render('voiture/index.html.twig', [
             'controller_name' => 'VoitureController',
@@ -41,15 +34,7 @@ class VoitureController extends AbstractController
     public function ajouterVoiture(Request $request, EntityManagerInterface $entityManager): Response
     {
         $voiture = new Voiture();
-        // Récupérer l'utilisateur connecté
-        $user = $this->getUser();
-        if (!$user) {
-            // Rediriger vers la page de connexion si l'utilisateur n'est pas connecté
-            // Normalement, IsGranted s'en charge, mais c'est une double sécurité.
-            $this->addFlash('warning', 'Vous devez être connecté pour ajouter une voiture.');
-            return $this->redirectToRoute('app_login');
-        }
-        $voiture->setProprietaire($user); // Associer la voiture à l'utilisateur connecté
+        $voiture->setProprietaire($this->getUser()); // Associer la voiture à l'utilisateur connecté
 
         $form = $this->createForm(VoitureType::class, $voiture);
         $form->handleRequest($request);
@@ -69,5 +54,47 @@ class VoitureController extends AbstractController
         ]);
     }
 
-    // Ajouter ici des méthodes pour voir les détails d'une voiture, la modifier, la supprimer.
+    #[Route('/{id}/modifier', name: 'app_voiture_modifier', methods: ['GET', 'POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function modifierVoiture(Request $request, Voiture $voiture, EntityManagerInterface $entityManager): Response
+    {
+        // Sécurité : Vérifier que l'utilisateur connecté est bien le propriétaire de la voiture
+        if ($this->getUser() !== $voiture->getProprietaire()) {
+            throw $this->createAccessDeniedException('Vous n\'êtes pas autorisé à modifier cette voiture.');
+        }
+
+        $form = $this->createForm(VoitureType::class, $voiture);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Les informations de votre voiture ont été mises à jour.');
+
+            return $this->redirectToRoute('app_voiture_index', [], Response::HTTP_SEE_OTHER);
+        }
+
+        return $this->render('voiture/edit.html.twig', [
+            'voiture' => $voiture,
+            'form' => $form->createView(),
+        ]);
+    }
+
+    #[Route('/{id}', name: 'app_voiture_supprimer', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function supprimerVoiture(Request $request, Voiture $voiture, EntityManagerInterface $entityManager): Response
+    {
+        // Sécurité : Vérifier que l'utilisateur connecté est bien le propriétaire de la voiture
+        if ($this->getUser() !== $voiture->getProprietaire()) {
+            throw $this->createAccessDeniedException('Vous n\'êtes pas autorisé à supprimer cette voiture.');
+        }
+
+        if ($this->isCsrfTokenValid('delete' . $voiture->getId(), $request->request->get('_token'))) {
+            $entityManager->remove($voiture);
+            $entityManager->flush();
+            $this->addFlash('success', 'Votre voiture a été supprimée.');
+        }
+
+        return $this->redirectToRoute('app_voiture_index', [], Response::HTTP_SEE_OTHER);
+    }
 }

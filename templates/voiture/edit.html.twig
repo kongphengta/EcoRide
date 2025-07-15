@@ -1,13 +1,13 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Ajouter une nouvelle voiture
+{% block title %}Modifier ma voiture
 {% endblock %}
 
 {% block body %}
 	<div class="container mt-4">
-		<h1>Ajouter une nouvelle voiture</h1>
+		<h1>Modifier ma voiture</h1>
 
-		{{ include('voiture/_form.html.twig') }}
+		{{ include('voiture/_form.html.twig', {'button_label': 'Mettre à jour'}) }}
 
 		<a href="{{ path('app_voiture_index') }}" class="btn btn-secondary mt-3">Retour à la liste</a>
 	</div>

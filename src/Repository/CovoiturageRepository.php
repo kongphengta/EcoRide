@@ -51,19 +51,30 @@ class CovoiturageRepository extends ServiceEntityRepository
                 ->setParameter('dateFin', $dateFin);
         }
 
-        // Optionnel: Filtrer uniquement les covoiturages qui ne sont pas "Annulé" ou "Terminé"
-        // et dont la date de départ est future ou aujourd'hui
+        // On ne motre que les covoiturages qui sont "proposés" et dont la date n'est pas passée.
         $qb->andWhere('c.statut NOT IN (:excluded_statuts)')
-            ->setParameter('excluded_statuts', ['Annulé', 'Terminé', 'Passé']); // Ajoutez 'Passé' si vous avez un tel statut
+            ->setParameter('excluded_statuts', ['Annulé', 'Terminé', 'Passé']);
 
-        // $qb->andWhere('c.dateDepart >= :today') // S'assurer que la date de départ est aujourd'hui ou future
-        // ->setParameter('today', (new \DateTimeImmutable('today'))->setTime(0,0,0) );
-
+        $qb->andWhere('c.dateDepart >= :today') // S'assurer que la date de départ est aujourd'hui ou future.
+            ->setParameter('today', (new \DateTimeImmutable('today'))->setTime(0, 0, 0));
 
         // Trier par date de départ la plus proche
         $qb->orderBy('c.dateDepart', 'ASC')
             ->addOrderBy('c.heureDepart', 'ASC');
 
         return $qb->getQuery()->getResult();
+    }
+    /**
+     * @return Covoiturage[] Returns an array of upcoming Covoiturage objects
+     */
+    public function findUpcoming(string $order = 'ASC'): array
+    {
+        return $this->createQueryBuilder('c')
+            ->andWhere('c.dateDepart >= :today')
+            ->setParameter('today', new \DateTime('today'))
+            ->orderBy('c.dateDepart', $order)
+            ->addOrderBy('c.heureDepart', $order)
+            ->getQuery()
+            ->getResult();
     }
 }

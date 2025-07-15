@@ -30,12 +30,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $email = null;
 
     /**
-     * @var list<string> The user roles
-     */
-    #[ORM\Column]
-    private array $roles = [];
-
-    /**
      * @var string The hashed password
      */
     #[ORM\Column]
@@ -68,8 +62,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     // Champ rempli dans la 2ème étape (Profil), donc nullable
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
-    #[Assert\Type("\DateTimeInterface", message: "La date de naissance doit être une date valide.")] // Ajouté
-    private ?\DateTimeInterface $date_naissance = null;
+    #[Assert\Type("\DateTimeInterface", message: "La date de naissance doit être une date valide.")]
+    private ?\DateTimeInterface $dateNaissance = null;
 
     // le nom du fichier de la photo de profil, nullable
     #[ORM\Column(length: 255, nullable: true)]
@@ -86,18 +80,18 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     // Initialisé dans le constructeur
     #[ORM\Column(type: Types::DATETIME_MUTABLE)]
-    private ?\DateTimeInterface $date_inscription = null;
+    private ?\DateTimeInterface $dateInscription = null;
 
     // --- Champs pour la vérification d'email ---
     #[ORM\Column(type: 'boolean')]
-    private bool $is_verified = false;
+    private bool $isVerified = false;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    private ?string $verification_token = null;
+    private ?string $verificationToken = null;
 
     // --- Champ pour l'état de complétion du profil --- 
     #[ORM\Column(type: 'boolean')]
-    private bool $is_profile_complete = false; // Initialisé à false par défaut
+    private bool $isProfileComplete = false; // Initialisé à false par défaut
 
     /**
      * @var Collection<int, Covoiturage>
@@ -141,7 +135,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->avisDonnes = new ArrayCollection();
         $this->avisRecus = new ArrayCollection();
         // Initialiser la date d'inscription lors de la création de l'objet
-        $this->date_inscription = new \DateTime();
+        $this->dateInscription = new \DateTime();
     }
 
     public function getId(): ?int
@@ -178,22 +172,20 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function getRoles(): array
     {
-        $roles = $this->roles;
-        // Guarantie que chaque utilisateur a au moins le rôle ROLE_USER
+        // Récupérer les rôles depuis la collection d'entités Role
+        $roles = $this->ecoRideRoles->map(function ($role) {
+            return $role->getLibelle();
+        })->toArray();
+
+        // Garantir que chaque utilisateur a au moins le rôle ROLE_USER
         $roles[] = 'ROLE_USER';
 
         return array_unique($roles);
     }
 
-    /**
-     * @param list<string> $roles
-     */
-    public function setRoles(array $roles): static
-    {
-        $this->roles = $roles;
-
-        return $this;
-    }
+    // La méthode setRoles n'est plus nécessaire, car les rôles sont gérés
+    // via les méthodes addEcoRideRole() and removeEcoRideRole().
+    // On la supprime pour éviter toute confusion.
 
     /**
      * @see PasswordAuthenticatedUserInterface
@@ -290,12 +282,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getDateNaissance(): ?\DateTimeInterface
     {
-        return $this->date_naissance;
+        return $this->dateNaissance;
     }
 
-    public function setDateNaissance(\DateTimeInterface $date_naissance): static
+    public function setDateNaissance(\DateTimeInterface $dateNaissance): static
     {
-        $this->date_naissance = $date_naissance;
+        $this->dateNaissance = $dateNaissance;
 
         return $this;
     }
@@ -338,23 +330,23 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getDateInscription(): ?\DateTimeInterface
     {
-        return $this->date_inscription;
+        return $this->dateInscription;
     }
 
-    public function setDateInscription(\DateTimeInterface $date_inscription): static
+    public function setDateInscription(\DateTimeInterface $dateInscription): static
     {
-        $this->date_inscription = $date_inscription;
+        $this->dateInscription = $dateInscription;
 
         return $this;
     }
     public function isVerified(): bool
     {
-        return $this->is_verified;
+        return $this->isVerified;
     }
 
-    public function setIsVerified(bool $is_verified): self
+    public function setIsVerified(bool $isVerified): self
     {
-        $this->is_verified = $is_verified;
+        $this->isVerified = $isVerified;
         return $this;
     }
 
@@ -362,24 +354,24 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function isProfileComplete(): bool
     {
-        return $this->is_profile_complete;
+        return $this->isProfileComplete;
     }
 
-    public function setIsProfileComplete(bool $is_profile_complete): self
+    public function setIsProfileComplete(bool $isProfileComplete): self
     {
-        $this->is_profile_complete = $is_profile_complete;
+        $this->isProfileComplete = $isProfileComplete;
         return $this;
     }
 
 
     public function getVerificationToken(): ?string
     {
-        return $this->verification_token;
+        return $this->verificationToken;
     }
 
-    public function setVerificationToken(?string $verification_token): self
+    public function setVerificationToken(?string $verificationToken): self
     {
-        $this->verification_token = $verification_token;
+        $this->verificationToken = $verificationToken;
         return $this;
     }
 
