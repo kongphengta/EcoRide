@@ -2,141 +2,165 @@
 
 namespace App\Controller;
 
-use App\Entity\Role;
-use App\Entity\User;
-use App\Form\ProfileFormType;
 use App\Form\ChangePasswordFormType;
+use App\Form\ProfileFormType;
+use App\Service\FileUploader;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Repository\CovoiturageRepository;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Psr\Log\LoggerInterface;
 
 #[Route('/profil')]
-#[IsGranted('ROLE_USER')] // Sécurise toutes les routes de ce contrôleur
+#[IsGranted('ROLE_USER')]
 class ProfileController extends AbstractController
 {
-    /**
-     * Affiche la page principale du profil de l'utilisateur.
-     */
-    #[Route('', name: 'app_profile')]
-    public function index(): Response
-    {
-        // Le getUser() récupère l'utilisateur actuellement connecté
-        return $this->render('profile/index.html.twig', [
-            'user' => $this->getUser(),
-        ]);
-    }
-
-    /**
-     * Permet à l'utilisateur de modifier ses informations personnelles.
-     */
-    #[Route('/modifier', name: 'app_profile_edit')]
-    public function edit(Request $request, EntityManagerInterface $entityManager): Response
-    {
-        /** @var User $user */
-        $user = $this->getUser();
-
-        // Nous réutilisons ProfileFormType qui sert aussi à compléter le profil
-        $form = $this->createForm(ProfileFormType::class, $user);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->flush();
-
-            $this->addFlash('success', 'Vos informations ont été mises à jour avec succès.');
-
-            return $this->redirectToRoute('app_profile', [], Response::HTTP_SEE_OTHER);
-        }
-
-        return $this->render('profile/edit.html.twig', [
-            'user' => $user,
-            'profileForm' => $form->createView(),
-        ]);
-    }
-
-    /**
-     * Permet à l'utilisateur de changer son mot de passe.
-     */
-    #[Route('/changer-mot-de-passe', name: 'app_profile_change_password')]
-    public function changePassword(Request $request, UserPasswordHasherInterface $passwordHasher, EntityManagerInterface $entityManager): Response
-    {
-        /** @var User $user */
-        $user = $this->getUser();
-
-        // Nous supposons l'existence d'un ChangePasswordFormType
-        // Si ce n'est pas le cas, il faudra le créer.
-        // Il devrait contenir les champs : currentPassword, et newPassword (repeated)
-        $form = $this->createForm(ChangePasswordFormType::class);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $newPassword = $form->get('newPassword')->getData();
-
-            // Hasher et définir le nouveau mot de passe
-            $user->setPassword(
-                $passwordHasher->hashPassword($user, $newPassword)
-            );
-            $entityManager->flush();
-
-            $this->addFlash('success', 'Votre mot de passe a été changé avec succès.');
-
-            return $this->redirectToRoute('app_profile', [], Response::HTTP_SEE_OTHER);
-        }
-
-        return $this->render('profile/change_password.html.twig', [
-            'changePasswordForm' => $form->createView(),
-        ]);
-    }
-
-    /**
-     * Affiche les covoiturages proposés par l'utilisateur.
-     */
     #[Route('/mes-covoiturages', name: 'app_profile_my_covoiturages')]
-    public function myCovoiturages(): Response
+    public function myCovoiturages(CovoiturageRepository $covoiturageRepository): Response
     {
-        /** @var User $user */
+        /** @var \App\Entity\User $user */
         $user = $this->getUser();
 
-        // La relation $user->covoiturages est définie dans l'entité User
-        $covoiturages = $user->getCovoiturages();
+        // Récupérer les covoiturages où l'utilisateur est le chauffeur
+        $covoiturages = $covoiturageRepository->findBy(
+            ['chauffeur' => $user],
+            ['dateDepart' => 'DESC'] // Trier par date de départ, les plus récents en premier
+        );
 
         return $this->render('profile/my_covoiturages.html.twig', [
             'covoiturages' => $covoiturages,
         ]);
     }
 
-    /**
-     * Permet à un utilisateur de devenir chauffeur.
-     */
-    #[Route('/devenir-chauffeur', name: 'app_profile_become_driver', methods: ['POST'])]
-    public function becomeDriver(Request $request, EntityManagerInterface $entityManager): Response
+    #[Route('/', name: 'app_profile')]
+    public function index(): Response
     {
-        /** @var User $user */
+        return $this->render('profile/profile.html.twig', [
+            'user' => $this->getUser(),
+            'changePasswordForm' => $this->createForm(ChangePasswordFormType::class)->createView(),  // ← AJOUTER CETTE LIGNE
+        ]);
+    }
+
+    #[Route('/edit', name: 'app_profile_edit')]
+    public function edit(Request $request, EntityManagerInterface $entityManager, FileUploader $fileUploader, LoggerInterface $logger): Response
+    {
+        /** @var \App\Entity\User $user */
         $user = $this->getUser();
+        $logger->info("ProfileController: DEBUT edit()", ['userId' => $user->getId(), 'method' => $request->getMethod()]);
 
-        // Sécurité : Vérifier le token CSRF
-        if ($this->isCsrfTokenValid('become_driver' . $user->getId(), $request->request->get('_token'))) {
-            // La méthode getRoles() mise à jour fonctionne toujours ici
-            if (!in_array('ROLE_CHAUFFEUR', $user->getRoles(), true)) {
-                // Récupérer le rôle "Chauffeur" depuis la base de données
-                $roleChauffeur = $entityManager->getRepository(Role::class)->findOneBy(['libelle' => 'ROLE_CHAUFFEUR']);
+        $form = $this->createForm(ProfileFormType::class, $user);
+        $form->handleRequest($request);
 
-                if ($roleChauffeur) {
-                    $user->addEcoRideRole($roleChauffeur);
-                    $entityManager->flush();
-                    $this->addFlash('success', 'Félicitations ! Vous êtes maintenant enregistré comme chauffeur.');
-                } else {
-                    // Gérer le cas où le rôle n'existe pas, ce qui serait une erreur de configuration
-                    $this->addFlash('danger', 'Une erreur de configuration est survenue. Le rôle chauffeur est introuvable.');
+        $logger->info("ProfileController: Après handleRequest", [
+            'isSubmitted' => $form->isSubmitted(),
+            'isValid' => $form->isSubmitted() ? $form->isValid() : 'N/A'
+        ]);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $logger->info("ProfileController: Formulaire soumis et valide");
+
+            // Gérer l'upload de la photo
+            $photoFile = $form->get('photoFile')->getData();
+
+            $logger->info("ProfileController: PhotoFile récupéré", [
+                'hasFile' => $photoFile !== null,
+                'filename' => $photoFile ? $photoFile->getClientOriginalName() : 'N/A',
+                'size' => $photoFile ? $photoFile->getSize() : 'N/A'
+            ]);
+
+            if ($photoFile) {
+                try {
+                    $newFilename = $fileUploader->upload($photoFile);
+                    $logger->info("ProfileController: Upload réussi", ['newFilename' => $newFilename]);
+
+                    $user->setPhoto($newFilename);
+                    $logger->info("ProfileController: Photo définie sur user", [
+                        'photo' => $user->getPhoto(),
+                        'userId' => $user->getId()
+                    ]);
+                } catch (\Exception $e) {
+                    $logger->error("ProfileController: Erreur upload", ['error' => $e->getMessage()]);
+                    $this->addFlash('error', 'Erreur lors de l\'upload de la photo: ' . $e->getMessage());
+                    return $this->redirectToRoute('app_profile_edit');
                 }
             } else {
-                $this->addFlash('info', 'Vous êtes déjà un chauffeur.');
+                $logger->info("ProfileController: Pas de fichier photo uploadé");
+            }
+
+            $logger->info("ProfileController: Avant flush", [
+                'userPhoto' => $user->getPhoto(),
+                'userId' => $user->getId(),
+                'userEmail' => $user->getEmail()
+            ]);
+
+            $entityManager->flush();
+
+            $logger->info("ProfileController: Après flush - Vérification immédiate", ['userPhoto' => $user->getPhoto()]);
+
+            $this->addFlash('success', 'Profil mis à jour avec succès !');
+            return $this->redirectToRoute('app_profile');
+        } else {
+            if ($form->isSubmitted()) {
+                $logger->warning("ProfileController: Formulaire soumis mais INVALIDE");
+                foreach ($form->getErrors(true) as $error) {
+                    $logger->warning("ProfileController: Erreur formulaire", ['error' => $error->getMessage()]);
+                }
+            } else {
+                $logger->info("ProfileController: Formulaire PAS soumis - affichage initial");
             }
         }
 
+        $logger->info("ProfileController: FIN edit() - Affichage template", ['userId' => $user->getId()]);
+        return $this->render('profile/edit_profile.html.twig', [
+            'form' => $form->createView(),
+            'user' => $user,
+        ]);
+    }
+    #[Route('/change-password', name: 'change_password')]
+    #[IsGranted('ROLE_USER')]
+    public function changePassword(Request $request, UserPasswordHasherInterface $passwordHasher, EntityManagerInterface $entityManager): Response
+    {
+        /** @var \App\Entity\User $user */
+        $user = $this->getUser();
+        if (!$user) {
+            throw $this->createAccessDeniedException('Utilisateur non connecté.');
+        }
+        $form = $this->createForm(ChangePasswordFormType::class);
+
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $newPassword = $form->get('newPassword')->getData();
+            $hashedPassword = $passwordHasher->hashPassword($user, $newPassword);
+            $user->setPassword($hashedPassword);
+
+            $entityManager->flush();
+            $this->addFlash('success', 'Mot de passe modifié avec succès !');
+
+            return $this->redirectToRoute('app_profile');
+        }
+
+        return $this->render('profile/change_password.html.twig', [
+            'form' => $form->createView(),
+        ]);
+    }
+    #[Route('/devenir-chauffeur', name: 'app_profile_become_driver')]
+    public function becomeDriver(EntityManagerInterface $entityManager): Response
+    {
+        /** @var \App\Entity\User $user */
+        $user = $this->getUser();
+        if (!$user) {
+            throw $this->createAccessDeniedException('Utilisateur non connecté.');
+        }
+
+        $user->setIsChauffeur(true); // Assurez-vous que le champ existe dans l'entité User
+        $entityManager->flush();
+
+        $this->addFlash('success', 'Vous êtes maintenant chauffeur !');
         return $this->redirectToRoute('app_profile');
     }
 }

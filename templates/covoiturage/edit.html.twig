@@ -26,9 +26,17 @@
 		<hr
 		class="my-4">
 
-		{# Formulaire séparé pour la suppression, pour la sécurité (CSRF) #}
-		<h2 class="h4 mt-4 text-danger">Supprimer l'annonce</h2>
-		<p>Cette action est irréversible.</p>
-		{{ include('covoiturage/_delete_form.html.twig') }}
+		{# Zone de danger pour l'annulation #}
+		<h2 class="h4 mt-4 text-danger">Zone de danger</h2>
+		<p>L'annulation d'un trajet est définitive et notifiera tous les passagers ayant réservé.</p>
+
+		{% if covoiturage.statut in ['Proposé', 'Confirmé', 'Complet'] %}
+			<form method="post" action="{{ path('app_covoiturage_cancel', {'id': covoiturage.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir annuler ce trajet ? Toutes les réservations seront également annulées.');">
+				<input type="hidden" name="_token" value="{{ csrf_token('cancel_covoiturage' ~ covoiturage.id) }}">
+				<button class="btn btn-danger">
+					<i class="bi bi-x-octagon-fill me-2"></i>Annuler ce covoiturage
+				</button>
+			</form>
+		{% endif %}
 	</div>
 {% endblock %}

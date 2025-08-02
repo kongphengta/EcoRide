@@ -1,0 +1,38 @@
+<div class="card covoiturage-card mb-4 shadow-sm">
+	<div class="card-body">
+		<div class="row align-items-center">
+			<div class="col-md-8">
+				<div
+					class="d-flex align-items-center mb-3">
+					<!-- Avatar temporaire avec initiales -->
+					<div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 50px; height: 50px; font-weight: bold;">
+						{{ covoiturage.chauffeur.pseudo|slice(0, 2)|upper }}
+					</div>
+					<div>
+						<h5 class="card-title mb-0">
+							<a href="{{ path('app_covoiturage_show', {'id': covoiturage.id}) }}" class="text-decoration-none stretched-link">
+								{{ covoiturage.lieuDepart }}
+								&rarr;
+								{{ covoiturage.lieuArrivee }}
+							</a>
+						</h5>
+						<small class="text-muted">Proposé par
+							{{ covoiturage.chauffeur.pseudo }}</small>
+					</div>
+				</div>
+				<p class="card-text mb-0">
+					<i class="bi bi-calendar-event"></i>
+					{{ covoiturage.dateDepart|date('d/m/Y') }}
+					à
+					{{ covoiturage.heureDepart }}
+				</p>
+			</div>
+			<div class="col-md-4 text-md-end mt-3 mt-md-0">
+				<h4 class="text-success fw-bold mb-1">{{ covoiturage.prixPersonne|number_format(2, ',', ' ') }}
+					€</h4>
+				<p class="text-info fw-bold mb-0">{{ covoiturage.nbPlaceRestantes }}
+					place(s) restante(s)</p>
+			</div>
+		</div>
+	</div>
+</div>

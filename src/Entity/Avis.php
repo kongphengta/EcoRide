@@ -35,6 +35,22 @@ class Avis
     #[ORM\JoinColumn(nullable: false)]
     private ?User $receveur = null;
 
+    #[ORM\OneToOne(inversedBy: 'avis', cascade: ['persist', 'remove'])]
+    #[ORM\JoinColumn(nullable: false)]
+    private ?Reservation $reservation = null;
+
+    public function getReservation(): ?Reservation
+    {
+        return $this->reservation;
+    }
+
+    public function setReservation(Reservation $reservation): static
+    {
+        $this->reservation = $reservation;
+
+        return $this;
+    }
+
     public function __construct()
     {
         // Initialisation de la date de création à l'instant présent

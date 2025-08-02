@@ -7,6 +7,7 @@ use App\Entity\User;
 use App\Form\RegistrationFormType;
 use App\Form\ProfileFormType;
 use App\Service\EmailService;
+use App\Service\FileUploader;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -52,6 +53,9 @@ class RegistrationController extends AbstractController
 
             $user->setIsVerified(false);
             $user->setIsProfileComplete(false);
+
+            // US 7: Attribuer 20 crédits à l'inscription
+            $user->setCredits(20);
 
             // Hasher le mot de passe
             $user->setPassword(
@@ -122,9 +126,8 @@ class RegistrationController extends AbstractController
     }
 
     #[Route('/complete/profile', name: 'app_complete_profile')]
-
     #[IsGranted('IS_AUTHENTICATED_FULLY')]
-    public function completeProfile(Request $request, EntityManagerInterface $entityManager): Response
+    public function completeProfile(Request $request, EntityManagerInterface $entityManager, FileUploader $fileUploader, LoggerInterface $logger): Response
     {
         // --- Récupérer l'utilisateur connecté ---
         /** @var User|null $user */
@@ -145,8 +148,43 @@ class RegistrationController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $logger->info("CompleteProfile: Formulaire soumis et valide");
+
+            // Gérer l'upload de la photo (même logique que ProfileController)
+            $photoFile = $form->get('photoFile')->getData();
+
+            $logger->info("CompleteProfile: PhotoFile récupéré", [
+                'hasFile' => $photoFile !== null,
+                'filename' => $photoFile ? $photoFile->getClientOriginalName() : 'N/A'
+            ]);
+
+            if ($photoFile) {
+                try {
+                    $newFilename = $fileUploader->upload($photoFile);
+                    $logger->info("CompleteProfile: Upload réussi", ['newFilename' => $newFilename]);
+
+                    $user->setPhoto($newFilename);
+                    $logger->info("CompleteProfile: Photo définie sur user", [
+                        'photo' => $user->getPhoto(),
+                        'userId' => $user->getId()
+                    ]);
+                } catch (\Exception $e) {
+                    $logger->error("CompleteProfile: Erreur upload", ['error' => $e->getMessage()]);
+                    $this->addFlash('error', 'Erreur lors de l\'upload de la photo: ' . $e->getMessage());
+                    return $this->redirectToRoute('app_complete_profile');
+                }
+            }
+
             $user->setIsProfileComplete(true);
+
+            $logger->info("CompleteProfile: Avant flush", [
+                'userPhoto' => $user->getPhoto(),
+                'userId' => $user->getId()
+            ]);
+
             $entityManager->flush();
+
+            $logger->info("CompleteProfile: Après flush");
 
             $this->addFlash('success', 'Profil complété avec succès ! Vous pouvez maintenant utiliser toutes les fonctionnalités.');
 

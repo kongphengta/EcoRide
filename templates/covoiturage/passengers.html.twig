@@ -1,0 +1,78 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Passagers pour
+	{{ covoiturage.lieuDepart }}
+	-
+	{{ covoiturage.lieuArrivee }}
+{% endblock %}
+
+{% block body %}
+	<div class="container my-5">
+		<div class="d-flex justify-content-between align-items-center mb-4">
+			<div>
+				<h1>Passagers du trajet</h1>
+				<h5 class="text-muted">{{ covoiturage.lieuDepart }}
+					&rarr;
+					{{ covoiturage.lieuArrivee }}</h5>
+				<p class="text-muted">Le
+					{{ covoiturage.dateDepart|date('d/m/Y') }}
+					à
+					{{ covoiturage.heureDepart }}</p>
+			</div>
+			<a href="{{ path('app_profile_my_covoiturages') }}" class="btn btn-outline-secondary">
+				<i class="bi bi-arrow-left"></i>
+				Retour à mes covoiturages
+			</a>
+		</div>
+
+		{% if reservations is not empty %}
+			<div class="table-responsive">
+				<table class="table table-hover align-middle">
+					<thead class="table-light">
+						<tr>
+							<th>Passager</th>
+							<th>Date de réservation</th>
+							<th>Places réservées</th>
+							<th>Statut</th>
+							<th class="text-end">Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for reservation in reservations %}
+							<tr>
+								<td>
+									{# TODO: Lien vers le profil public du passager #}
+									{{ reservation.passager.pseudo }}
+								</td>
+								<td>{{ reservation.dateReservation|date('d/m/Y H:i') }}</td>
+								<td>{{ reservation.nbPlacesReservees }}</td>
+								<td>
+									<span class="badge bg-success">{{ reservation.statut }}</span>
+								</td>
+								<td class="text-end">
+									<a href="mailto:{{ reservation.passager.email }}" class="btn btn-sm btn-outline-primary me-2" title="Contacter par email">
+										<i class="bi bi-envelope"></i>
+									</a>
+									{# On ne peut annuler qu'une réservation confirmée #}
+									{% if reservation.statut == 'Confirmée' %}
+										<form method="post" action="{{ path('app_reservation_driver_cancel', {'id': reservation.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir annuler la réservation de ce passager ?');" class="d-inline">
+											<input type="hidden" name="_token" value="{{ csrf_token('driver_cancel' ~ reservation.id) }}">
+											<button class="btn btn-sm btn-outline-danger" title="Annuler la réservation">
+												<i class="bi bi-person-x-fill"></i>
+											</button>
+										</form>
+									{% endif %}
+								</td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		{% else %}
+			<div class="alert alert-info" role="alert">
+				<h4 class="alert-heading">Aucun passager pour le moment</h4>
+				<p>Personne n'a encore réservé de place pour ce trajet. Revenez consulter cette page plus tard.</p>
+			</div>
+		{% endif %}
+	</div>
+{% endblock %}

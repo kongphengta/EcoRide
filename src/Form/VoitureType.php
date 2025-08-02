@@ -13,6 +13,7 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 
 
 class VoitureType extends AbstractType
@@ -55,16 +56,18 @@ class VoitureType extends AbstractType
                 ]
             ])
 
-            ->add('energie', TextType::class, [
-                'label' => 'Type d\'énergie',
-                'attr' => [
-                    'placeholder' => 'Ex: Essence, Diesel, Électrique',
-                    'class' => 'form-control',
+            ->add('motorisation', ChoiceType::class, [
+                'label' => 'Motorisation',
+                'choices' => [
+                    'Essence' => 'Essence',
+                    'Diesel' => 'Diesel',
+                    'Électrique' => 'Électrique',
+                    'Hybride' => 'Hybride',
                 ],
+                'placeholder' => 'Choisissez une motorisation',
                 'constraints' => [
-                    new NotBlank(['message' => 'Veuillez préciser le type d\'énergie.']),
-                    new Length(['max' => 50, 'maxMessage' => 'Le type d\'énergie ne peut pas dépasser {{ limit }} caractères.']),
-                ],
+                    new NotBlank(['message' => 'Veuillez sélectionner la motorisation.']),
+                ]
             ])
             ->add('couleur', TextType::class, [
                 'label' => 'Couleur',
@@ -77,18 +80,14 @@ class VoitureType extends AbstractType
                     new Length(['max' => 50, 'maxMessage' => 'La couleur ne peut pas dépasser {{ limit }} caractères.']),
                 ],
             ])
-            ->add('date_premiere_immatriculation', TextType::class, [ // L'entité attend une chaîne
-                'label' => 'Date de première immatriculation (JJ/MM/AAAA ou AAAA-MM-JJ)',
-                'required' => false, // Selon si ce champ est obligatoire ou non
+            ->add('date_premiere_immatriculation', DateType::class, [
+                'label' => 'Date de première immatriculation',
+                'widget' => 'single_text',
+                'html5' => true, // Utilise le type="date" du navigateur
+                'required' => false,
                 'attr' => [
-                    'placeholder' => 'Ex: 25/12/2010'
-                ]
-                // Si vous voulez un champ DateType et gérer la conversion string <-> DateTime :
-                // 'widget' => 'single_text',
-                // 'html5' => true,
-                // 'constraints' => [
-                //     new Assert\Date(['message' => 'La date de première immatriculation est invalide.'])
-                // ]
+                    'class' => 'form-control',
+                ],
             ]);
         // Le champ 'proprietaire' sera défini dans le contrôleur, pas dans le formulaire.
     }

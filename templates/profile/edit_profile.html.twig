@@ -1,17 +1,71 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Modifier de profil
+{% block title %}Modifier mes informations
 {% endblock %}
+
+{% block carousel %}{% endblock %}
 
 {% block body %}
 	<div class="container mt-5">
-		<h1>Modifier votre profil</h1>
-		<p>Ce formulaire vous permettra de modifier vos informations personnelles.</p>
+		<div class="row justify-content-center">
+			<div class="col-md-8">
+				<div class="card shadow-sm">
+					<div class="card-header">
+						<h1 class="h3 mb-0">Modifier mes informations</h1>
+					</div>
+					<div class="card-body">
+						{% for message in app.flashes('success') %}
+							<div class="alert alert-success">
+								{{ message }}
+							</div>
+						{% endfor %}
 
-		{{ form_start(form) }}
-		{{ form_widget(form) }}
-		<button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
-		{{ form_end(form) }}
+						{% for message in app.flashes('error') %}
+							<div class="alert alert-danger">
+								{{ message }}
+							</div>
+						{% endfor %}
 
+						<p>Utilisez ce formulaire pour mettre à jour vos informations personnelles.</p>
+
+						<!-- Afficher la photo actuelle si elle existe -->
+						{% if user.photo %}
+							<div class="mb-3">
+								<label class="form-label">Photo actuelle :</label>
+								<div>
+									<img src="{{ asset('uploads/' ~ user.photo) }}" alt="Photo actuelle" class="rounded" style="max-width: 150px; max-height: 150px; object-fit: cover;">
+								</div>
+							</div>
+						{% endif %}
+
+						{{ form_start(form, {'attr': {'enctype': 'multipart/form-data'}}) }}
+
+						<div class="row">
+							<div class="col-md-6">
+								{{ form_row(form.telephone) }}
+							</div>
+							<div class="col-md-6">
+								{{ form_row(form.adresse) }}
+							</div>
+						</div>
+
+						<div class="row">
+							<div class="col-md-6">
+								{{ form_row(form.date_naissance) }}
+							</div>
+							<div class="col-md-6">
+								{{ form_row(form.photoFile) }}
+							</div>
+						</div>
+
+						<button class="btn btn-primary mt-3 w-100" type="submit">Enregistrer les modifications</button>
+						{{ form_end(form) }}
+					</div>
+				</div>
+				<div class="text-center mt-3">
+					<a href="{{ path('app_profile') }}" class="btn btn-secondary">Retour au profil</a>
+				</div>
+			</div>
+		</div>
 	</div>
 {% endblock %}

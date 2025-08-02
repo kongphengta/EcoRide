@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8">
+		<title>Annulation d'un de vos trajets</title>
+		<style>
+			body {
+				font-family: sans-serif;
+				color: #333;
+			}
+			.container {
+				padding: 20px;
+				border: 1px solid #ddd;
+				border-radius: 5px;
+				max-width: 600px;
+				margin: auto;
+			}
+			.header {
+				font-size: 20px;
+				font-weight: bold;
+				margin-bottom: 20px;
+			}
+			.footer {
+				margin-top: 20px;
+				font-size: 12px;
+				color: #777;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="container">
+			<div class="header">Annulation d'un trajet sur EcoRide</div>
+			<p>Bonjour
+				{{ reservation.passager.pseudo }},</p>
+
+			<p>
+				Nous vous informons que le covoiturage pour lequel vous aviez une réservation a été
+				<strong>annulé par le chauffeur</strong>.
+			</p>
+			<ul>
+				<li>
+					<strong>Trajet :</strong>
+					{{ reservation.covoiturage.lieuDepart }}
+					&rarr;
+					{{ reservation.covoiturage.lieuArrivee }}</li>
+				<li>
+					<strong>Date :</strong>
+					{{ reservation.covoiturage.dateDepart|date('d/m/Y') }}
+					à
+					{{ reservation.covoiturage.heureDepart }}</li>
+			</ul>
+			<p>Nous sommes sincèrement désolés pour cet imprévu. N'hésitez pas à rechercher un nouveau trajet sur notre plateforme.</p>
+
+			<div class="footer">L'équipe EcoRide</div>
+		</div>
+	</body>
+</html>

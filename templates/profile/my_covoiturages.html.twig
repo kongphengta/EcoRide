@@ -1,65 +1,105 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Mes Covoiturages - EcoRide
+{% block title %}Mes Covoiturages
 {% endblock %}
 
 {% block body %}
-	<div class="container my-5">
-		<div class="d-flex justify-content-between align-items-center mb-4">
-			<h1>Mes Annonces de Covoiturage</h1>
-			<a href="{{ path('app_covoiturage_new') }}" class="btn btn-success">
-				<i class="bi bi-plus-circle me-2"></i>Proposer un nouveau trajet
+	<div class="container mt-4">
+		<h1>Mes Covoiturages</h1>
+		<p>Gérez les trajets que vous avez proposés.</p>
+
+		<div class="d-flex justify-content-end mb-3">
+			<a href="{{ path('app_covoiturage_new') }}" class="btn btn-primary">
+				<i class="bi bi-plus-circle"></i>
+				Proposer un nouveau covoiturage
 			</a>
 		</div>
 
 		{% if covoiturages is not empty %}
-			<div class="table-responsive">
-				<table class="table table-hover align-middle">
-					<thead class="table-light">
-						<tr>
-							<th>Départ</th>
-							<th>Arrivée</th>
-							<th>Date et Heure</th>
-							<th>Prix</th>
-							<th>Places (Rest./Total)</th>
-							<th>Statut</th>
-							<th class="text-end">Actions</th>
-						</tr>
-					</thead>
-					<tbody>
-						{% for covoiturage in covoiturages %}
-							<tr>
-								<td>{{ covoiturage.lieuDepart }}</td>
-								<td>{{ covoiturage.lieuArrivee }}</td>
-								<td>{{ covoiturage.dateDepart|date('d/m/Y') }}
-									à
-									{{ covoiturage.heureDepart|date('H:i') }}</td>
-								<td>{{ covoiturage.prixPersonne|number_format(2, ',', ' ') }}
-									€</td>
-								<td>{{ covoiturage.nbPlaceRestante }}
-									/
-									{{ covoiturage.nbPlaceTotal }}</td>
-								<td>
-									<span class="badge bg-info text-dark">{{ covoiturage.statut }}</span>
-								</td>
-								<td class="text-end">
-									<a href="{{ path('app_covoiturage_edit', {'id': covoiturage.id}) }}" class="btn btn-sm btn-primary me-2">
-										<i class="bi bi-pencil-square"></i>
-										Modifier
-									</a>
-									{{ include('covoiturage/_delete_form.html.twig') }}
-								</td>
-							</tr>
-						{% endfor %}
-					</tbody>
-				</table>
+			<div class="list-group">
+				{% for covoiturage in covoiturages %}
+					<div class="list-group-item list-group-item-action flex-column align-items-start">
+						<div class="d-flex w-100 justify-content-between">
+							<h5 class="mb-1">{{ covoiturage.lieuDepart }}
+								&rarr;
+								{{ covoiturage.lieuArrivee }}</h5>
+							<div>
+								<span class="badge
+										                                {% if covoiturage.statut == 'Proposé' %}bg-secondary
+										                                {% elseif covoiturage.statut in ['Confirmé', 'Complet'] %}bg-primary
+										                                {% elseif covoiturage.statut == 'En cours' %}bg-info text-dark
+										                                {% elseif covoiturage.statut == 'Terminé' %}bg-success
+										                                {% elseif covoiturage.statut == 'Annulé' %}bg-danger
+										                                {% else %}bg-light text-dark{% endif %}">
+									{{ covoiturage.statut }}
+								</span>
+							</div>
+						</div>
+						<p class="mb-1">
+							Le
+							{{ covoiturage.dateDepart|date('d/m/Y') }}
+							à
+							{{ covoiturage.heureDepart|date('H:i') }}
+						</p>
+						<small class="text-muted">
+							{{ covoiturage.reservations|length }}
+							réservation(s) /
+							{{ covoiturage.nbPlaceTotal }}
+							places.
+						</small>
+
+						<div class="mt-3 text-end">
+							{# Actions possibles en fonction du statut #}
+
+							{# Voir les passagers (toujours possible si chauffeur) #}
+								<a href="{{ path('app_covoiturage_passengers', {'id': covoiturage.id}) }}" class="btn btn-sm btn-outline-secondary"> <i class="bi bi-people-fill"></i>
+								Passagers
+							</a>
+
+							{# Démarrer le trajet #}
+							{% if covoiturage.statut in ['Confirmé', 'Complet'] %}
+								<form method="post" action="{{ path('app_covoiturage_start', {'id': covoiturage.id}) }}" class="d-inline" onsubmit="return confirm('Voulez-vous vraiment démarrer ce trajet ?');">
+									<input type="hidden" name="_token" value="{{ csrf_token('start' ~ covoiturage.id) }}">
+									<button class="btn btn-sm btn-success">
+										<i class="bi bi-play-circle-fill"></i>
+										Démarrer
+									</button>
+								</form>
+							{% endif %}
+
+							{# Terminer le trajet #}
+							{% if covoiturage.statut == 'En cours' %}
+								<form method="post" action="{{ path('app_covoiturage_finish', {'id': covoiturage.id}) }}" class="d-inline" onsubmit="return confirm('Confirmez-vous l'arrivée à destination ?');">
+									<input type="hidden" name="_token" value="{{ csrf_token('finish' ~ covoiturage.id) }}">
+									<button class="btn btn-sm btn-info text-dark">
+										<i class="bi bi-check-circle-fill"></i>
+										Arrivé à destination
+									</button>
+								</form>
+							{% endif %}
+
+							{# Modifier ou Annuler (si le trajet n'est pas commencé, terminé ou déjà annulé) #}
+							{% if covoiturage.statut in ['Proposé', 'Confirmé', 'Complet'] %}
+								<a href="{{ path('app_covoiturage_edit', {'id': covoiturage.id}) }}" class="btn btn-sm btn-outline-primary">
+									<i class="bi bi-pencil-fill"></i>
+									Modifier
+								</a>
+								<form method="post" action="{{ path('app_covoiturage_cancel', {'id': covoiturage.id}) }}" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir annuler ce covoiturage ? Cette action est irréversible.');">
+									<input type="hidden" name="_token" value="{{ csrf_token('cancel_covoiturage' ~ covoiturage.id) }}">
+									<button class="btn btn-sm btn-outline-danger">
+										<i class="bi bi-x-circle-fill"></i>
+										Annuler
+									</button>
+								</form>
+							{% endif %}
+						</div>
+					</div>
+				{% endfor %}
 			</div>
 		{% else %}
-			<div class="alert alert-info" role="alert">
-				<h4 class="alert-heading">Aucune annonce trouvée</h4>
-				<p>Vous n'avez pas encore proposé de covoiturage. Pourquoi ne pas commencer dès maintenant ?</p>
-				<hr>
-				<p class="mb-0">Cliquez sur le bouton "Proposer un nouveau trajet" pour créer votre première annonce.</p>
+			<div class="alert alert-info">
+				<h4 class="alert-heading">Aucun covoiturage proposé</h4>
+				<p>Vous n'avez pas encore proposé de trajet. Cliquez sur le bouton ci-dessus pour en créer un !</p>
 			</div>
 		{% endif %}
 	</div>

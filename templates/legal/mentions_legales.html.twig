@@ -1,0 +1,47 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mentions légales - EcoRide{% endblock %}
+
+{% block carousel %}{% endblock %}
+
+{% block body %}
+<div class="container my-5">
+    <h1>Mentions légales</h1>
+    
+    <h2>Éditeur du site</h2>
+    <p>
+        <strong>EcoRide</strong><br>
+        Plateforme de covoiturage écologique<br>
+        Email : <a href="mailto:contact@ecoride.fr">contact@ecoride.fr</a>
+    </p>
+
+    <h2>Hébergement</h2>
+    <p>
+        Ce site est hébergé par :<br>
+        [Nom de l'hébergeur]<br>
+        [Adresse de l'hébergeur]
+    </p>
+
+    <h2>Propriété intellectuelle</h2>
+    <p>
+        L'ensemble de ce site relève de la législation française et internationale sur le droit d'auteur et la propriété intellectuelle. 
+        Tous les droits de reproduction sont réservés, y compris pour les documents téléchargeables et les représentations iconographiques et photographiques.
+    </p>
+
+    <h2>Responsabilité</h2>
+    <p>
+        EcoRide s'efforce de fournir sur le site des informations aussi précises que possible. 
+        Toutefois, il ne pourra être tenu responsable des omissions, des inexactitudes et des carences dans la mise à jour, qu'elles soient de son fait ou du fait des tiers partenaires qui lui fournissent ces informations.
+    </p>
+
+    <h2>Données personnelles</h2>
+    <p>
+        Conformément au RGPD, vous disposez d'un droit d'accès, de rectification et de suppression des données vous concernant. 
+        Pour exercer ce droit, contactez-nous à l'adresse : <a href="mailto:contact@ecoride.fr">contact@ecoride.fr</a>
+    </p>
+
+    <div class="mt-4">
+        <a href="{{ path('app_home') }}" class="btn btn-success">Retour à l'accueil</a>
+    </div>
+</div>
+{% endblock %}

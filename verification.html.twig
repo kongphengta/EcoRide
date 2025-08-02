@@ -1,0 +1,21 @@
+{# templates/emails/verification.html.twig #}
+
+<h1>Bienvenue sur EcoRide,
+	{{ user.firstname }}
+	!</h1>
+
+<p>
+	Pour finaliser votre inscription et activer votre compte, veuillez cliquer sur le lien ci-dessous :
+</p>
+
+<p>
+	<a href="{{ verificationUrl }}">Activer mon compte</a>
+</p>
+
+<p>
+	Ce lien expirera dans 1 heure.
+</p>
+
+<p>
+	L'équipe EcoRide
+</p>

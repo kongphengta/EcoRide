@@ -1,58 +1,60 @@
 <?php
-// src/Controller/CovoiturageController.php
+
 namespace App\Controller;
 
-
+use App\Entity\User;
 use App\Entity\Covoiturage;
+use App\Entity\Reservation;
 use App\Form\CovoiturageType;
+use App\Service\EmailService;
+use App\Form\CovoiturageSearchType;
 use App\Repository\VoitureRepository;
-use App\Repository\CovoiturageRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use App\Repository\CovoiturageRepository;
+use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 
 #[Route('/covoiturage')]
 class CovoiturageController extends AbstractController
 {
     #[Route('/', name: 'app_covoiturage_index', methods: ['GET'])]
-    public function index(Request $request, CovoiturageRepository $covoiturageRepository): Response
+    public function index(Request $request, CovoiturageRepository $covoiturageRepository, PaginatorInterface $paginator): Response
     {
-        $depart = $request->query->get('depart');
-        $arrivee = $request->query->get('arrivee');
-        $date_str = $request->query->get('date');
-        $date = null;
-        if ($date_str) {
-            try {
-                $date = new \DateTimeImmutable($date_str);
-            } catch (\Exception $e) {
-                // Gérer l'erreur de format de date si nécessaire, ou laisser null
-                $this->addFlash('warning', 'Le format de la date de recherche est invalide.');
-            }
-        }
         $breadcrumb = [
             ['label' => 'Accueil', 'url' => $this->generateUrl('app_home')],
             ['label' => 'Covoiturages', 'url' => $this->generateUrl('app_covoiturage_index')],
         ];
 
-        // Si au moins un critère de recherche est fourni, on utilise la méthode de recherche.
-        if ($depart || $arrivee || $date) {
-            $covoiturages = $covoiturageRepository->searchCovoiturages($depart, $arrivee, $date);
+        // Le formulaire doit utiliser la méthode GET pour que les paramètres de recherche
+        // soient dans l'URL, ce qui est essentiel pour la pagination.
+        $searchForm = $this->createForm(CovoiturageSearchType::class, null, ['method' => 'GET']);
+        $searchForm->handleRequest($request);
+
+        $criteria = $searchForm->getData() ?? [];
+        $query = $covoiturageRepository->searchCovoituragesQueryBuilder($criteria);
+
+        $pagination = $paginator->paginate(
+            $query, // Le QueryBuilder, pas les résultats
+            $request->query->getInt('page', 1), // Numéro de page depuis l'URL, 1 par défaut
+            10 // Nombre de résultats par page
+        );
+
+        // Le 'rechercher' vient du nom du bouton submit dans CovoiturageSearchType
+        $searchPerformed = $request->query->has('rechercher');
+        if ($searchPerformed) {
             $breadcrumb[] = ['label' => 'Résultats de recherche', 'url' => $this->generateUrl('app_covoiturage_index', $request->query->all())];
-        } else {
-            // si non, on affiche tous les covoiturages à venir, triés par date.
-            $covoiturages = $covoiturageRepository->findUpcoming('ASC');
         }
+
         return $this->render('covoiturage/index.html.twig', [
             'breadcrumb' => $breadcrumb,
-            'covoiturages' => $covoiturages,
-            'search_params' => [
-                'depart' => $depart,
-                'arrivee' => $arrivee,
-                'date' => $date_str,
-            ],
+            'pagination' => $pagination, // On passe l'objet de pagination à la vue
+            'searchForm' => $searchForm->createView(),
+            'searchPerformed' => $searchPerformed, // Pour savoir si on doit afficher un titre "Résultats"
         ]);
     }
     #[Route('/new', name: 'app_covoiturage_new', methods: ['GET', 'POST'])]
@@ -62,15 +64,17 @@ class CovoiturageController extends AbstractController
         /** @var \App\Entity\User $user */
         $user = $this->getUser();
 
-        // Vérifier si l'utilisateur (chauffeur)a au moins une voiture enregistrée
-        $userVoitures = $voitureRepository->findBy(['proprietaire' => $user]);
+        // Vérifier si l'utilisateur (chauffeur) a au moins une voiture enregistrée
         // Si l'utilisateur n'a pas de voiture, rediriger vers la page d'ajout de voiture
-        if (empty($userVoitures)) {
+        if ($voitureRepository->count(['proprietaire' => $user]) === 0) {
             $this->addFlash('error', 'Vous devez d\'abord enregistrer une voiture avant de proposer un covoiturage.');
-            return $this->redirectToRoute('app_voiture_ajouter');
+            return $this->redirectToRoute('app_voiture_new');
         }
         $covoiturage = new Covoiturage();
-        $form = $this->createForm(CovoiturageType::class, $covoiturage);
+        // On passe l'utilisateur dans les options du formulaire pour pouvoir filtrer ses voitures
+        $form = $this->createForm(CovoiturageType::class, $covoiturage, [
+            'user' => $user,
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -96,9 +100,6 @@ class CovoiturageController extends AbstractController
             'covoiturageForm' => $form->createView(),
         ]);
     }
-
-
-
     #[Route('/{id}', name: 'app_covoiturage_show', methods: ['GET'])]
     public function show(Covoiturage $covoiturage): Response
     {
@@ -113,6 +114,92 @@ class CovoiturageController extends AbstractController
         ]);
     }
 
+    #[Route('/{id}/passagers', name: 'app_covoiturage_passengers', methods: ['GET'])]
+    #[IsGranted('ROLE_CHAUFFEUR')]
+    public function passengers(Covoiturage $covoiturage): Response
+    {
+        // Sécurité : Vérifier que l'utilisateur connecté est bien le chauffeur du covoiturage
+        if ($this->getUser() !== $covoiturage->getChauffeur()) {
+            throw $this->createAccessDeniedException('Vous n\'êtes pas autorisé à voir les passagers de ce covoiturage.');
+        }
+
+        $breadcrumb = [
+            ['label' => 'Accueil', 'url' => $this->generateUrl('app_home')],
+            ['label' => 'Mes Covoiturages', 'url' => $this->generateUrl('app_profile_my_covoiturages')],
+            ['label' => 'Passagers', 'url' => ''],
+        ];
+
+        return $this->render('covoiturage/passengers.html.twig', [
+            'covoiturage' => $covoiturage,
+            // Le template attend une variable 'reservations'. On la lui passe.
+            'reservations' => $covoiturage->getReservations(),
+            'breadcrumb' => $breadcrumb,
+        ]);
+    }
+
+    #[Route('/{id}/reserver', name: 'app_covoiturage_reserver', methods: ['POST'])]
+    #[IsGranted('ROLE_USER')]
+    public function reserver(Request $request, Covoiturage $covoiturage, EntityManagerInterface $entityManager): Response
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+
+        // 1. Vérification du token CSRF pour la sécurité
+        if (!$this->isCsrfTokenValid('reserver' . $covoiturage->getId(), $request->request->get('_token'))) {
+            $this->addFlash('danger', 'Action non autorisée.');
+            return $this->redirectToRoute('app_covoiturage_show', ['id' => $covoiturage->getId()]);
+        }
+
+        // 2. Vérifications métier
+        if ($covoiturage->getChauffeur() === $user) {
+            $this->addFlash('warning', 'Vous ne pouvez pas réserver une place dans votre propre covoiturage.');
+            return $this->redirectToRoute('app_covoiturage_show', ['id' => $covoiturage->getId()]);
+        }
+
+        if ($covoiturage->getNbPlaceRestantes() <= 0) {
+            $this->addFlash('warning', 'Désolé, ce covoiturage est complet.');
+            return $this->redirectToRoute('app_covoiturage_show', ['id' => $covoiturage->getId()]);
+        }
+
+        // Vérifier si l'utilisateur n'a pas déjà une réservation pour ce trajet
+        foreach ($covoiturage->getReservations() as $existingReservation) {
+            if ($existingReservation->getPassager() === $user) {
+                $this->addFlash('info', 'Vous avez déjà réservé une place pour ce trajet.');
+                return $this->redirectToRoute('app_covoiturage_show', ['id' => $covoiturage->getId()]);
+            }
+        }
+
+        // US 6 & 9: Vérifier si l'utilisateur a assez de crédits
+        $prixTrajet = $covoiturage->getPrixPersonne();
+        if ($user->getCredits() < $prixTrajet) {
+            $this->addFlash('danger', 'Vous n\'avez pas assez de crédits pour réserver ce trajet. Vous pouvez en acheter depuis votre profil.');
+            // TODO: Créer une page pour acheter des crédits et lier ici.
+            return $this->redirectToRoute('app_covoiturage_show', ['id' => $covoiturage->getId()]);
+        }
+
+        // 3. Création de la réservation
+        $placesReservees = 1; // Pour l'instant, on ne réserve qu'une place à la fois.
+
+        $reservation = new Reservation();
+        $reservation->setCovoiturage($covoiturage);
+        $reservation->setPassager($user);
+        $reservation->setNbPlacesReservees($placesReservees);
+        $reservation->setStatut('Confirmée');
+        $reservation->setDateReservation(new \DateTimeImmutable());
+
+        // 4. Mettre à jour le nombre de places restantes dans le covoiturage
+        $covoiturage->setNbPlaceRestantes($covoiturage->getNbPlaceRestantes() - $placesReservees);
+
+        // 5. Débiter les crédits du passager
+        $user->setCredits($user->getCredits() - $prixTrajet);
+
+        $entityManager->persist($reservation);
+        $entityManager->flush();
+
+        $this->addFlash('success', 'Votre réservation a été confirmée avec succès !');
+        return $this->redirectToRoute('app_covoiturage_show', ['id' => $covoiturage->getId()]);
+    }
+
     #[Route('/{id}/edit', name: 'app_covoiturage_edit', methods: ['GET', 'POST'])]
     #[IsGranted('ROLE_CHAUFFEUR')]
     public function edit(Request $request, Covoiturage $covoiturage, EntityManagerInterface $entityManager): Response
@@ -122,7 +209,9 @@ class CovoiturageController extends AbstractController
             throw $this->createAccessDeniedException('Vous n\'êtes pas autorisé à modifier ce covoiturage.');
         }
 
-        $form = $this->createForm(CovoiturageType::class, $covoiturage);
+        $form = $this->createForm(CovoiturageType::class, $covoiturage, [
+            'user' => $this->getUser(),
+        ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -139,23 +228,91 @@ class CovoiturageController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}', name: 'app_covoiturage_delete', methods: ['POST'])]
+    #[Route('/{id}/annuler', name: 'app_covoiturage_cancel', methods: ['POST'])]
     #[IsGranted('ROLE_CHAUFFEUR')]
-    public function delete(Request $request, Covoiturage $covoiturage, EntityManagerInterface $entityManager): Response
+    public function cancel(Request $request, Covoiturage $covoiturage, EntityManagerInterface $entityManager, EmailService $emailService): Response
     {
         // Sécurité : Vérifier que l'utilisateur connecté est bien le chauffeur du covoiturage
         if ($this->getUser() !== $covoiturage->getChauffeur()) {
-            throw $this->createAccessDeniedException('Vous n\'êtes pas autorisé à supprimer ce covoiturage.');
+            throw $this->createAccessDeniedException('Vous n\'êtes pas autorisé à annuler ce covoiturage.');
         }
 
         // Sécurité : Vérifier le token CSRF pour se protéger contre les attaques
-        if ($this->isCsrfTokenValid('delete' . $covoiturage->getId(), $request->request->get('_token'))) {
-            $entityManager->remove($covoiturage);
-            $entityManager->flush();
+        if (!$this->isCsrfTokenValid('cancel_covoiturage' . $covoiturage->getId(), $request->request->get('_token'))) {
+            $this->addFlash('danger', 'Le token de sécurité est invalide. L\'annulation a échoué.');
+            return $this->redirectToRoute('app_profile_my_covoiturages', [], Response::HTTP_SEE_OTHER);
+        }
 
-            $this->addFlash('success', 'Le covoiturage a été supprimé.');
+        // Logique métier : On ne peut annuler qu'un trajet qui n'est pas déjà terminé ou annulé.
+        if (in_array($covoiturage->getStatut(), ['Proposé', 'Confirmé', 'Complet'])) {
+            // 1. Mettre à jour le statut du covoiturage
+            $covoiturage->setStatut('Annulé');
+
+            // 2. Annuler toutes les réservations associées qui sont 'Confirmée' ou 'En attente'
+            foreach ($covoiturage->getReservations() as $reservation) {
+                if (in_array($reservation->getStatut(), ['Confirmée', 'En attente'])) {
+                    // Envoyer l'email de notification AVANT de changer le statut
+                    $emailService->sendCovoiturageCancelledEmail($reservation);
+
+                    // CRITICAL: Rembourser les crédits au passager
+                    $passager = $reservation->getPassager();
+                    $passager->setCredits($passager->getCredits() + $covoiturage->getPrixPersonne());
+                    $reservation->setStatut('Annulée par le chauffeur');
+                }
+            }
+
+            $entityManager->flush();
+            $this->addFlash('success', 'Le covoiturage a bien été annulé.');
+        } else {
+            $this->addFlash('warning', 'Ce covoiturage ne peut plus être annulé.');
         }
 
         return $this->redirectToRoute('app_profile_my_covoiturages', [], Response::HTTP_SEE_OTHER);
+    }
+    #[Route('/{id}/start', name: 'app_covoiturage_start', methods: ['POST'])]
+    #[IsGranted('ROLE_CHAUFFEUR')]
+    public function start(Request $request, Covoiturage $covoiturage, EntityManagerInterface $entityManager): Response
+    {
+        if ($this->getUser() !== $covoiturage->getChauffeur()) {
+            throw $this->createAccessDeniedException();
+        }
+        if (!$this->isCsrfTokenValid('start' . $covoiturage->getId(), $request->request->get('_token'))) {
+            $this->addFlash('danger', 'Token de sécurité invalide.');
+            return $this->redirectToRoute('app_profile_my_covoiturages');
+        }
+        if (!in_array($covoiturage->getStatut(), [Covoiturage::STATUT_CONFIRME, Covoiturage::STATUT_COMPLET])) {
+            $this->addFlash('warning', 'Ce trajet ne peut pas être démarré.');
+            return $this->redirectToRoute('app_profile_my_covoiturages');
+        }
+        $covoiturage->setStatut(Covoiturage::STATUT_EN_COURS);
+        $entityManager->flush();
+        $this->addFlash('success', 'Le covoiturage a bien été démarré.');
+        return $this->redirectToRoute('app_profile_my_covoiturages');
+    }
+
+    #[Route('/{id}/end', name: 'app_covoiturage_end', methods: ['POST'])]
+    #[IsGranted('ROLE_CHAUFFEUR')]
+    public function end(Request $request, Covoiturage $covoiturage, EntityManagerInterface $entityManager, EmailService $emailService, UrlGeneratorInterface $urlGenerator): Response
+    {
+        if ($this->getUser() !== $covoiturage->getChauffeur()) {
+            throw $this->createAccessDeniedException();
+        }
+        if (!$this->isCsrfTokenValid('end' . $covoiturage->getId(), $request->request->get('_token'))) {
+            $this->addFlash('danger', 'Token de sécurité invalide.');
+            return $this->redirectToRoute('app_profile_my_covoiturages');
+        }
+        if ($covoiturage->getStatut() !== Covoiturage::STATUT_EN_COURS) {
+            $this->addFlash('warning', 'Ce trajet ne peut pas être terminé.');
+            return $this->redirectToRoute('app_profile_my_covoiturages');
+        }
+        $covoiturage->setStatut(Covoiturage::STATUT_TERMINE);
+        // Envoi des emails pour avis
+        foreach ($covoiturage->getReservations() as $reservation) {
+            $reviewUrl = $urlGenerator->generate('app_avis_new', ['id' => $reservation->getId()], UrlGeneratorInterface::ABSOLUTE_URL);
+            $emailService->sendLeaveReviewEmail($reservation, $reviewUrl);
+        }
+        $entityManager->flush();
+        $this->addFlash('success', 'Le covoiturage est terminé.');
+        return $this->redirectToRoute('app_profile_my_covoiturages');
     }
 }

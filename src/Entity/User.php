@@ -63,6 +63,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     // Champ rempli dans la 2ème étape (Profil), donc nullable
     #[ORM\Column(type: Types::DATE_MUTABLE, nullable: true)]
     #[Assert\Type("\DateTimeInterface", message: "La date de naissance doit être une date valide.")]
+    #[Assert\LessThan("today", message: "La date de naissance ne peut pas être dans le futur.")]
     private ?\DateTimeInterface $dateNaissance = null;
 
     // le nom du fichier de la photo de profil, nullable
@@ -92,6 +93,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     // --- Champ pour l'état de complétion du profil --- 
     #[ORM\Column(type: 'boolean')]
     private bool $isProfileComplete = false; // Initialisé à false par défaut
+
+    #[ORM\Column(type: 'boolean')]
+    private bool $isChauffeur = false;
+
+    #[ORM\Column(type: 'boolean')]
+    private bool $isActive = true;
 
     /**
      * @var Collection<int, Covoiturage>
@@ -127,6 +134,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Avis::class, mappedBy: 'receveur', orphanRemoval: true)]
     private Collection $avisRecus;
 
+    /**
+     * @var Collection<int, Reservation>
+     */
+    #[ORM\OneToMany(targetEntity: Reservation::class, mappedBy: 'passager')]
+    private Collection $reservations;
+
+    #[ORM\Column]
+    private ?int $credits = 0;
+
     public function __construct()
     {
         $this->covoiturages = new ArrayCollection();
@@ -136,6 +152,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->avisRecus = new ArrayCollection();
         // Initialiser la date d'inscription lors de la création de l'objet
         $this->dateInscription = new \DateTime();
+        $this->reservations = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -240,7 +257,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->telephone;
     }
 
-    public function setTelephone(string $telephone): static
+    public function setTelephone(?string $telephone): static
     {
         $this->telephone = $telephone;
 
@@ -273,7 +290,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->adresse;
     }
 
-    public function setAdresse(string $adresse): static
+    public function setAdresse(?string $adresse): static
     {
         $this->adresse = $adresse;
 
@@ -285,7 +302,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->dateNaissance;
     }
 
-    public function setDateNaissance(\DateTimeInterface $dateNaissance): static
+    public function setDateNaissance(?\DateTimeInterface $dateNaissance): static
     {
         $this->dateNaissance = $dateNaissance;
 
@@ -363,6 +380,27 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function isChauffeur(): bool
+    {
+        return $this->isChauffeur;
+    }
+
+    public function setIsChauffeur(bool $isChauffeur): self
+    {
+        $this->isChauffeur = $isChauffeur;
+        return $this;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->isActive;
+    }
+
+    public function setIsActive(bool $isActive): self
+    {
+        $this->isActive = $isActive;
+        return $this;
+    }
 
     public function getVerificationToken(): ?string
     {
@@ -551,5 +589,102 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         }
 
         return round($totalNotes / $avisRecus->count(), 1);
+    }
+
+    /**
+     * Calcule la durée d'adhésion de l'utilisateur et la retourne sous forme de chaîne lisible.
+     *
+     * @return string La durée d'adhésion (ex: "depuis 2 ans", "depuis 3 mois", "aujourd'hui").
+     */
+    public function getMembershipDurationAsString(): string
+    {
+        if (!$this->dateInscription) {
+            return 'N/A';
+        }
+
+        $now = new \DateTime();
+        $interval = $this->dateInscription->diff($now);
+
+        if ($interval->y >= 1) {
+            $plural = $interval->y > 1 ? 's' : '';
+            return "depuis {$interval->y} an{$plural}";
+        }
+        if ($interval->m >= 1) {
+            return "depuis {$interval->m} mois";
+        }
+        if ($interval->d >= 1) {
+            $plural = $interval->d > 1 ? 's' : '';
+            return "depuis {$interval->d} jour{$plural}";
+        }
+
+        return "aujourd'hui";
+    }
+
+    /**
+     * Retourne l'URL de l'avatar de l'utilisateur.
+     * Gère la photo de profil, l'avatar par défaut selon le sexe, ou un avatar généré.
+     *
+     * @param int $size La taille de l'avatar pour ui-avatars.com.
+     * @return string L'URL complète ou le chemin relatif de l'avatar.
+     */
+    public function getAvatarUrl(int $size = 150): string
+    {
+        if ($this->photo) {
+            return 'uploads/' . $this->photo;
+        }
+
+        if ($this->sexe === 'Homme') {
+            return 'images/avatar_homme.png';
+        }
+
+        if ($this->sexe === 'Femme') {
+            return 'images/avatar_femme.png';
+        }
+
+        // Fallback sur ui-avatars.com
+        $name = urlencode($this->firstname . '+' . $this->lastname);
+        return "https://ui-avatars.com/api/?name={$name}&background=random&size={$size}";
+    }
+
+    /**
+     * @return Collection<int, Reservation>
+     */
+    public function getReservations(): Collection
+    {
+        return $this->reservations;
+    }
+
+    public function addReservation(Reservation $reservation): static
+    {
+        if (!$this->reservations->contains($reservation)) {
+            $this->reservations->add($reservation);
+            $reservation->setPassager($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReservation(Reservation $reservation): static
+    {
+        if ($this->reservations->removeElement($reservation)) {
+            // set the owning side to null (unless already changed)
+            if ($reservation->getPassager() === $this) {
+                $reservation->setPassager(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getCredits(): ?int
+    {
+        return $this->credits;
+    }
+
+    public function setCredits(int $credits): static
+    {
+        $this->credits = $credits;
+
+        return $this;
     }
 }

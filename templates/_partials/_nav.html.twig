@@ -1,6 +1,6 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-success shadow-sm">
 	<div class="container-fluid">
-		<a class="navbar-brand" href="{{ path('app_home') }}">EcoRide</a>
+		<a class="navbar-brand" href="{{ path('app_home') }}"><img src="{{ asset('build/images/logo.png') }}" alt="EcoRide" class="img-fluid" style="max-height: 40px;">EcoRide</a>
 		<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
 			<span class="navbar-toggler-icon"></span>
 		</button>
@@ -22,8 +22,12 @@
 				{% if app.user %}
 					<li class="nav-item dropdown">
 						<a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-							<img src="{% if app.user.photo %} {{ asset('uploads/photos/' ~ app.user.photo) }} {% elseif app.user.sexe == 'Homme' %} {{ asset('images/avatar_homme.png') }} {% elseif app.user.sexe == 'Femme' %} {{ asset('images/avatar_femme.png') }} {% else %} {{ 'https://ui-avatars.com/api/?name=' ~ app.user.firstname|url_encode ~ '+' ~ app.user.lastname|url_encode ~ '&background=random&size=32' }} {% endif %}" alt="Avatar" class="rounded-circle me-2" width="32" height="32" style="object-fit: cover;">
-							{{ app.user.pseudo }}
+							{% if app.user.photo %}
+								<img src="{{ asset('uploads/' ~ app.user.photo) }}" alt="Avatar de {{ app.user.pseudo }}" class="rounded-circle me-2" width="32" height="32" style="object-fit: cover;">
+							{% else %}
+								<img src="{{ asset('build/images/default-avatar.png') }}" alt="Avatar par défaut" class="rounded-circle me-2" width="32" height="32" style="object-fit: cover;">
+							{% endif %}
+							<span>{{ app.user.pseudo }}</span>
 						</a>
 						<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
 							<li>
@@ -31,6 +35,9 @@
 							</li>
 							<li>
 								<a class="dropdown-item" href="{{ path('app_profile_my_covoiturages') }}">Mes Covoiturages</a>
+							</li>
+							<li>
+								<a class="dropdown-item" href="{{ path('app_voiture_index') }}">Mes Voitures</a>
 							</li>
 							<li><hr class="dropdown-divider"></li>
 							<li>

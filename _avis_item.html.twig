@@ -1,0 +1,19 @@
+<li class="mb-4 pb-4 border-bottom">
+	<div class="d-flex align-items-start">
+		<img src="{{ asset(avis.auteur.avatarUrl) }}" alt="Avatar de {{ avis.auteur.pseudo }}" class="rounded-circle me-3" width="50" height="50">
+		<div class="flex-grow-1">
+			<div class="d-flex justify-content-between">
+				<span class="fw-bold">{{ avis.auteur.pseudo }}</span>
+				<span class="text-muted fs-sm">{{ avis.dateCreation|date('d/m/Y') }}</span>
+			</div>
+			<div class="text-warning mb-2">
+				{% for i in 1..5 %}
+					<i class="bi bi-star-fill {{ i > avis.note ? 'text-light' : '' }}"></i>
+				{% endfor %}
+			</div>
+			{% if avis.commentaire %}
+				<p class="mb-0 fst-italic">"{{ avis.commentaire|nl2br }}"</p>
+			{% endif %}
+		</div>
+	</div>
+</li>

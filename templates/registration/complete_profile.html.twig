@@ -7,9 +7,28 @@
 	<div class="container my-5">
 		<h1>Compléter votre profil</h1>
 		<p>Ce formulaire vous permettra de fournir des informations supplémentaires.</p>
-		{# Ici, nous afficherons le formulaire ProfileFormType #}
-		{{ form_start(profileForm) }}
-		{{ form_widget(profileForm) }}
+
+		{{ form_start(profileForm, {'attr': {'enctype': 'multipart/form-data'}}) }}
+
+		{# Affichage manuel des champs sans la photo actuelle #}
+		<div class="row">
+			<div class="col-md-6">
+				{{ form_row(profileForm.telephone) }}
+			</div>
+			<div class="col-md-6">
+				{{ form_row(profileForm.adresse) }}
+			</div>
+		</div>
+
+		<div class="row">
+			<div class="col-md-6">
+				{{ form_row(profileForm.date_naissance) }}
+			</div>
+			<div class="col-md-6">
+				{{ form_row(profileForm.photoFile, {'label': 'Photo de profil (optionnel)'}) }}
+			</div>
+		</div>
+
 		<button type="submit" class="btn btn-primary">Enregistrer les informations</button>
 		{{ form_end(profileForm) }}
 	</div>

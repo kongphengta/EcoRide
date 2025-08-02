@@ -1,4 +1,30 @@
-{{ form_start(form) }}
-{{ form_widget(form) }}
-<button class="btn btn-primary">{{ button_label|default('Enregistrer') }}</button>
+{{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+<div class="row">
+	<div class="col-md-6 mb-3">
+		{{ form_row(form.marque) }}
+	</div>
+	<div class="col-md-6 mb-3">
+		{{ form_row(form.modele) }}
+	</div>
+</div>
+<div class="row">
+	<div class="col-md-6 mb-3">
+		{{ form_row(form.immatriculation) }}
+	</div>
+	<div class="col-md-6 mb-3">
+		{{ form_row(form.couleur) }}
+	</div>
+</div>
+<div class="row">
+	<div class="col-md-6 mb-3">
+		{{ form_row(form.energie) }}
+	</div>
+	<div class="col-md-6 mb-3">
+		{{ form_row(form.date_premiere_immatriculation) }}
+	</div>
+</div>
+
+<button class="btn btn-primary mt-3">
+	<i class="fas fa-save me-2"></i>
+	{{ button_label|default('Enregistrer') }}</button>
 {{ form_end(form) }}

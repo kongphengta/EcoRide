@@ -1,42 +1,67 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Mes voitures
+{% block title %}Mes Voitures
 {% endblock %}
 
 {% block body %}
 	<div class="container mt-4">
-		<h1>Mes voitures</h1>
+		<div class="d-flex justify-content-between align-items-center mb-4">
+			<h1>Mes Voitures</h1>
+			<a href="{{ path('app_voiture_new') }}" class="btn btn-primary">
+				<i class="fas fa-plus-circle me-2"></i>Ajouter une voiture
+			</a>
+		</div>
+
+		{% for message in app.flashes('success') %}
+			<div class="alert alert-success" role="alert">
+				{{ message }}
+			</div>
+		{% endfor %}
 
 		{% if voitures is not empty %}
-			<table class="table table-hover">
-				<thead>
-					<tr>
-						<th>Marque</th>
-						<th>Modèle</th>
-						<th>Couleur</th>
-						<th>Année</th>
-						<th>Actions</th>
-					</tr>
-				</thead>
-				<tbody>
-					{% for voiture in voitures %}
+			<div class="table-responsive">
+				<table class="table table-hover align-middle">
+					<thead class="table-light">
 						<tr>
-							<td>{{ voiture.marque }}</td>
-							<td>{{ voiture.modele }}</td>
-							<td>{{ voiture.couleur }}</td>
-							<td>{{ voiture.annee }}</td>
-							<td>
-								<a href="{{ path('app_voiture_modifier', {'id': voiture.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
-								{{ include('voiture/_delete_form.html.twig') }}
-							</td>
+							<th>Marque</th>
+							<th>Modèle</th>
+							<th>Immatriculation</th>
+							<th>Couleur</th>
+							<th>Énergie</th>
+							<th class="text-end">Actions</th>
 						</tr>
-					{% endfor %}
-				</tbody>
-			</table>
+					</thead>
+					<tbody>
+						{% for voiture in voitures %}
+							<tr>
+								<td>{{ voiture.marque.libelle }}</td>
+								<td>{{ voiture.modele }}</td>
+								<td>{{ voiture.immatriculation }}</td>
+								<td>{{ voiture.couleur }}</td>
+								<td>{{ voiture.energie }}</td>
+								<td class="text-end">
+									<a href="{{ path('app_voiture_edit', {'id': voiture.id}) }}" class="btn btn-sm btn-secondary">
+										<i class="fas fa-edit"></i>
+										Modifier</a>
+									<form method="post" action="{{ path('app_voiture_delete', {'id': voiture.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette voiture ?');" class="d-inline">
+										<input type="hidden" name="_token" value="{{ csrf_token('delete' ~ voiture.id) }}">
+										<button class="btn btn-sm btn-danger">
+											<i class="fas fa-trash"></i>
+											Supprimer</button>
+									</form>
+								</td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
 		{% else %}
-			<p>Vous n'avez pas encore enregistré de voiture.</p>
+			<div class="alert alert-info" role="alert">
+				<h4 class="alert-heading">Aucune voiture enregistrée !</h4>
+				<p>Il semble que vous n'ayez pas encore ajouté de véhicule à votre profil.</p>
+				<hr>
+				<p class="mb-0">Pour proposer un covoiturage, commencez par ajouter une voiture en cliquant sur le bouton ci-dessus.</p>
+			</div>
 		{% endif %}
-
-		<a href="{{ path('app_voiture_ajouter') }}" class="btn btn-primary mt-3">Ajouter une nouvelle voiture</a>
 	</div>
 {% endblock %}

@@ -1,0 +1,29 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes Covoiturages - EcoRide
+{% endblock %}
+
+{% block body %}
+	<div class="container my-5">
+		<h1>
+			<i class="bi bi-car-front me-2"></i>Mes Covoiturages</h1>
+
+		{% if covoiturages is empty %}
+			<div class="alert alert-info text-center">
+				<h4>Aucun covoiturage proposé</h4>
+				<p>Vous n'avez pas encore proposé de trajet.</p>
+				<a href="{{ path('app_covoiturage_new') }}" class="btn btn-success">
+					<i class="bi bi-plus-circle me-2"></i>Proposer un covoiturage
+				</a>
+			</div>
+		{% else %}
+			<div class="row">
+				{% for covoiturage in covoiturages %}
+					<div class="col-12 mb-4">
+						{% include 'covoiturage/_covoiturage_card.html.twig' %}
+					</div>
+				{% endfor %}
+			</div>
+		{% endif %}
+	</div>
+{% endblock %}

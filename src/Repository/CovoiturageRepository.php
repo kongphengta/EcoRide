@@ -23,32 +23,44 @@ class CovoiturageRepository extends ServiceEntityRepository
 
     /**
      * Recherche les covoiturages en fonction des critères.
-     * @return Covoiturage[]
+     * @return \Doctrine\ORM\QueryBuilder
      */
-    public function searchCovoiturages(?string $lieuDepart, ?string $lieuArrivee, ?\DateTimeImmutable $dateDepart): array
+    public function searchCovoituragesQueryBuilder(array $criteria): \Doctrine\ORM\QueryBuilder
     {
         $qb = $this->createQueryBuilder('c')
             ->leftJoin('c.chauffeur', 'ch') // Pour accéder aux infos du chauffeur si besoin
             ->leftJoin('c.voiture', 'v') // Pour accéder aux infos de la voiture si besoin
             ->addSelect('ch', 'v'); // S'assurer que les entités jointes sont chargées
 
-        if ($lieuDepart) {
+        if (!empty($criteria['depart'])) {
             $qb->andWhere('c.lieuDepart LIKE :lieuDepart')
-                ->setParameter('lieuDepart', '%' . $lieuDepart . '%');
+                ->setParameter('lieuDepart', '%' . $criteria['depart'] . '%');
         }
 
-        if ($lieuArrivee) {
+        if (!empty($criteria['arrivee'])) {
             $qb->andWhere('c.lieuArrivee LIKE :lieuArrivee')
-                ->setParameter('lieuArrivee', '%' . $lieuArrivee . '%');
+                ->setParameter('lieuArrivee', '%' . $criteria['arrivee'] . '%');
         }
 
-        if ($dateDepart) {
+        if (!empty($criteria['date'])) {
+            /** @var \DateTime $date */
+            $date = $criteria['date'];
             // Recherche pour la journée entière
-            $dateDebut = $dateDepart->setTime(0, 0, 0);
-            $dateFin = $dateDepart->setTime(23, 59, 59);
+            $dateDebut = (clone $date)->setTime(0, 0, 0);
+            $dateFin = (clone $date)->setTime(23, 59, 59);
             $qb->andWhere('c.dateDepart BETWEEN :dateDebut AND :dateFin')
                 ->setParameter('dateDebut', $dateDebut)
                 ->setParameter('dateFin', $dateFin);
+        }
+
+        if (!empty($criteria['prixMax'])) {
+            $qb->andWhere('c.prixPersonne <= :prixMax')
+                ->setParameter('prixMax', $criteria['prixMax']);
+        }
+
+        if (!empty($criteria['ecologique']) && $criteria['ecologique'] === true) {
+            $qb->andWhere('v.motorisation = :motorisation')
+                ->setParameter('motorisation', 'Électrique');
         }
 
         // On ne motre que les covoiturages qui sont "proposés" et dont la date n'est pas passée.
@@ -58,11 +70,21 @@ class CovoiturageRepository extends ServiceEntityRepository
         $qb->andWhere('c.dateDepart >= :today') // S'assurer que la date de départ est aujourd'hui ou future.
             ->setParameter('today', (new \DateTimeImmutable('today'))->setTime(0, 0, 0));
 
+        // US 3: On ne montre que les covoiturages avec au moins une place disponible.
+        $qb->andWhere('c.nbPlaceRestantes > 0');
+
+        if (!empty($criteria['noteMinimale'])) {
+            $qb->leftJoin('ch.avisRecus', 'a')
+                ->groupBy('c.id, ch.id, v.id') // Grouper pour pouvoir utiliser AVG()
+                ->having('AVG(a.note) >= :noteMinimale')
+                ->setParameter('noteMinimale', $criteria['noteMinimale']);
+        }
+
         // Trier par date de départ la plus proche
         $qb->orderBy('c.dateDepart', 'ASC')
             ->addOrderBy('c.heureDepart', 'ASC');
 
-        return $qb->getQuery()->getResult();
+        return $qb;
     }
     /**
      * @return Covoiturage[] Returns an array of upcoming Covoiturage objects

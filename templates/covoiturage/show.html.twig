@@ -1,186 +1,196 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}
-	Détails du covoiturage :
+{% block title %}Détails du covoiturage de
 	{{ covoiturage.lieuDepart }}
-	-
+	à
 	{{ covoiturage.lieuArrivee }}
 {% endblock %}
 
 {% block body %}
-
-	<div
-		class="container mt-4">
-		{# Inclusion du fil d'Ariane #}
-		{% if breadcrumb is defined and breadcrumb is not empty %}
-			<nav aria-label="breadcrumb" class="mb-3">
-				<ol class="breadcrumb">
-					{% for item in breadcrumb %}
-						{% if loop.last %}
-							<li class="breadcrumb-item active" aria-current="page">
-								{{ item.label }}
-							</li>
-						{% else %}
-							<li class="breadcrumb-item">
-								<a href="{{ item.url }}">{{ item.label }}</a>
-							</li>
-						{% endif %}
-					{% endfor %}
-				</ol>
-			</nav>
-		{% endif %}
-		{# Inclusion du titre de la page #}
-
+	<div class="container my-5">
 		<div class="row">
-			<div class="col-lg-8">
-				<div class="card shadow-sm mb-4">
+			{# ============================================= #}
+			{# COLONNE PRINCIPALE : DÉTAILS DU TRAJET        #}
+			{# ============================================= #}
+				<div class="col-lg-7"> <div class="card shadow-sm mb-4">
 					<div class="card-header bg-primary text-white">
-						<h2 class="h3 mb-0">Trajet de
+						<h1 class="h3 mb-0 d-flex align-items-center">
+							<i class="bi bi-geo-alt-fill me-2"></i>
 							{{ covoiturage.lieuDepart }}
-							à
-							{{ covoiturage.lieuArrivee }}</h2>
+							<i class="bi bi-arrow-right mx-3"></i>
+							{{ covoiturage.lieuArrivee }}
+						</h1>
 					</div>
 					<div class="card-body">
-						<h5 class="card-title">Détails du trajet</h5>
-						<p>
-							<strong>Date de départ :</strong>
-							{{ covoiturage.dateDepart ? covoiturage.dateDepart|date('d/m/Y') : 'Non spécifié' }}
-						</p>
-						<p>
-							<strong>Heure de départ :</strong>
-							{{ covoiturage.heureDepart ? covoiturage.heureDepart|date('H:i') : 'Non spécifié' }}
-						</p>
+						<div class="row g-3">
+							<div class="col-md-6">
+								<h5>
+									<i class="bi bi-calendar-event me-2"></i>Départ</h5>
+								<p class="mb-0">{{ covoiturage.dateDepart|date('l d F Y') }}
+									à
+									<strong>{{ covoiturage.heureDepart }}</strong>
+								</p>
+							</div>
+							<div class="col-md-6">
+								<h5>
+									<i class="bi bi-calendar-check me-2"></i>Arrivée estimée</h5>
+								<p class="mb-0">{{ covoiturage.dateArrivee ? covoiturage.dateArrivee|date('l d F Y') ~ ' à ' ~ covoiturage.heureArrivee : 'Non spécifiée' }}</p>
+							</div>
+						</div>
 
-						{% if covoiturage.dateArrivee %}
-							<p>
-								<strong>Date d'arrivée estimée :</strong>
-								{{ covoiturage.dateArrivee|date('d/m/Y') }}
-							</p>
-						{% endif %}
-						{% if covoiturage.heureArrivee %}
-							<p>
-								<strong>Heure d'arrivée estimée :</strong>
-								{{ covoiturage.heureArrivee|date('H:i') }}
-							</p>
-						{% endif %}
-						<p>
-							<strong>Prix par place :</strong>
-							{{ covoiturage.prixPersonne|number_format(2, ',', ' ') }}
-							€
-						</p>
-						<p>
-							<strong>Nombre de places total :</strong>
-							{{ covoiturage.nbPlaceTotal }}
-						</p>
-						<p>
-							<strong>Nombre de places Restantes :</strong>
-							<span class="badge bg-{{ covoiturage.nbPlaceRestantes > 0 ? 'success' : 'danger' }} fs-6">
-								{{ covoiturage.nbPlaceRestantes }}</span>
-						</p>
+						<hr>
+
 						{% if covoiturage.description %}
-							<p>
-								<strong>Description :</strong>
-								{{ covoiturage.description|nl2br }}
-							</p>
+							<h5 class="mt-4">
+								<i class="bi bi-info-circle me-2"></i>Détails du trajet</h5>
+							<p class="text-muted">{{ covoiturage.description|nl2br }}</p>
 						{% endif %}
-						<p>
-							<strong>Statut :</strong>
-							<span class="badge bg-info">
-								{{ covoiturage.statut|default('Non défini') }}
-							</span>
+						{% if app.user and covoiturage.chauffeur == app.user %}
+							<div class="mb-4">
+								{% if covoiturage.statut == 'en_attente' %}
+									<form method="post" action="{{ path('app_covoiturage_start', {'id': covoiturage.id}) }}">
+										<input type="hidden" name="_token" value="{{ csrf_token('start' ~ covoiturage.id) }}">
+										<button class="btn btn-success">Démarrer le covoiturage</button>
+									</form>
+									<form method="post" action="{{ path('app_covoiturage_cancel', {'id': covoiturage.id}) }}" class="d-inline ms-2" onsubmit="return confirm('Annuler ce covoiturage ?');">
+										<input type="hidden" name="_token" value="{{ csrf_token('cancel' ~ covoiturage.id) }}">
+										<button class="btn btn-danger">Annuler</button>
+									</form>
+								{% elseif covoiturage.statut == 'en_cours' %}
+									<form method="post" action="{{ path('app_covoiturage_end', {'id': covoiturage.id}) }}">
+										<input type="hidden" name="_token" value="{{ csrf_token('end' ~ covoiturage.id) }}">
+										<button class="btn btn-primary">Terminer le covoiturage</button>
+									</form>
+								{% elseif covoiturage.statut == 'termine' %}
+									<span class="badge bg-success">Trajet terminé</span>
+								{% elseif covoiturage.statut == 'annule' %}
+									<span class="badge bg-danger">Trajet annulé</span>
+								{% endif %}
+							</div>
+						{% endif %}
+
+						<h5 class="mt-4">
+							<i class="bi bi-car-front-fill me-2"></i>Véhicule</h5>
+						<p class="mb-0">
+							<strong>{{ covoiturage.voiture.marque.libelle }}
+								{{ covoiturage.voiture.modele }}</strong>
+							- Couleur
+							{{ covoiturage.voiture.couleur }}
 						</p>
-
-						<hr>
-
-						<h5 class="card-title">Informations sur le Conducteur</h5>
-						{% if covoiturage.chauffeur %}
-							<p>
-								<strong>Pseudo :</strong>
-								{{ covoiturage.chauffeur.pseudo }}
-							</p>
-							<p>
-								<strong>Prénom :</strong>
-								{{ covoiturage.chauffeur.firstname }}
-							</p>
-							<p>
-								<strong>Email :</strong>
-								{{ covoiturage.chauffeur.email }}
-							</p>
-						{% else %}
-							<p class="text-muted">Aucune information sur le conducteur disponible.</p>
-						{% endif %}
-
-						<hr>
-
-						<h5 class="card-title mt-4">Informations sur la voiture</h5>
-						{% if covoiturage.voiture %}
-							<p>
-								<strong>Marque :</strong>
-								{{ covoiturage.voiture.marque.libelle|default('non spécifié') }}
-							</p>
-							<p>
-								<strong>Modèle :</strong>
-								{{ covoiturage.voiture.modele }}
-							</p>
-							<p>
-								<strong>Couleur :</strong>
-								{{ covoiturage.voiture.couleur }}
-							</p>
-						{% else %}
-							<p class="text-muted">Informations sur la voiture non disponibles.</p>
-						{% endif %}
-
 					</div>
 				</div>
 			</div>
 
-			<div class="col-lg-4">
-				<div class="sticky-top" style="top: 2rem;">
+			{# ============================================= #}
+			{# COLONNE LATÉRALE : RÉSERVATION & CHAUFFEUR    #}
+			{# ============================================= #}
+				<div class="col-lg-5"> <div
+					class="sticky-top" style="top: 20px;">
+					{# --- Carte de Réservation --- #}
 					<div class="card shadow-sm mb-4">
-						<div class="card-body">
-							<h5 class="card-title mb-3">Réserver ce trajet</h5>
-							<p class="card-text">
-								<strong>Prix :</strong>
-								<span class="fw-bold fs-5 text-primary">{{ covoiturage.prixPersonne|number_format(2, ',', ' ') }}
-									€</span>
-								/ personne<br>
-								<strong>Places restantes :</strong>
-								/
-								<span class="badge bg-{{ covoiturage.nbPlaceRestantes > 0 ? 'success' : 'danger' }} fs-6">{{ covoiturage.nbPlaceRestantes }}</span>
+						<div class="card-body text-center">
+							<h5 class="card-title">Réserver votre place</h5>
+							<h3 class="text-success fw-bold my-3">{{ covoiturage.prixPersonne|number_format(2, ',', ' ') }}
+								€
+								<small class="text-muted">/ personne</small>
+							</h3>
+							<p class="text-info fw-bold">{{ covoiturage.nbPlaceRestantes }}
+								place{{ covoiturage.nbPlaceRestantes > 1 ? 's' : '' }}
+								restante{{ covoiturage.nbPlaceRestantes > 1 ? 's' : '' }}
+								sur
+								{{ covoiturage.nbPlaceTotal }}</p>
+							<div class="d-grid">
+								{% if app.user %}
+									{% if covoiturage.chauffeur == app.user %}
+										<p class="alert alert-info small m-0">C'est votre trajet. Vous pouvez le
+											<a href="{{ path('app_covoiturage_edit', {'id': covoiturage.id}) }}">modifier</a>.</p>
+									{% else %}
+										{% set hasReserved = false %}
+										{% for reservation in covoiturage.reservations %}
+											{% if reservation.passager == app.user %}
+												{% set hasReserved = true %}
+											{% endif %}
+										{% endfor %}
 
-								{{ covoiturage.nbPlaceRestantes }}
-							</p>
-
-							{# Logique de réservation à implémenter (vérifier si l'utilisateur est connecté, n'est pas le chauffeur, etc.) #}
-							{% if covoiturage.nbPlaceRestantes > 0 %}
-								<a href="#" class="btn btn-primary w-100 mb-2">
-									<i class="bi bi-calendar-plus-fill me-2"></i>Réserver une place
-								</a>
-							{% else %}
-								<button type="button" class="btn btn-secondary w-100 mb-2" disabled>Complet</button>
-							{% endif %}
-							{# Logique pour contacter le chauffeur #}
-							<a href="#" class="btn btn-outline-info w-100">
-								<i class="bi bi-envelope-fill me-2"></i>Contacter le chauffeur
-							</a>
+										{% if hasReserved %}
+											<p class="alert alert-success m-0">Vous avez déjà réservé.</p>
+										{% elseif covoiturage.nbPlaceRestantes > 0 %}
+											<form method="post" action="{{ path('app_covoiturage_reserver', {'id': covoiturage.id}) }}" onsubmit="return confirm('Confirmez-vous la réservation pour ce trajet ?');" class="m-0">
+												<input type="hidden" name="_token" value="{{ csrf_token('reserver' ~ covoiturage.id) }}">
+												<button class="btn btn-success btn-lg w-100">Réserver ma place</button>
+											</form>
+										{% else %}
+											<button class="btn btn-warning btn-lg w-100" disabled>Complet</button>
+										{% endif %}
+									{% endif %}
+								{% else %}
+									<a href="{{ path('app_login', {'redirect_to': app.request.pathInfo}) }}" class="btn btn-primary btn-lg w-100">Se connecter pour réserver</a>
+								{% endif %}
+							</div>
 						</div>
 					</div>
 
-					{% if covoiturage.chauffeur %}
-						<div class="card shadow-sm">
-							<div class="card-header">
-								Informations du Chauffeur
-							</div>
-							<div class="card-body d-flex align-items-center">
-								<i class="bi bi-person-circle fs-1 text-primary me-3"></i>
-								<div>
-									<h6 class="card-title mb-0">{{ covoiturage.chauffeur.pseudo }}</h6>
-									{# Autres infos : e.g. évaluation moyenne, lien vers profil #}
-									{# <small class="text-muted">Membre depuis ...</small> #}
-								</div>
+					{# --- Carte du Chauffeur --- #}
+					{% set chauffeur = covoiturage.chauffeur %}
+					<div class="card shadow-sm mb-4">
+						<div class="card-header">
+							<h5 class="mb-0">Proposé par</h5>
+						</div>
+						<div class="card-body text-center">
+							<a href="{{ path('app_public_profile_show', {'id': chauffeur.id}) }}" class="text-decoration-none text-dark">
+								<img src="{{ asset(chauffeur.avatarUrl) }}" alt="Avatar de {{ chauffeur.pseudo }}" class="rounded-circle mb-3" width="100" height="100">
+								<h5 class="card-title">{{ chauffeur.pseudo }}</h5>
+							</a>
+							<p class="card-text text-muted">
+								Membre
+								{{ chauffeur.membershipDurationAsString }}
+							</p>
+							<div class="d-flex justify-content-center align-items-center">
+								<span class="fw-bold fs-5 me-2">{{ chauffeur.averageRating|number_format(1, ',', ' ') }}</span>
+								<span class="text-warning">
+									{% for i in 1..5 %}
+										{% if i <= chauffeur.averageRating %}
+											<i class="bi bi-star-fill"></i>
+										{% elseif i - 0.5 <= chauffeur.averageRating %}
+											<i class="bi bi-star-half"></i>
+										{% else %}
+											<i class="bi bi-star"></i>
+										{% endif %}
+									{% endfor %}
+								</span>
+								<span class="text-muted ms-2">({{ chauffeur.avisRecus|length }}
+									avis)</span>
 							</div>
 						</div>
-					{% endif %}
+					</div>
+
+					{# --- Carte des Avis --- #}
+					{% set avisRecus = chauffeur.avisRecus|sort((a, b) => b.dateCreation <=> a.dateCreation) %}
+					<div class="card shadow-sm">
+						<div class="card-header">
+							<h5 class="mb-0">Derniers avis</h5>
+						</div>
+						<div class="card-body">
+							{% if avisRecus is not empty %}
+								<ul class="list-unstyled mb-0">
+									{% for avis in avisRecus|slice(0, 3) %}
+										{% include 'avis/_avis_item.html.twig' with {'avis': avis} %}
+									{% endfor %}
+								</ul>
+								{% if avisRecus|length > 3 %}
+									<div class="text-center mt-3">
+										<a href="{{ path('app_public_profile_show', {'id': chauffeur.id}) }}" class="btn btn-outline-primary btn-sm">Voir tous les avis</a>
+									</div>
+								{% endif %}
+							{% else %}
+								<p class="text-muted mb-0">
+									<i class="bi bi-chat-square-text me-2"></i>
+									{{ chauffeur.pseudo }}
+									n'a pas encore reçu d'avis.
+								</p>
+							{% endif %}
+						</div>
+					</div>
 				</div>
 			</div>
 		</div>

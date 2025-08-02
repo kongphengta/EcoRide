@@ -3,8 +3,10 @@
 namespace App\Repository;
 
 use App\Entity\Avis;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
+use Doctrine\ORM\QueryBuilder;
 
 /**
  * @extends ServiceEntityRepository<Avis>
@@ -16,28 +18,18 @@ class AvisRepository extends ServiceEntityRepository
         parent::__construct($registry, Avis::class);
     }
 
-    //    /**
-    //     * @return Avis[] Returns an array of Avis objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('a')
-    //            ->andWhere('a.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('a.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
-
-    //    public function findOneBySomeField($value): ?Avis
-    //    {
-    //        return $this->createQueryBuilder('a')
-    //            ->andWhere('a.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+    /**
+     * Crée un QueryBuilder pour les avis reçus par un utilisateur,
+     * triés par date de création décroissante.
+     *
+     * @param User $user Le receveur des avis.
+     * @return QueryBuilder
+     */
+    public function createQueryBuilderForAvisRecus(User $user): QueryBuilder
+    {
+        return $this->createQueryBuilder('a')
+            ->andWhere('a.receveur = :user')
+            ->setParameter('user', $user)
+            ->orderBy('a.dateCreation', 'DESC');
+    }
 }

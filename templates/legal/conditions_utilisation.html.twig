@@ -1,0 +1,63 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Conditions d'utilisation - EcoRide{% endblock %}
+
+{% block carousel %}{% endblock %}
+
+{% block body %}
+<div class="container my-5">
+    <h1>Conditions d'utilisation</h1>
+    
+    <h2>Objet</h2>
+    <p>
+        Les présentes conditions générales d'utilisation régissent l'accès et l'utilisation de la plateforme EcoRide, 
+        service de mise en relation pour le covoiturage.
+    </p>
+
+    <h2>Inscription et compte utilisateur</h2>
+    <p>
+        L'inscription sur EcoRide est gratuite et requiert la fourniture d'informations véridiques. 
+        Chaque utilisateur est responsable de la confidentialité de ses identifiants de connexion.
+    </p>
+
+    <h2>Utilisation du service</h2>
+    <h3>Pour les conducteurs :</h3>
+    <ul>
+        <li>Publier des trajets avec des informations exactes</li>
+        <li>Posséder un permis de conduire valide</li>
+        <li>S'assurer que le véhicule est en bon état</li>
+        <li>Respecter les horaires annoncés</li>
+    </ul>
+
+    <h3>Pour les passagers :</h3>
+    <ul>
+        <li>Respecter les horaires de rendez-vous</li>
+        <li>Effectuer le paiement convenu</li>
+        <li>Adopter un comportement respectueux</li>
+    </ul>
+
+    <h2>Responsabilité</h2>
+    <p>
+        EcoRide est une plateforme de mise en relation. La responsabilité du transport incombe entièrement au conducteur. 
+        EcoRide ne peut être tenu responsable des dommages survenus pendant les trajets.
+    </p>
+
+    <h2>Interdictions</h2>
+    <p>Il est strictement interdit :</p>
+    <ul>
+        <li>D'utiliser le service à des fins commerciales non autorisées</li>
+        <li>De publier des contenus offensants ou inappropriés</li>
+        <li>D'usurper l'identité d'autrui</li>
+        <li>De perturber le fonctionnement de la plateforme</li>
+    </ul>
+
+    <h2>Suspension et résiliation</h2>
+    <p>
+        EcoRide se réserve le droit de suspendre ou de résilier tout compte en cas de non-respect des présentes conditions.
+    </p>
+
+    <div class="mt-4">
+        <a href="{{ path('app_home') }}" class="btn btn-success">Retour à l'accueil</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Laisser un avis
+{% endblock %}
+
+{% block body %}
+	<div class="container my-5">
+		<div class="row justify-content-center">
+			<div class="col-md-8 col-lg-6">
+				<div class="card shadow-sm">
+					<div class="card-header bg-primary text-white">
+						<h1 class="h3 mb-0">Laisser un avis</h1>
+					</div>
+					<div class="card-body">
+						<p class="card-text">
+							Vous êtes sur le point de laisser un avis pour le trajet du
+							<strong>{{ reservation.covoiturage.dateDepart|date('d/m/Y') }}</strong>
+							de
+							<strong>{{ reservation.covoiturage.lieuDepart }}</strong>
+							à
+							<strong>{{ reservation.covoiturage.lieuArrivee }}</strong>
+							avec
+							<strong>{{ reservation.covoiturage.chauffeur.pseudo }}</strong>.
+						</p>
+						<hr>
+
+						{{ form_start(form) }}
+						<div class="mb-4">
+							{{ form_label(form.note) }}
+							<div class="star-rating">
+								{{ form_widget(form.note) }}
+							</div>
+							{{ form_errors(form.note) }}
+						</div>
+
+						<div class="mb-3">
+							{{ form_row(form.commentaire) }}
+						</div>
+
+						<div class="d-grid">
+							<button type="submit" class="btn btn-success btn-lg">Envoyer mon avis</button>
+						</div>
+						{{ form_end(form) }}
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+{% endblock %}
+
+{% block stylesheets %}
+	{{ parent() }}
+	<style>
+		.star-rating {
+			display: flex;
+			flex-direction: row-reverse; /* Pour que le hover fonctionne de droite à gauche */
+			font-size: 2rem;
+			justify-content: flex-end;
+		}
+		.star-rating > input {
+			display: none;
+		}
+		.star-rating > label {
+			color: #ccc;
+			cursor: pointer;
+			padding: 0 0.1em;
+			transition: color 0.2s;
+		}
+		.star-rating > input:checked ~ label,
+		.star-rating:not(:checked) > label:hover,
+		.star-rating:not(:checked) > label:hover ~ label {
+			color: #ffc107; /* Jaune étoile */
+		}
+		.star-rating > div {
+			display: contents;
+		}
+	</style>
+{% endblock %}

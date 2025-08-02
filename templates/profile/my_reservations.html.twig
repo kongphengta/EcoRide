@@ -1,0 +1,84 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Mes Réservations - EcoRide
+{% endblock %}
+
+{% block body %}
+	<div class="container my-5">
+		<div class="d-flex justify-content-between align-items-center mb-4">
+			<h1>Mes Réservations</h1>
+		</div>
+
+		{% if reservations is not empty %}
+			{# On peut utiliser la même logique de couleurs de badge que pour les statuts de covoiturage #}
+			{% set status_colors = {
+            'Confirmée': 'success',
+            'Annulée': 'danger',
+            'Annulée par le chauffeur': 'danger',
+            'En attente': 'warning'
+        } %}
+			<div class="table-responsive">
+				<table class="table table-hover align-middle">
+					<thead class="table-light">
+						<tr>
+							<th>Trajet</th>
+							<th>Date et Heure</th>
+							<th>Chauffeur</th>
+							<th>Statut</th>
+							<th class="text-end">Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+						{% for reservation in reservations %}
+							<tr>
+								<td>
+									<a href="{{ path('app_covoiturage_show', {'id': reservation.covoiturage.id}) }}" class="text-decoration-none fw-bold">
+										{{ reservation.covoiturage.lieuDepart }}
+										&rarr;
+										{{ reservation.covoiturage.lieuArrivee }}
+									</a>
+								</td>
+								<td>{{ reservation.covoiturage.dateDepart|date('d/m/Y') }}
+									à
+									{{ reservation.covoiturage.heureDepart }}</td>
+								<td>
+									{# TODO: Ajouter un lien vers le profil public du chauffeur quand il existera #}
+									{{ reservation.covoiturage.chauffeur.pseudo }}
+								</td>
+								<td>
+									<span class="badge bg-{{ status_colors[reservation.statut]|default('info') }}">{{ reservation.statut }}</span>
+								</td>
+								<td class="text-end">
+									<a href="{{ path('app_covoiturage_show', {'id': reservation.covoiturage.id}) }}" class="btn btn-sm btn-outline-primary me-2">
+										<i class="bi bi-eye"></i>
+										Voir le trajet
+									</a>
+									{# On affiche le bouton "Annuler" seulement si la réservation est confirmée ou en attente #}
+									{% if reservation.statut == 'Confirmée' or reservation.statut == 'En attente' %}
+										<form method="post" action="{{ path('app_reservation_cancel', {'id': reservation.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir annuler cette réservation ?');" class="d-inline">
+											<input type="hidden" name="_token" value="{{ csrf_token('cancel' ~ reservation.id) }}">
+											<button class="btn btn-sm btn-danger">
+												<i class="bi bi-x-circle"></i>
+												Annuler
+											</button>
+										</form>
+									{% endif %}
+								</td>
+							</tr>
+						{% endfor %}
+					</tbody>
+				</table>
+			</div>
+		{% else %}
+			<div class="alert alert-info" role="alert">
+				<h4 class="alert-heading">Aucune réservation pour le moment</h4>
+				<p>Vous n'avez encore réservé aucun trajet. Il est temps de planifier votre prochaine aventure !</p>
+				<hr>
+				<p class="mb-0">
+					<a href="{{ path('app_covoiturage_index') }}" class="alert-link">Trouvez un covoiturage</a>
+					qui correspond à vos besoins.
+				</p>
+			</div>
+		{% endif %}
+	</div>
+{% endblock %}

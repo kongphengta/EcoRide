@@ -23,94 +23,95 @@ use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 /\*\*
 
 - @ORM\Entity(repositoryClass=App\Repository\UserRepository::class)
+
 - @UniqueEntity(fields={"email"}, message="Il existe déjà un compte avec cet email")
+
 - @UniqueEntity(fields={"pseudo"}, message="Ce pseudo est déjà utilisé")
   \*/
   class User implements UserInterface, PasswordAuthenticatedUserInterface
   {
   // ... autres propriétés ...
-
+  
       /**
        * @ORM\Column(type="string", length=180, unique=true)
        * @Assert\NotBlank(message="L'email ne peut pas être vide.")
        * @Assert\Email(message="L'email '{{ value }}' n'est pas valide.")
        */
       private $email;
-
+      
       /**
        * @ORM\Column(type="string", length=128)
        * @Assert\NotBlank(message="Le prénom ne peut pas être vide.")
        * @Assert\Length(min=2, minMessage="Le prénom doit faire au moins {{ limit }} caractères.")
        */
       private $firstname;
-
+      
       /**
        * @ORM\Column(type="string", length=128)
        * @Assert\NotBlank(message="Le nom ne peut pas être vide.")
        * @Assert\Length(min=2, minMessage="Le nom doit faire au moins {{ limit }} caractères.")
        */
       private $lastname;
-
+      
       /**
        * @var string The hashed password
        * @ORM\Column(type="string")
        * // Pas de Assert\NotBlank ici, car on valide le plainPassword dans le formulaire
        */
       private $password;
-
+      
       // Ajoutez Assert\NotBlank aux autres champs si requis par le cahier des charges
       // ... telephone, adresse, date_naissance ...
-
+      
       /**
        * @ORM\Column(type="string", length=255, unique=true)
        * @Assert\NotBlank(message="Le pseudo ne peut pas être vide.")
        */
       private $pseudo;
-
+      
       /**
        * @ORM\Column(type="boolean")
        */
       private $is_verified = false; // Nouveau champ pour le statut de vérification
-
+      
       /**
        * @ORM\Column(type="string", length=255, nullable=true)
        */
       private $verification_token; // Nouveau champ pour le token de vérification
-
+      
       // ... Getters et Setters pour les nouveaux champs ...
-
+      
       public function isVerified(): bool
       {
           return $this->is_verified;
       }
-
+      
       public function setIsVerified(bool $is_verified): self
       {
           $this->is_verified = $is_verified;
           return $this;
       }
-
+      
       public function getVerificationToken(): ?string
       {
           return $this->verification_token;
       }
-
+      
       public function setVerificationToken(?string $verification_token): self
       {
           $this->verification_token = $verification_token;
           return $this;
       }
-
+      
       // Assurez-vous que les méthodes de UserInterface sont implémentées
       // getRoles, eraseCredentials, getUserIdentifier (qui retourne l'email)
       // et getPassword de PasswordAuthenticatedUserInterface
-
+  
   }
   N'oubliez pas de générer et exécuter la migration Doctrine :
   bash
   php bin/console make:migration
   php bin/console doctrine:migrations:migrate
-
 2. Mettre à jour le RegistrationFormType :
 
 Assurez-vous d'avoir un champ pour le mot de passe non mappé (plainPassword) et ajoutez des contraintes de validation.
@@ -194,7 +195,7 @@ new Length([
             // ])
         ;
     }
-
+    
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
@@ -243,12 +244,12 @@ return $this->redirectToRoute('app_home'); // Ou une autre page (ex: tableau de 
         $user = new User();
         $form = $this->createForm(RegistrationFormType::class, $user);
         $form->handleRequest($request);
-
+    
         if ($form->isSubmitted() && $form->isValid()) {
             // Générer le token de vérification
             $token = $tokenGenerator->generateToken();
             $user->setVerificationToken($token);
-
+    
             // Encoder le mot de passe en clair
             $user->setPassword(
                 $userPasswordHasher->hashPassword(
@@ -256,26 +257,26 @@ return $this->redirectToRoute('app_home'); // Ou une autre page (ex: tableau de 
                     $form->get('plainPassword')->getData() // Récupérer le mdp depuis le champ non mappé
                 )
             );
-
+    
             // Définir le rôle par défaut (si non géré ailleurs)
             $user->setRoles(['ROLE_USER']);
-
+    
             // Définir la date d'inscription (si non géré automatiquement par Doctrine)
             // $user->setDateInscription(new \DateTimeImmutable()); // Votre table l'a déjà
-
+    
             // Mettre is_verified à false (déjà fait par défaut dans l'entité)
             // $user->setIsVerified(false);
-
+    
             $entityManager->persist($user);
             $entityManager->flush();
-
+    
             // Générer l'URL de vérification
             $verificationUrl = $this->generateUrl(
                 'app_verify_email', // Nom de la route de vérification (à créer)
                 ['token' => $token, 'id' => $user->getId()],
                 UrlGeneratorInterface::ABSOLUTE_URL // URL complète
             );
-
+    
             // Envoyer l'email de confirmation
             $email = (new Email())
                 ->from('noreply@ecoride.com') // Votre adresse d'expédition
@@ -286,7 +287,7 @@ return $this->redirectToRoute('app_home'); // Ou une autre page (ex: tableau de 
                         <p><a href='{$verificationUrl}'>Activer mon compte</a></p>
                         <p>Ce lien expirera dans 1 heure.</p> {# Vous pouvez ajouter une logique d'expiration #}
                         <p>L'équipe EcoRide</p>");
-
+    
             try {
                 $mailer->send($email);
                 $this->addFlash('success', 'Inscription réussie ! Veuillez vérifier votre boîte mail pour activer votre compte.');
@@ -295,17 +296,17 @@ return $this->redirectToRoute('app_home'); // Ou une autre page (ex: tableau de 
                 $this->addFlash('warning', 'Inscription réussie, mais l\'email de confirmation n\'a pas pu être envoyé. Contactez le support.');
                 // Vous pourriez vouloir supprimer l'utilisateur ou le marquer pour une tentative ultérieure
             }
-
-
+    
+    
             // Rediriger vers la page de connexion ou une page d'attente
             return $this->redirectToRoute('app_login');
         }
-
+    
         return $this->render('registration/register.html.twig', [
             'registrationForm' => $form->createView(),
         ]);
     }
-
+    
     /**
      * @Route("/verify/email", name="app_verify_email")
      */
@@ -313,36 +314,36 @@ return $this->redirectToRoute('app_home'); // Ou une autre page (ex: tableau de 
     {
         $id = $request->query->get('id'); // Récupérer l'id depuis l'URL
         $token = $request->query->get('token'); // Récupérer le token depuis l'URL
-
+    
         if (null === $id || null === $token) {
             return $this->redirectToRoute('app_register'); // Ou une page d'erreur
         }
-
+    
         $user = $entityManager->getRepository(User::class)->find($id);
-
+    
         if (null === $user) {
             $this->addFlash('danger', 'Utilisateur inconnu.');
             return $this->redirectToRoute('app_register');
         }
-
+    
         // Vérifier si le token est valide et si l'utilisateur n'est pas déjà vérifié
         if ($user->isVerified()) {
              $this->addFlash('info', 'Votre compte est déjà activé.');
              return $this->redirectToRoute('app_login');
         }
-
+    
         if ($user->getVerificationToken() === null || $user->getVerificationToken() !== $token) {
              $this->addFlash('danger', 'Le token de vérification est invalide.');
              return $this->redirectToRoute('app_register');
         }
-
+    
         // Valider l'email (et éventuellement vérifier l'expiration du token ici)
         $user->setIsVerified(true);
         $user->setVerificationToken(null); // Nettoyer le token après utilisation
         $entityManager->flush();
-
+    
         $this->addFlash('success', 'Votre compte a été activé avec succès ! Vous pouvez maintenant vous connecter.');
-
+    
         return $this->redirectToRoute('app_login');
     }
 
@@ -371,9 +372,9 @@ html
                         </div>
                     {% endfor %}
                 {% endfor %}
-
+    
                 {{ form_start(registrationForm, {'attr': {'class': 'needs-validation', 'novalidate': 'novalidate'}}) }}
-
+    
                     <div class="row mb-3">
                         <div class="col-md-6">
                             {{ form_row(registrationForm.firstname, {'attr': {'class': 'form-control'}}) }}
@@ -382,40 +383,40 @@ html
                             {{ form_row(registrationForm.lastname, {'attr': {'class': 'form-control'}}) }}
                         </div>
                     </div>
-
+    
                     <div class="mb-3">
                         {{ form_row(registrationForm.pseudo, {'attr': {'class': 'form-control'}}) }}
                     </div>
-
+    
                     <div class="mb-3">
                         {{ form_row(registrationForm.email, {'attr': {'class': 'form-control'}}) }}
                     </div>
-
+    
                     <div class="mb-3">
                         {{ form_row(registrationForm.telephone, {'attr': {'class': 'form-control'}}) }}
                     </div>
-
+    
                      <div class="mb-3">
                         {{ form_row(registrationForm.adresse, {'attr': {'class': 'form-control'}}) }}
                     </div>
-
+    
                      <div class="mb-3">
                         {{ form_row(registrationForm.date_naissance, {'attr': {'class': 'form-control'}}) }}
                     </div>
-
+    
                     {# Champ photo si géré
                     <div class="mb-3">
                         {{ form_row(registrationForm.photo, {'attr': {'class': 'form-control'}}) }}
                     </div>
                     #}
-
+    
                     <div class="mb-3">
                         {{ form_row(registrationForm.plainPassword, {
                             label: 'Mot de passe',
                             'attr': {'class': 'form-control'}
                         }) }}
                     </div>
-
+    
                     {# Champ confirmation mot de passe si ajouté
                     <div class="mb-3">
                         {{ form_row(registrationForm.confirmPassword, {
@@ -424,21 +425,21 @@ html
                         }) }}
                     </div>
                     #}
-
+    
                     {# Case CGU si ajoutée
                     <div class="mb-3 form-check">
                         {{ form_widget(registrationForm.agreeTerms, {'attr': {'class': 'form-check-input'}}) }}
                         {{ form_label(registrationForm.agreeTerms, null, {'label_attr': {'class': 'form-check-label'}}) }}
                         {{ form_errors(registrationForm.agreeTerms) }} {# Afficher l'erreur spécifique ici #}
                     {#</div> #}
-
-
+    
+    
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-primary btn-lg">S'inscrire</button>
                     </div>
-
+    
                 {{ form_end(registrationForm) }}
-
+    
                 <p class="text-center mt-3">
                     Déjà un compte ? <a href="{{ path('app_login') }}">Connectez-vous</a>
                 </p>
@@ -477,7 +478,7 @@ return;
             );
         }
     }
-
+    
     public function checkPostAuth(UserInterface $user): void
     {
         // Pas besoin de vérifier ici pour ce cas
@@ -4022,7 +4023,7 @@ class CovoiturageType extends AbstractType
                 'constraints' => [
                     new Assert\NotBlank([
                         'message' => 'Veuillez sélectionner une voiture',
-                    
+
                 ],
             ->add('statut', TextType::class, [ // Champ 'statut' ajouté
                 'label' => 'Statut',
@@ -4031,7 +4032,7 @@ class CovoiturageType extends AbstractType
                     'placeholder' => 'Ex: Proposé, Confirmé, Annulé',
                 ]
             ])
-            
+
 
             ->add('heureDepart')
             ->add('lieuDepart')
@@ -4052,7 +4053,7 @@ class CovoiturageType extends AbstractType
 +            // Les champs 'voiture', 'nbPlaceRestante', 'chauffeur' et les ajouts incorrects/dupliqués sont supprimés.
          ;
      }
- 
+
 Quelques notes sur ces changements :
 
 J'ai séparé dateDepart en DateType et heureDepart en TimeType (et de même pour l'arrivée) pour correspondre à votre cahier des charges.
@@ -4371,23 +4372,23 @@ Here's the suggested change:
 index.html.twig
 -5
 +5
-					<label for="date" class="form-label">Date</label>
-					<input type="date" class="form-control" id="date">
-				</div>
-				<div class="col-md-1 align-self-end">
-					<button type="submit" class="btn btn-outline-info w-100">
-						<i class="bi bi-search"></i> Recherche
-					</button>
-				</div>
-			</form>
-			<div class="col-md-1 mt-3">
-				<button type="submit" class="btn btn-outline-info">
-					<i class="bi bi-search">Recherche</i>
-				</button>
-			</div>
- 		</section>
- 
- 		<section>
+                    <label for="date" class="form-label">Date</label>
+                    <input type="date" class="form-control" id="date">
+                </div>
+                <div class="col-md-1 align-self-end">
+                    <button type="submit" class="btn btn-outline-info w-100">
+                        <i class="bi bi-search"></i> Recherche
+                    </button>
+                </div>
+            </form>
+            <div class="col-md-1 mt-3">
+                <button type="submit" class="btn btn-outline-info">
+                    <i class="bi bi-search">Recherche</i>
+                </button>
+            </div>
+         </section>
+
+         <section>
 Key changes made:
 
 Button moved into the form: The div containing the submit button is now placed inside the <form class="row g-3"> ... </form> tags.
@@ -4420,18 +4421,18 @@ Super ! C'est exactement ça. En déplaçant le div contenant le bouton de soumi
 Le code que vous avez partagé a maintenant le bouton correctement placé :
 
 html
-			<form class="row g-3">
-				{# ... autres champs ... #}
-				<div class="col-md-3">
-					<label for="date" class="form-label">Date</label>
-					<input type="date" class="form-control" id="date">
-				</div>
-				<div class="col-md-1 mt-3">  {# Ce div est maintenant DANS le formulaire #}
-					<button type="submit" class="btn btn-outline-info">
-						<i class="bi bi-search">Recherche</i>
-					</button>
-				</div>
-			</form>
+            <form class="row g-3">
+                {# ... autres champs ... #}
+                <div class="col-md-3">
+                    <label for="date" class="form-label">Date</label>
+                    <input type="date" class="form-control" id="date">
+                </div>
+                <div class="col-md-1 mt-3">  {# Ce div est maintenant DANS le formulaire #}
+                    <button type="submit" class="btn btn-outline-info">
+                        <i class="bi bi-search">Recherche</i>
+                    </button>
+                </div>
+            </form>
 C'est la correction fonctionnelle la plus importante !
 
 Pour aller un peu plus loin et peaufiner l'alignement et l'apparence avec Bootstrap, comme je l'avais suggéré précédemment, voici les petites modifications que l'on pourrait encore apporter. Ce sont des détails, mais ils peuvent améliorer l'intégration visuelle :
@@ -4439,18 +4440,18 @@ Pour aller un peu plus loin et peaufiner l'alignement et l'apparence avec Bootst
 index.html.twig
 -3
 +3
-					<label for="date" class="form-label">Date</label>
-					<input type="date" class="form-control" id="date">
-				</div>
-				<div class="col-md-1 mt-3">
-					<button type="submit" class="btn btn-outline-info">
-						<i class="bi bi-search">Recherche</i>
-				<div class="col-md-1 align-self-end">
-					<button type="submit" class="btn btn-outline-info w-100">
-						<i class="bi bi-search"></i> Recherche
-					</button>
-				</div>
-			</form>
+                    <label for="date" class="form-label">Date</label>
+                    <input type="date" class="form-control" id="date">
+                </div>
+                <div class="col-md-1 mt-3">
+                    <button type="submit" class="btn btn-outline-info">
+                        <i class="bi bi-search">Recherche</i>
+                <div class="col-md-1 align-self-end">
+                    <button type="submit" class="btn btn-outline-info w-100">
+                        <i class="bi bi-search"></i> Recherche
+                    </button>
+                </div>
+            </form>
 
 Les changements ici sont :
 
@@ -4481,7 +4482,7 @@ Parfait ! C'est exactement ça.
 Vous avez bien ajouté l'espace entre l'icône et le mot "Recherche" dans le bouton :
 
 html
-						<i class="bi bi-search"></i> Recherche
+                        <i class="bi bi-search"></i> Recherche
 C'est un petit détail, mais ça améliore la lisibilité et c'est la manière standard d'utiliser les icônes Bootstrap avec du texte.
 
 Le fichier f:\xampp\htdocs\ecoride\templates\covoiturage\index.html.twig est maintenant impeccable !
@@ -4625,18 +4626,18 @@ Modifions templates/covoiturage/index.html.twig pour ajouter un bouton ou un lie
 index.html.twig
 -0
 +6
-			<p class="lead">Partez à la découverte de nouvelles destinations tout en partageant les frais et en réduisant votre empreinte carbone.</p>
-		</header>
+            <p class="lead">Partez à la découverte de nouvelles destinations tout en partageant les frais et en réduisant votre empreinte carbone.</p>
+        </header>
 
-		<div class="mb-4">
-			<a href="{{ path('app_covoiturage_new') }}" class="btn btn-success btn-lg">
-				<i class="bi bi-plus-circle-fill me-2"></i>Proposer un covoiturage
-			</a>
-		</div>
+        <div class="mb-4">
+            <a href="{{ path('app_covoiturage_new') }}" class="btn btn-success btn-lg">
+                <i class="bi bi-plus-circle-fill me-2"></i>Proposer un covoiturage
+            </a>
+        </div>
 
-		<section class="mb-4">
-			<h2>Rechercher un covoiturage</h2>
-			<form class="row g-3">
+        <section class="mb-4">
+            <h2>Rechercher un covoiturage</h2>
+            <form class="row g-3">
 
 Use code with care. Learn more
 Avant de tester :
@@ -4677,23 +4678,23 @@ Voici un petit diff pour corriger cela :
 index.html.twig
 -2
 +2
-		</header>
-		<div class="mb-4">
-			<a href="{{ path('app_covoiturage_new') }}" class="btn btn-success btn-lg">
-				<i class="bi bi-plus-circle-fill me-2">Proposer un covoiturage
-				<i class="bi bi-plus-circle-fill me-2"></i>Proposer un covoiturage
-				</a>
-			</div>
+        </header>
+        <div class="mb-4">
+            <a href="{{ path('app_covoiturage_new') }}" class="btn btn-success btn-lg">
+                <i class="bi bi-plus-circle-fill me-2">Proposer un covoiturage
+                <i class="bi bi-plus-circle-fill me-2"></i>Proposer un covoiturage
+                </a>
+            </div>
 
 Unchanged lines
-					</div>
-					<div class="col-md-1 align-self-end">
-						<button type="submit" class="btn btn-outline-info w-100">
-							<i class="bi bi-search"></i>Recherche
-							<i class="bi bi-search"></i> Recherche
-						</button>
-					</div>
-				</form>
+                    </div>
+                    <div class="col-md-1 align-self-end">
+                        <button type="submit" class="btn btn-outline-info w-100">
+                            <i class="bi bi-search"></i>Recherche
+                            <i class="bi bi-search"></i> Recherche
+                        </button>
+                    </div>
+                </form>
 
 Avec ces ajustements, les icônes et le texte dans vos boutons seront bien formatés.
 
@@ -5026,7 +5027,7 @@ The code change produced by Gemini could not be fully parsed. Can't automaticall
         if ($form->isSubmitted() && $form->isValid()) {
             // Assigner l'utilisateur connecté comme chauffeur
             $covoiturage->setChauffeur($this->getUser());
-            
+
             // Initialiser le nombre de places disponibles
             $covoiturage->setNbPlaceRestante($covoiturage->getNbPlace());
 
@@ -5200,7 +5201,7 @@ Unchanged lines
                     new Assert\NotBlank(['message' => 'Veuillez sélectionner une voiture.']),
                 ],
             ])
- 
+
              ->add('nbPlace', IntegerType::class, [
                  'label' => 'Nombre de places',
 
@@ -5939,7 +5940,7 @@ Unchanged lines
                     new Assert\NotBlank(['message' => 'Veuillez sélectionner une voiture.']),
                 ],
             ])
- 
+
              ->add('nbPlace', IntegerType::class, [
                  'label' => 'Nombre de places',
 
@@ -6378,7 +6379,7 @@ class CovoiturageType extends AbstractType
                 'constraints' => [
                     new Assert\NotBlank([
                         'message' => 'Veuillez sélectionner une voiture',
-                    
+
                 ],
             ->add('statut', TextType::class, [ // Champ 'statut' ajouté
                 'label' => 'Statut',
@@ -6387,7 +6388,7 @@ class CovoiturageType extends AbstractType
                     'placeholder' => 'Ex: Proposé, Confirmé, Annulé',
                 ]
             ])
-            
+
 
             ->add('heureDepart')
             ->add('lieuDepart')
@@ -6408,7 +6409,7 @@ class CovoiturageType extends AbstractType
 +            // Les champs 'voiture', 'nbPlaceRestante', 'chauffeur' et les ajouts incorrects/dupliqués sont supprimés.
          ;
      }
- 
+
 Quelques notes sur ces changements :
 
 J'ai séparé dateDepart en DateType et heureDepart en TimeType (et de même pour l'arrivée) pour correspondre à votre cahier des charges.
@@ -6727,23 +6728,23 @@ Here's the suggested change:
 index.html.twig
 -5
 +5
-					<label for="date" class="form-label">Date</label>
-					<input type="date" class="form-control" id="date">
-				</div>
-				<div class="col-md-1 align-self-end">
-					<button type="submit" class="btn btn-outline-info w-100">
-						<i class="bi bi-search"></i> Recherche
-					</button>
-				</div>
-			</form>
-			<div class="col-md-1 mt-3">
-				<button type="submit" class="btn btn-outline-info">
-					<i class="bi bi-search">Recherche</i>
-				</button>
-			</div>
- 		</section>
- 
- 		<section>
+                    <label for="date" class="form-label">Date</label>
+                    <input type="date" class="form-control" id="date">
+                </div>
+                <div class="col-md-1 align-self-end">
+                    <button type="submit" class="btn btn-outline-info w-100">
+                        <i class="bi bi-search"></i> Recherche
+                    </button>
+                </div>
+            </form>
+            <div class="col-md-1 mt-3">
+                <button type="submit" class="btn btn-outline-info">
+                    <i class="bi bi-search">Recherche</i>
+                </button>
+            </div>
+         </section>
+
+         <section>
 Key changes made:
 
 Button moved into the form: The div containing the submit button is now placed inside the <form class="row g-3"> ... </form> tags.
@@ -6776,18 +6777,18 @@ Super ! C'est exactement ça. En déplaçant le div contenant le bouton de soumi
 Le code que vous avez partagé a maintenant le bouton correctement placé :
 
 html
-			<form class="row g-3">
-				{# ... autres champs ... #}
-				<div class="col-md-3">
-					<label for="date" class="form-label">Date</label>
-					<input type="date" class="form-control" id="date">
-				</div>
-				<div class="col-md-1 mt-3">  {# Ce div est maintenant DANS le formulaire #}
-					<button type="submit" class="btn btn-outline-info">
-						<i class="bi bi-search">Recherche</i>
-					</button>
-				</div>
-			</form>
+            <form class="row g-3">
+                {# ... autres champs ... #}
+                <div class="col-md-3">
+                    <label for="date" class="form-label">Date</label>
+                    <input type="date" class="form-control" id="date">
+                </div>
+                <div class="col-md-1 mt-3">  {# Ce div est maintenant DANS le formulaire #}
+                    <button type="submit" class="btn btn-outline-info">
+                        <i class="bi bi-search">Recherche</i>
+                    </button>
+                </div>
+            </form>
 C'est la correction fonctionnelle la plus importante !
 
 Pour aller un peu plus loin et peaufiner l'alignement et l'apparence avec Bootstrap, comme je l'avais suggéré précédemment, voici les petites modifications que l'on pourrait encore apporter. Ce sont des détails, mais ils peuvent améliorer l'intégration visuelle :
@@ -6795,18 +6796,18 @@ Pour aller un peu plus loin et peaufiner l'alignement et l'apparence avec Bootst
 index.html.twig
 -3
 +3
-					<label for="date" class="form-label">Date</label>
-					<input type="date" class="form-control" id="date">
-				</div>
-				<div class="col-md-1 mt-3">
-					<button type="submit" class="btn btn-outline-info">
-						<i class="bi bi-search">Recherche</i>
-				<div class="col-md-1 align-self-end">
-					<button type="submit" class="btn btn-outline-info w-100">
-						<i class="bi bi-search"></i> Recherche
-					</button>
-				</div>
-			</form>
+                    <label for="date" class="form-label">Date</label>
+                    <input type="date" class="form-control" id="date">
+                </div>
+                <div class="col-md-1 mt-3">
+                    <button type="submit" class="btn btn-outline-info">
+                        <i class="bi bi-search">Recherche</i>
+                <div class="col-md-1 align-self-end">
+                    <button type="submit" class="btn btn-outline-info w-100">
+                        <i class="bi bi-search"></i> Recherche
+                    </button>
+                </div>
+            </form>
 
 Les changements ici sont :
 
@@ -6837,7 +6838,7 @@ Parfait ! C'est exactement ça.
 Vous avez bien ajouté l'espace entre l'icône et le mot "Recherche" dans le bouton :
 
 html
-						<i class="bi bi-search"></i> Recherche
+                        <i class="bi bi-search"></i> Recherche
 C'est un petit détail, mais ça améliore la lisibilité et c'est la manière standard d'utiliser les icônes Bootstrap avec du texte.
 
 Le fichier f:\xampp\htdocs\ecoride\templates\covoiturage\index.html.twig est maintenant impeccable !
@@ -6981,18 +6982,18 @@ Modifions templates/covoiturage/index.html.twig pour ajouter un bouton ou un lie
 index.html.twig
 -0
 +6
-			<p class="lead">Partez à la découverte de nouvelles destinations tout en partageant les frais et en réduisant votre empreinte carbone.</p>
-		</header>
+            <p class="lead">Partez à la découverte de nouvelles destinations tout en partageant les frais et en réduisant votre empreinte carbone.</p>
+        </header>
 
-		<div class="mb-4">
-			<a href="{{ path('app_covoiturage_new') }}" class="btn btn-success btn-lg">
-				<i class="bi bi-plus-circle-fill me-2"></i>Proposer un covoiturage
-			</a>
-		</div>
+        <div class="mb-4">
+            <a href="{{ path('app_covoiturage_new') }}" class="btn btn-success btn-lg">
+                <i class="bi bi-plus-circle-fill me-2"></i>Proposer un covoiturage
+            </a>
+        </div>
 
-		<section class="mb-4">
-			<h2>Rechercher un covoiturage</h2>
-			<form class="row g-3">
+        <section class="mb-4">
+            <h2>Rechercher un covoiturage</h2>
+            <form class="row g-3">
 
 Use code with care. Learn more
 Avant de tester :
@@ -7033,23 +7034,23 @@ Voici un petit diff pour corriger cela :
 index.html.twig
 -2
 +2
-		</header>
-		<div class="mb-4">
-			<a href="{{ path('app_covoiturage_new') }}" class="btn btn-success btn-lg">
-				<i class="bi bi-plus-circle-fill me-2">Proposer un covoiturage
-				<i class="bi bi-plus-circle-fill me-2"></i>Proposer un covoiturage
-				</a>
-			</div>
+        </header>
+        <div class="mb-4">
+            <a href="{{ path('app_covoiturage_new') }}" class="btn btn-success btn-lg">
+                <i class="bi bi-plus-circle-fill me-2">Proposer un covoiturage
+                <i class="bi bi-plus-circle-fill me-2"></i>Proposer un covoiturage
+                </a>
+            </div>
 
 Unchanged lines
-					</div>
-					<div class="col-md-1 align-self-end">
-						<button type="submit" class="btn btn-outline-info w-100">
-							<i class="bi bi-search"></i>Recherche
-							<i class="bi bi-search"></i> Recherche
-						</button>
-					</div>
-				</form>
+                    </div>
+                    <div class="col-md-1 align-self-end">
+                        <button type="submit" class="btn btn-outline-info w-100">
+                            <i class="bi bi-search"></i>Recherche
+                            <i class="bi bi-search"></i> Recherche
+                        </button>
+                    </div>
+                </form>
 
 Avec ces ajustements, les icônes et le texte dans vos boutons seront bien formatés.
 
@@ -7382,7 +7383,7 @@ The code change produced by Gemini could not be fully parsed. Can't automaticall
         if ($form->isSubmitted() && $form->isValid()) {
             // Assigner l'utilisateur connecté comme chauffeur
             $covoiturage->setChauffeur($this->getUser());
-            
+
             // Initialiser le nombre de places disponibles
             $covoiturage->setNbPlaceRestante($covoiturage->getNbPlace());
 
@@ -7554,7 +7555,7 @@ Unchanged lines
                     new Assert\NotBlank(['message' => 'Veuillez sélectionner une voiture.']),
                 ],
             ])
- 
+
              ->add('nbPlace', IntegerType::class, [
                  'label' => 'Nombre de places',
 
@@ -8113,7 +8114,7 @@ Unchanged lines
                     new Assert\NotBlank(['message' => 'Veuillez sélectionner une voiture.']),
                 ],
             ])
- 
+
              ->add('nbPlace', IntegerType::class, [
                  'label' => 'Nombre de places',
 
@@ -8627,7 +8628,7 @@ class LoginSuccessHandler implements AuthenticationSuccessHandlerInterface
             // Si le profil est complet, rediriger vers la page de profil
             return new RedirectResponse($this->urlGenerator->generate('app_profile'));
         }
-        
+
         // Cas par défaut si $user n'est pas une instance de User (ne devrait pas arriver normalement)
         // ou si une autre logique l'exigeait. Rediriger vers la page d'accueil.
         return new RedirectResponse($this->urlGenerator->generate('app_home'));
@@ -8666,7 +8667,7 @@ LoginSuccessHandler.php
             // Si le profil est complet, rediriger vers la page de profil
             return new RedirectResponse($this->urlGenerator->generate('app_profile'));
         }
-        
+
         // Cas par défaut si $user n'est pas une instance de User (ne devrait pas arriver normalement)
         // ou si une autre logique l'exigeait. Rediriger vers la page d'accueil.
         return new RedirectResponse($this->urlGenerator->generate('app_home'));
@@ -8797,7 +8798,7 @@ security.yaml
 
             # La section form_login est supprimée car custom_authenticator gère tout
             entry_point: App\Security\LoginFormAuthenticator
-              
+
             logout:
 
 Use code with care. Learn more
@@ -8855,13 +8856,13 @@ Unchanged lines
         // Logique pour rediriger vers le profil si complet, sinon vers la complétion du profil
         /** @var \App\Entity\User|null $user */
         $user = $token->getUser();
-        
+
         // Rediriger vers la page de profil par défaut si le profil est complet ou si ce n'est pas un User
         return new RedirectResponse($this->urlGenerator->generate('app_profile'));
         // Déléguer la gestion du succès à LoginSuccessHandler
         return $this->loginSuccessHandler->onAuthenticationSuccess($request, $token);
      }
- 
+
      protected function getLoginUrl(Request $request): string
 
 Use code with care. Learn more
@@ -9101,32 +9102,32 @@ Voici le diff avec les corrections proposées :
 profile.html.twig
 -5
 +10
-					<dd class="col-sm-9">{{ user.dateNaissance ? user.dateNaissance|date('d/m/Y') : 'Non renseignée' }}</dd>
+                    <dd class="col-sm-9">{{ user.dateNaissance ? user.dateNaissance|date('d/m/Y') : 'Non renseignée' }}</dd>
 
-					<dt class="col-sm-3">Photo</dt>
-					<dd class="col-sm-9">{{ user.photo ? '<img src="' ~ asset('uploads/' ~ user.photo) ~ '" alt="Photo de profil" style="max-width: 100px;">' : 'Non renseignée' }}</dd>
-					<dd class="col-sm-9">
-						{% if user.photo %}
-							<img src="{{ asset('uploads/' ~ user.photo) }}" alt="Photo de profil" style="max-width: 100px;">
-						{% else %}
-							Non renseignée
-						{% endif %}
-					</dd>
-				</dl>
+                    <dt class="col-sm-3">Photo</dt>
+                    <dd class="col-sm-9">{{ user.photo ? '<img src="' ~ asset('uploads/' ~ user.photo) ~ '" alt="Photo de profil" style="max-width: 100px;">' : 'Non renseignée' }}</dd>
+                    <dd class="col-sm-9">
+                        {% if user.photo %}
+                            <img src="{{ asset('uploads/' ~ user.photo) }}" alt="Photo de profil" style="max-width: 100px;">
+                        {% else %}
+                            Non renseignée
+                        {% endif %}
+                    </dd>
+                </dl>
 
-				<div class="d-flex gap-5">
+                <div class="d-flex gap-5">
 Unchanged lines
-		<div class="mt-4 p-3 border rounded">
-			<h3>Devenir chauffeur</h3>
-			<p>Souhaitez-vous avoir la posibilité de proposer des trajets en tant que chauffeur sur EcoRide ?</p>
-			<form method="post" action="{{ path('app_profile_become_driver') }}" onsubmit="return confirm('Voulez-vous vraiment devenir chauffeur ? Cette action vous donnera accès à la publication de trajets.');"></p>
-			<form method="post" action="{{ path('app_profile_become_driver') }}" onsubmit="return confirm('Voulez-vous vraiment devenir chauffeur ? Cette action vous donnera accès à la publication de trajets.');">
-			<input type="hidden" name="_token" value="{{ csrf_token('become_driver' ~ app.user.id) }}">
-			<button type="submit" class="btn btn-info">
-				<i class="bi bi-car-front-fill me-2"></i>
+        <div class="mt-4 p-3 border rounded">
+            <h3>Devenir chauffeur</h3>
+            <p>Souhaitez-vous avoir la posibilité de proposer des trajets en tant que chauffeur sur EcoRide ?</p>
+            <form method="post" action="{{ path('app_profile_become_driver') }}" onsubmit="return confirm('Voulez-vous vraiment devenir chauffeur ? Cette action vous donnera accès à la publication de trajets.');"></p>
+            <form method="post" action="{{ path('app_profile_become_driver') }}" onsubmit="return confirm('Voulez-vous vraiment devenir chauffeur ? Cette action vous donnera accès à la publication de trajets.');">
+            <input type="hidden" name="_token" value="{{ csrf_token('become_driver' ~ app.user.id) }}">
+            <button type="submit" class="btn btn-info">
+                <i class="bi bi-car-front-fill me-2"></i>
 Unchanged lines
-		<a href="{{ path('app_covoiturage_new') }}">proposer un trajet</a>
-	</div>
+        <a href="{{ path('app_covoiturage_new') }}">proposer un trajet</a>
+    </div>
 {% endif %}
 <hr>
 
@@ -9285,16 +9286,16 @@ diff
 -2
 +2
 The code change produced by Gemini could not be fully parsed. Can't automatically accept changes.
-	<p>
-		<strong>Date d'inscription :</strong>
-		{{ user.dateInscription|date('d/m/Y') }}</p>
-	{% ajouter des informations ici si nécessaire %}
-	{% Section pour devenir chauffeur %}
-	{# ajouter des informations ici si nécessaire #}
-	{# Section pour devenir chauffeur #}
-	{% if 'ROLE_CHAUFFEUR' not in app.user.roles %}
-		<div class="mt-4 p-3 border rounded">
-			<h3>Devenir chauffeur</h3>
+    <p>
+        <strong>Date d'inscription :</strong>
+        {{ user.dateInscription|date('d/m/Y') }}</p>
+    {% ajouter des informations ici si nécessaire %}
+    {% Section pour devenir chauffeur %}
+    {# ajouter des informations ici si nécessaire #}
+    {# Section pour devenir chauffeur #}
+    {% if 'ROLE_CHAUFFEUR' not in app.user.roles %}
+        <div class="mt-4 p-3 border rounded">
+            <h3>Devenir chauffeur</h3>
 
 Explication des modifications : J'ai remplacé :
 
@@ -9633,13 +9634,13 @@ diff
 +3
 The code change produced by Gemini could not be fully parsed. Can't automatically accept changes.
 
-				<div class="d-flex gap-5">
-					<a href="{{ path('app_profile_edit') }}" class="btn btn-primary">Modifier mon profil</a>
-					{% if is_granted('ROLE_CHAUFFEUR') %}
-						<a href="{{ path('app_voiture_index') }}" class="btn btn-info">Gérer mes voitures</a>
-					{% endif %}
-				</div>
-			</div>
+                <div class="d-flex gap-5">
+                    <a href="{{ path('app_profile_edit') }}" class="btn btn-primary">Modifier mon profil</a>
+                    {% if is_granted('ROLE_CHAUFFEUR') %}
+                        <a href="{{ path('app_voiture_index') }}" class="btn btn-info">Gérer mes voitures</a>
+                    {% endif %}
+                </div>
+            </div>
 
 
 Avant de tester :
@@ -10718,7 +10719,7 @@ twig
                 </div>
                 <div class="card-body">
                     {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
-                        
+
                         {# Affiche les erreurs globales du formulaire s'il y en a #}
                         {{ form_errors(form) }}
 
@@ -10751,7 +10752,7 @@ twig
                             {{ form_widget(form.couleur, {'attr': {'class': 'form-control', 'placeholder': 'Ex: Rouge, Gris métallisé...'}}) }}
                             {{ form_errors(form.couleur) }}
                         </div>
-                        
+
                         <div class="mb-3">
                             {{ form_label(form.date_premiere_immatriculation) }}
                             {{ form_widget(form.date_premiere_immatriculation, {'attr': {'class': 'form-control'}}) }}
@@ -11094,56 +11095,56 @@ Voici comment vous pourriez modifier f:\xampp\htdocs\ecoride\templates\base.html
 base.html.twig
 -14
 +23
-							<a class="nav-link" href="{{ path('app_covoiturage_index') }}">Covoiturages</a>
-						</li>
+                            <a class="nav-link" href="{{ path('app_covoiturage_index') }}">Covoiturages</a>
+                        </li>
 
-						<li class="nav-item">
-							<a class="nav-link" href="{{ path('app_voiture_ajouter') }}">
-								<i class="fas fa-car-side me-1"></i>
-								Ajouter ma Voiture
-							</a>
-						</li>
-						{# Le lien "Ajouter ma Voiture" n'est visible que si l'utilisateur est connecté #}
-						{% if app.user %}
-							<li class="nav-item">
-								<a class="nav-link" href="{{ path('app_voiture_ajouter') }}">
-									<i class="fas fa-car-side me-1"></i>Ajouter ma Voiture
-								</a>
-							</li>
-						{% endif %}
-						<li class="nav-item">
-							<a class="nav-link" href="{{ path('app_contact') }}">Contact</a>
-						</li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ path('app_voiture_ajouter') }}">
+                                <i class="fas fa-car-side me-1"></i>
+                                Ajouter ma Voiture
+                            </a>
+                        </li>
+                        {# Le lien "Ajouter ma Voiture" n'est visible que si l'utilisateur est connecté #}
+                        {% if app.user %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ path('app_voiture_ajouter') }}">
+                                    <i class="fas fa-car-side me-1"></i>Ajouter ma Voiture
+                                </a>
+                            </li>
+                        {% endif %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ path('app_contact') }}">Contact</a>
+                        </li>
 Unchanged lines
 
-					<ul class="navbar-nav ms-auto">
-						{% if app.user %}
-							<li class="nav-item">
-								<div class="nav-link user-info">
-									<i class="fas fa-user"></i>
-									<span>{{ app.user.firstname }}</span>
-								</div>
-							</li>
-							<li class="nav-item">
-								<a class="nav-link" href="{{ path('app_logout') }}">Déconnexion</a>
-							<li class="nav-item dropdown">
-								<a class="nav-link dropdown-toggle" href="#" id="navbarDropdownUser" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-									<i class="fas fa-user me-1"></i> {{ app.user.firstname }}
-								</a>
-								<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownUser">
-									{# Exemple de lien vers un profil utilisateur, si vous en avez un : #}
-									{# <li><a class="dropdown-item" href="{{ path('app_profile') }}"><i class="fas fa-id-card me-2"></i>Mon Profil</a></li> #}
-									<li>
-										<a class="dropdown-item" href="{{ path('app_voiture_index') }}">
-											<i class="fas fa-car me-2"></i>Mes Voitures
-										</a>
-									</li>
-									<li><hr class="dropdown-divider"></li>
-									<li><a class="dropdown-item" href="{{ path('app_logout') }}"><i class="fas fa-sign-out-alt me-2"></i>Déconnexion</a></li>
-								</ul>
-							</li>
-						{% else %}
-							<li class="nav-item">
+                    <ul class="navbar-nav ms-auto">
+                        {% if app.user %}
+                            <li class="nav-item">
+                                <div class="nav-link user-info">
+                                    <i class="fas fa-user"></i>
+                                    <span>{{ app.user.firstname }}</span>
+                                </div>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ path('app_logout') }}">Déconnexion</a>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownUser" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-user me-1"></i> {{ app.user.firstname }}
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownUser">
+                                    {# Exemple de lien vers un profil utilisateur, si vous en avez un : #}
+                                    {# <li><a class="dropdown-item" href="{{ path('app_profile') }}"><i class="fas fa-id-card me-2"></i>Mon Profil</a></li> #}
+                                    <li>
+                                        <a class="dropdown-item" href="{{ path('app_voiture_index') }}">
+                                            <i class="fas fa-car me-2"></i>Mes Voitures
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{{ path('app_logout') }}"><i class="fas fa-sign-out-alt me-2"></i>Déconnexion</a></li>
+                                </ul>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
 
 Ce qui change :
 
@@ -11180,58 +11181,58 @@ Reprenons la modification que je vous avais suggérée pour f:\xampp\htdocs\ecor
 base.html.twig
 -15
 +24
-						<li class="nav-item">
-							<a class="nav-link" href="{{ path('app_covoiturage_index') }}">Covoiturages</a>
-						</li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ path('app_covoiturage_index') }}">Covoiturages</a>
+                        </li>
 
-						<li class="nav-item">
-							<a class="nav-link" href="{{ path('app_voiture_ajouter') }}">
-								<i class="fas fa-car-side me-1"></i>
-								Ajouter ma Voiture
-							</a>
-						</li>
-						
-						{# Le lien "Ajouter ma Voiture" n'est visible que si l'utilisateur est connecté #}
-						{% if app.user %}
-							<li class="nav-item">
-								<a class="nav-link" href="{{ path('app_voiture_ajouter') }}">
-									<i class="fas fa-car-side me-1"></i>Ajouter ma Voiture
-								</a>
-							</li>
-						{% endif %}
-						<li class="nav-item">
-							<a class="nav-link" href="{{ path('app_contact') }}">Contact</a>
-						</li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ path('app_voiture_ajouter') }}">
+                                <i class="fas fa-car-side me-1"></i>
+                                Ajouter ma Voiture
+                            </a>
+                        </li>
+
+                        {# Le lien "Ajouter ma Voiture" n'est visible que si l'utilisateur est connecté #}
+                        {% if app.user %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ path('app_voiture_ajouter') }}">
+                                    <i class="fas fa-car-side me-1"></i>Ajouter ma Voiture
+                                </a>
+                            </li>
+                        {% endif %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ path('app_contact') }}">Contact</a>
+                        </li>
 Unchanged lines
 
-					<ul class="navbar-nav ms-auto">
-						{% if app.user %}
-							<li class="nav-item">
-								<div class="nav-link user-info">
-									<i class="fas fa-user"></i>
-									<span>{{ app.user.firstname }}</span>
-								</div>
-							</li>
-							<li class="nav-item">
-								<a class="nav-link" href="{{ path('app_logout') }}">Déconnexion</a>
-							<li class="nav-item dropdown">
-								<a class="nav-link dropdown-toggle" href="#" id="navbarDropdownUser" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-									<i class="fas fa-user me-1"></i> {{ app.user.firstname }}
-								</a>
-								<ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownUser">
-									{# Exemple de lien vers un profil utilisateur, si vous en avez un : #}
-									{# <li><a class="dropdown-item" href="{{ path('app_profile') }}"><i class="fas fa-id-card me-2"></i>Mon Profil</a></li> #}
-									<li>
-										<a class="dropdown-item" href="{{ path('app_voiture_index') }}">
-											<i class="fas fa-car me-2"></i>Mes Voitures
-										</a>
-									</li>
-									<li><hr class="dropdown-divider"></li>
-									<li><a class="dropdown-item" href="{{ path('app_logout') }}"><i class="fas fa-sign-out-alt me-2"></i>Déconnexion</a></li>
-								</ul>
-							</li>
-						{% else %}
-							<li class="nav-item">
+                    <ul class="navbar-nav ms-auto">
+                        {% if app.user %}
+                            <li class="nav-item">
+                                <div class="nav-link user-info">
+                                    <i class="fas fa-user"></i>
+                                    <span>{{ app.user.firstname }}</span>
+                                </div>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ path('app_logout') }}">Déconnexion</a>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownUser" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-user me-1"></i> {{ app.user.firstname }}
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownUser">
+                                    {# Exemple de lien vers un profil utilisateur, si vous en avez un : #}
+                                    {# <li><a class="dropdown-item" href="{{ path('app_profile') }}"><i class="fas fa-id-card me-2"></i>Mon Profil</a></li> #}
+                                    <li>
+                                        <a class="dropdown-item" href="{{ path('app_voiture_index') }}">
+                                            <i class="fas fa-car me-2"></i>Mes Voitures
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{{ path('app_logout') }}"><i class="fas fa-sign-out-alt me-2"></i>Déconnexion</a></li>
+                                </ul>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
 
 Ce que cette modification fait :
 
@@ -11264,27 +11265,27 @@ base.html.twig
 -6
 +0
 
-					<ul class="navbar-nav ms-auto">
-						{% if app.user %}
-							<li class="nav-item">
-								<div class="nav-link user-info">
-									<i class="fas fa-user"></i>
-									<span>{{ app.user.firstname }}</span>
-								</div>
-							</li>
- 							<li class="nav-item dropdown">
- 								<a class="nav-link dropdown-toggle" href="#" id="navbarDropdownUser" role="button" data-bs-toggle="dropdown" aria-expanded="false">
- 									<i class="fas fa-user me-1"></i>
+                    <ul class="navbar-nav ms-auto">
+                        {% if app.user %}
+                            <li class="nav-item">
+                                <div class="nav-link user-info">
+                                    <i class="fas fa-user"></i>
+                                    <span>{{ app.user.firstname }}</span>
+                                </div>
+                            </li>
+                             <li class="nav-item dropdown">
+                                 <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownUser" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                     <i class="fas fa-user me-1"></i>
 
 En supprimant ces lignes :
 
 twig
-							<li class="nav-item">
-								<div class="nav-link user-info">
-									<i class="fas fa-user"></i>
-									<span>{{ app.user.firstname }}</span>
-								</div>
-							</li>
+                            <li class="nav-item">
+                                <div class="nav-link user-info">
+                                    <i class="fas fa-user"></i>
+                                    <span>{{ app.user.firstname }}</span>
+                                </div>
+                            </li>
 Vous ne devriez plus avoir l'icône utilisateur en double. Le menu déroulant qui suit contient déjà l'icône et le prénom de l'utilisateur.
 
 C'est parfait, vous avez l'œil pour les détails !
@@ -11541,17 +11542,17 @@ Comme pour "Ajouter ma Voiture", il serait bien d'avoir un lien direct pour publ
 base.html.twig
 -0
 +5
-									<i class="fas fa-car-side me-1"></i>
-									Ajouter ma Voiture
-								</a>
-							</li>
-							<li class="nav-item">
-								<a class="nav-link" href="{{ path('app_covoiturage_publier') }}">
-									<i class="fas fa-route me-1"></i>Publier un trajet
-								</a>
-							</li>
-						{% endif %}
-						<li class="nav-item">
+                                    <i class="fas fa-car-side me-1"></i>
+                                    Ajouter ma Voiture
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ path('app_covoiturage_publier') }}">
+                                    <i class="fas fa-route me-1"></i>Publier un trajet
+                                </a>
+                            </li>
+                        {% endif %}
+                        <li class="nav-item">
 
 Avant de tester :
 
@@ -11582,17 +11583,17 @@ Pendant que vous faites cela, j'ai jeté un œil à votre f:\xampp\htdocs\ecorid
 base.html.twig
 -0
 +5
-									<i class="fas fa-car-side me-1"></i>
-									Ajouter ma Voiture
-								</a>
-							</li>
-							<li class="nav-item">
-								<a class="nav-link" href="{{ path('app_covoiturage_publier') }}">
-									<i class="fas fa-route me-1"></i>Publier un trajet
-								</a>
-							</li>
-						{% endif %}
-						<li class="nav-item">
+                                    <i class="fas fa-car-side me-1"></i>
+                                    Ajouter ma Voiture
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ path('app_covoiturage_publier') }}">
+                                    <i class="fas fa-route me-1"></i>Publier un trajet
+                                </a>
+                            </li>
+                        {% endif %}
+                        <li class="nav-item">
 
 Ce lien sera, comme "Ajouter ma Voiture", visible uniquement si l'utilisateur est connecté, ce qui est le comportement souhaité.
 
@@ -11644,14 +11645,14 @@ diff
 -1
 +1
 The code change produced by Gemini could not be fully parsed. Can't automatically accept changes.
-								</a>
-							</li>
-							<li class="nav-item">
-								<a class="nav-link" href="{{ path('app_covoiturage_publier') }}">
-								<a class="nav-link" href="{{ path('app_covoiturage_new') }}">
-									<i class="fas fa-route me-1"></i>Publier un trajet
-								</a>
-							</li>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ path('app_covoiturage_publier') }}">
+                                <a class="nav-link" href="{{ path('app_covoiturage_new') }}">
+                                    <i class="fas fa-route me-1"></i>Publier un trajet
+                                </a>
+                            </li>
 Vérification du rôle et des voitures :
 
 Vous avez $this->denyAccessUnlessGranted('ROLE_CHAUFFEUR');. C'est une bonne vérification si vous voulez que seuls les utilisateurs explicitement désignés comme chauffeurs puissent publier.
@@ -12869,14 +12870,14 @@ Si app_covoiturage_index est la page où vous souhaitez que les utilisateurs voi
 base.html.twig
 -1
 +1
-						<a class="nav-link active" aria-current="page" href="{{ path('app_home') }}">Accueil</a>
-					</li>
-					<li class="nav-item">
-						<a class="nav-link" href="{{ path('app_covoiturages') }}">Covoiturages</a>
-						<a class="nav-link" href="{{ path('app_covoiturage_index') }}">Covoiturages</a>
-					</li>
-					{% if app.user %}
-						<li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="{{ path('app_home') }}">Accueil</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ path('app_covoiturages') }}">Covoiturages</a>
+                        <a class="nav-link" href="{{ path('app_covoiturage_index') }}">Covoiturages</a>
+                    </li>
+                    {% if app.user %}
+                        <li class="nav-item">
 La page de liste des covoiturages (par exemple, app_covoiturage_index) n'a pas encore de formulaire de recherche.
 
 Actuellement, votre méthode index dans CovoiturageController récupère tous les covoiturages :
@@ -12929,14 +12930,14 @@ Si le nom de votre route est maintenant app_covoiturage (singulier, sans le s fi
 base.html.twig
 -1
 +1
-						<a class="nav-link active" aria-current="page" href="{{ path('app_home') }}">Accueil</a>
-					</li>
-					<li class="nav-item">
-						<a class="nav-link" href="{{ path('app_covoiturages') }}">Covoiturages</a>
-						<a class="nav-link" href="{{ path('app_covoiturage') }}">Covoiturages</a>
-					</li>
-					{% if app.user %}
-						<li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="{{ path('app_home') }}">Accueil</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ path('app_covoiturages') }}">Covoiturages</a>
+                        <a class="nav-link" href="{{ path('app_covoiturage') }}">Covoiturages</a>
+                    </li>
+                    {% if app.user %}
+                        <li class="nav-item">
 
 Vérifiez bien le nom exact de la route que vous avez défini dans votre CovoiturageController.php pour la méthode index(). Le path() dans Twig doit correspondre précisément à ce nom.
 
@@ -12969,14 +12970,14 @@ Vous avez mentionné précédemment que vous aviez "supprimé 'index' partout o�
 base.html.twig
 -1
 +1
-						<a class="nav-link active" aria-current="page" href="{{ path('app_home') }}">Accueil</a>
-					</li>
-					<li class="nav-item">
-						<a class="nav-link" href="{{ path('app_covoiturages') }}">Covoiturages</a>
-						<a class="nav-link" href="{{ path('app_covoiturage') }}">Covoiturages</a>
-					</li>
-					{% if app.user %}
-						<li class="nav-item">
+                        <a class="nav-link active" aria-current="page" href="{{ path('app_home') }}">Accueil</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ path('app_covoiturages') }}">Covoiturages</a>
+                        <a class="nav-link" href="{{ path('app_covoiturage') }}">Covoiturages</a>
+                    </li>
+                    {% if app.user %}
+                        <li class="nav-item">
 Action : Veuillez vérifier le nom exact de la route dans votre CovoiturageController.php pour la méthode qui affiche la liste des covoiturages (celle qui s'appelait index() et dont le nom de route était app_covoiturage_index). Assurez-vous que le path() dans f:\xampp\htdocs\ecoride\templates\base.html.twig correspond exactement à ce nom.
 
 La page cible du lien "Covoiturages" n'a pas la même fonctionnalité de recherche que la page d'accueil : Même si le lien pointe vers la bonne page (par exemple, app_covoiturage), il est possible que cette page :
@@ -13116,7 +13117,7 @@ class CovoiturageRepository extends ServiceEntityRepository
                ->setParameter('dateDebut', $dateDebut)
                ->setParameter('dateFin', $dateFin);
         }
-        
+
         // Filtrer uniquement les covoiturages qui ne sont pas "Annulé" ou "Terminé" (optionnel)
         // $qb->andWhere('c.statut NOT IN (:excluded_statuts)')
         //    ->setParameter('excluded_statuts', ['Annulé', 'Terminé']);
@@ -13252,7 +13253,7 @@ CovoiturageController.php
                 // Gérer l'erreur de format de date si nécessaire, ou laisser null
                 $this->addFlash('warning', 'Le format de la date de recherche est invalide.');
             }
-        
+
         $breadcrumb = [
             ['label' => 'Accueil', 'url' => $this->generateUrl('app_home')],
             ['label' => 'Covoiturages', 'url' => $this->generateUrl('app_covoiturages')],
@@ -13281,7 +13282,7 @@ CovoiturageController.php
                 'date' => $date_str,
             ],
         ]);
-        
+
         }
             $breadcrumb = [
                 ['label' => 'Accueil', 'url' => $this->generateUrl('app_home')],
@@ -13501,39 +13502,39 @@ Voici les modifications à apporter à votre fichier f:\xampp\htdocs\ecoride\tem
 index.html.twig
 -8
 +48
-		</div>
-		<section class="mb-4">
-			<h2>Rechercher un covoiturage</h2>
-			<form class="row g-3">
-			<form action="{{ path('app_covoiturages') }}" method="get" class="row g-3 p-3 border rounded bg-light">
-				<div class="col-md-4">
-					<label for="depart" class="form-label">Départ</label>
-					<input type="text" class="form-control" id="depart" placeholder="Ville de départ">
-					<input type="text" class="form-control" id="depart" name="depart" placeholder="Ville de départ" value="{{ search_params.depart|default('') }}">
-				</div>
-				<div class="col-md-4">
-					<label for="arrivee" class="form-label">Arrivée</label>
-					<input type="text" class="form-control" id="arrivee" placeholder="Ville d'arrivée">
-					<input type="text" class="form-control" id="arrivee" name="arrivee" placeholder="Ville d'arrivée" value="{{ search_params.arrivee|default('') }}">
-				</div>
-				<div class="col-md-3">
-					<label for="date" class="form-label">Date</label>
-					<input type="date" class="form-control" id="date">
-					<input type="date" class="form-control" id="date" name="date" value="{{ search_params.date|default('') }}">
-				</div>
-				<div class="col-12">
-				<div class="col-md-1 d-flex align-items-end"> {# Ajustement pour aligner le bouton #}
-					<button type="submit" class="btn btn-outline-success">
-						<i class="bi bi-arrow-right-circle me-2"></i>
-						Rechercher un trajet</button>
+        </div>
+        <section class="mb-4">
+            <h2>Rechercher un covoiturage</h2>
+            <form class="row g-3">
+            <form action="{{ path('app_covoiturages') }}" method="get" class="row g-3 p-3 border rounded bg-light">
+                <div class="col-md-4">
+                    <label for="depart" class="form-label">Départ</label>
+                    <input type="text" class="form-control" id="depart" placeholder="Ville de départ">
+                    <input type="text" class="form-control" id="depart" name="depart" placeholder="Ville de départ" value="{{ search_params.depart|default('') }}">
+                </div>
+                <div class="col-md-4">
+                    <label for="arrivee" class="form-label">Arrivée</label>
+                    <input type="text" class="form-control" id="arrivee" placeholder="Ville d'arrivée">
+                    <input type="text" class="form-control" id="arrivee" name="arrivee" placeholder="Ville d'arrivée" value="{{ search_params.arrivee|default('') }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="date" class="form-label">Date</label>
+                    <input type="date" class="form-control" id="date">
+                    <input type="date" class="form-control" id="date" name="date" value="{{ search_params.date|default('') }}">
+                </div>
+                <div class="col-12">
+                <div class="col-md-1 d-flex align-items-end"> {# Ajustement pour aligner le bouton #}
+                    <button type="submit" class="btn btn-outline-success">
+                        <i class="bi bi-arrow-right-circle me-2"></i>
+                        Rechercher un trajet</button>
 Unchanged lines
-		</section>
+        </section>
 
-		<section>
-			<h2>Derniers covoiturages proposés</h2>
-			<p>Consultez les derniers trajets partagés par notre communauté :</p>
-			{# Ici, nous afficherons la liste des covoiturages plus tard #}
-			<h2>
+        <section>
+            <h2>Derniers covoiturages proposés</h2>
+            <p>Consultez les derniers trajets partagés par notre communauté :</p>
+            {# Ici, nous afficherons la liste des covoiturages plus tard #}
+            <h2>
                 {% if search_params.depart or search_params.arrivee or search_params.date %}
                     Résultats de votre recherche
                 {% else %}
@@ -13541,7 +13542,7 @@ Unchanged lines
                 {% endif %}
             </h2>
 
-			{% if covoiturages is not empty %}
+            {% if covoiturages is not empty %}
                 <div class="row">
                     {% for covoiturage in covoiturages %}
                         <div class="col-md-6 col-lg-4 mb-4">
@@ -13576,8 +13577,8 @@ Unchanged lines
                     {% endif %}
                 </div>
             {% endif %}
-		</section>
-	</div>
+        </section>
+    </div>
 {% endblock %}
 
 Explication des modifications :

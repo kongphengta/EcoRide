@@ -22,7 +22,8 @@ class Voiture
     private ?string $immatriculation = null;
 
     #[ORM\Column(length: 50)]
-    private ?string $energie = null;
+    // Renommé de 'energie' pour correspondre au cahier des charges (électrique, etc.)
+    private ?string $motorisation = null;
 
     #[ORM\Column(length: 50)]
     private ?string $couleur = null;
@@ -43,6 +44,11 @@ class Voiture
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'voitures')]
     #[ORM\JoinColumn(nullable: false)]
     private ?User $proprietaire = null;
+
+    /**
+     * @ORM\Column(type="string", length=50, nullable=true)
+     */
+    private ?string $energie = null;
 
     public function __construct()
     {
@@ -78,14 +84,14 @@ class Voiture
         return $this;
     }
 
-    public function getEnergie(): ?string
+    public function getMotorisation(): ?string
     {
-        return $this->energie;
+        return $this->motorisation;
     }
 
-    public function setEnergie(string $energie): static
+    public function setMotorisation(string $motorisation): static
     {
-        $this->energie = $energie;
+        $this->motorisation = $motorisation;
 
         return $this;
     }
@@ -164,6 +170,25 @@ class Voiture
     {
         $this->proprietaire = $proprietaire;
 
+        return $this;
+    }
+
+    /**
+     * Méthode pratique pour vérifier si la voiture est électrique.
+     * Utilisée pour déterminer si un covoiturage est "écologique".
+     */
+    public function isElectric(): bool
+    {
+        return $this->motorisation === 'Électrique';
+    }
+    public function getEnergie(): ?string
+    {
+        return $this->energie;
+    }
+
+    public function setEnergie(?string $energie): self
+    {
+        $this->energie = $energie;
         return $this;
     }
 }

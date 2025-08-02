@@ -1,0 +1,102 @@
+{% extends 'base.html.twig' %}
+{% block title %}Espace Administrateur
+{% endblock %}
+{% block body %}
+	<h1>Espace Administrateur</h1>
+
+	<a href="{{ path('admin_create_employe') }}" class="btn btn-primary mb-3">Créer un employé</a>
+	<h2>Utilisateurs</h2>
+	<table class="table">
+		<thead>
+			<tr>
+				<th>Email</th>
+				<th>Rôles</th>
+				<th>Statut</th>
+				<th>Action</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for user in users %}
+				<tr>
+					<td>{{ user.email }}</td>
+					<td>{{ user.roles|join(', ') }}</td>
+					<td>
+						{% if user.isActive %}
+							<span class="badge bg-success">Actif</span>
+						{% else %}
+							<span class="badge bg-danger">Suspendu</span>
+						{% endif %}
+					</td>
+					<td>
+						{% if user.isActive %}
+							<a href="{{ path('admin_suspend_user', {'id': user.id}) }}" class="btn btn-warning btn-sm">Suspendre</a>
+						{% else %}
+							<a href="{{ path('admin_activate_user', {'id': user.id}) }}" class="btn btn-success btn-sm">Réactiver</a>
+						{% endif %}
+					</td>
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+	<h2>Nombre de covoiturages par jour</h2>
+	<canvas id="covoituragesChart" width="400" height="150"></canvas>
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script>
+		const ctx = document.getElementById('covoituragesChart').getContext('2d');
+new Chart(ctx, {
+type: 'bar',
+data: {
+labels: {{ jours|json_encode|raw }},
+datasets: [
+{
+label: 'Covoiturages',
+data: {{ totaux|json_encode|raw }},
+backgroundColor: 'rgba(54, 162, 235, 0.5)',
+borderColor: 'rgba(54, 162, 235, 1)',
+borderWidth: 1
+}
+]
+},
+options: {
+scales: {
+y: {
+beginAtZero: true
+}
+}
+}
+});
+	</script>
+
+	<h2>Crédits gagnés par jour</h2>
+	<h3 class="mt-4">Total des crédits gagnés :
+		<span class="badge bg-success">{{ totalCredits }}</span>
+	</h3>
+	<canvas id="creditsChart" width="400" height="150"></canvas>
+	<script>
+		const ctx2 = document.getElementById('creditsChart').getContext('2d');
+new Chart(ctx2, {
+type: 'line',
+data: {
+labels: {{ joursCredits|json_encode|raw }},
+datasets: [
+{
+label: 'Crédits gagnés',
+data: {{ creditsParJour|json_encode|raw }},
+backgroundColor: 'rgba(255, 206, 86, 0.2)',
+borderColor: 'rgba(255, 206, 86, 1)',
+borderWidth: 2,
+fill: true
+}
+]
+},
+options: {
+scales: {
+y: {
+beginAtZero: true
+}
+}
+}
+});
+	</script>
+{% endblock %}

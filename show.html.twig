@@ -1,0 +1,70 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Profil de
+	{{ user.pseudo }}
+{% endblock %}
+
+{% block body %}
+	<div class="container my-5">
+		<div
+			class="row">
+			{# Colonne de gauche pour les informations du profil #}
+			<div class="col-md-4">
+				<div class="card shadow-sm sticky-top" style="top: 20px;">
+					<div class="card-body text-center">
+						<img src="{{ asset(user.avatarUrl) }}" alt="Avatar de {{ user.pseudo }}" class="rounded-circle mb-3" width="120" height="120">
+						<h4 class="card-title">{{ user.pseudo }}</h4>
+						<p class="card-text text-muted">
+							Membre
+							{{ user.membershipDurationAsString }}
+						</p>
+						<hr>
+						<ul class="list-group list-group-flush text-start">
+							<li class="list-group-item d-flex justify-content-between align-items-center">
+								Note moyenne
+								<span class="badge bg-primary rounded-pill fs-6">
+									{{ user.averageRating|number_format(1, ',', ' ') }}
+									<i class="bi bi-star-fill"></i>
+								</span>
+							</li>
+							<li class="list-group-item d-flex justify-content-between align-items-center">
+								Avis reçus
+								<span class="badge bg-primary rounded-pill fs-6">{{ user.avisRecus|length }}</span>
+							</li>
+							<li class="list-group-item d-flex justify-content-between align-items-center">
+								Trajets proposés
+								<span class="badge bg-primary rounded-pill fs-6">{{ user.covoiturages|length }}</span>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+
+			{# Colonne de droite pour la liste des avis #}
+			<div class="col-md-8">
+				<div class="card shadow-sm">
+					<div class="card-header">
+						<h2 class="h4 mb-0">Avis reçus par
+							{{ user.pseudo }}</h2>
+					</div>
+					<div class="card-body">
+						{% if avisRecus is not empty %}
+							<ul class="list-unstyled">
+								{% for avis in avisRecus %}
+									{% include 'avis/_avis_item.html.twig' with {'avis': avis} %}
+								{% endfor %}
+							</ul>
+							{# TODO: Ajouter une pagination si le nombre d'avis est très grand #}
+						{% else %}
+							<p class="text-muted">
+								<i class="bi bi-chat-square-text me-2"></i>
+								{{ user.pseudo }}
+								n'a pas encore reçu d'avis.
+							</p>
+						{% endif %}
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+{% endblock %}

@@ -1,0 +1,55 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Passagers pour le covoiturage du
+	{{ covoiturage.dateDepart|date('d/m/Y') }}
+{% endblock %}
+
+{% block body %}
+	<div class="container mt-4">
+		{% include 'partials/_breadcrumb.html.twig' with { 'breadcrumb': breadcrumb } %}
+
+		<h1>Passagers pour le covoiturage</h1>
+		<p>
+			<strong>Trajet :</strong>
+			{{ covoiturage.lieuDepart }}
+			→
+			{{ covoiturage.lieuArrivee }}<br>
+			<strong>Date :</strong>
+			{{ covoiturage.dateDepart|date('d/m/Y') }}
+			à
+			{{ covoiturage.heureDepart|date('H:i') }}
+		</p>
+
+		<hr>
+
+		{% set confirmed_reservations = covoiturage.reservations|filter(r => r.statut == 'Confirmée') %}
+
+		{% if confirmed_reservations is not empty %}
+			<div class="list-group">
+				{% for reservation in confirmed_reservations %}
+					<div class="list-group-item list-group-item-action flex-column align-items-start">
+						<div class="d-flex w-100 justify-content-between">
+							<h5 class="mb-1">{{ reservation.passager.firstname }}
+								{{ reservation.passager.lastname }}
+								({{ reservation.passager.pseudo }})</h5>
+							<small>Réservé le
+								{{ reservation.dateReservation|date('d/m/Y') }}</small>
+						</div>
+						<p class="mb-1">
+							Places réservées :
+							{{ reservation.nbPlacesReservees }}
+						</p>
+					</div>
+				{% endfor %}
+			</div>
+		{% else %}
+			<div class="alert alert-info" role="alert">
+				Il n'y a pas encore de passagers confirmés pour ce trajet.
+			</div>
+		{% endif %}
+
+		<div class="mt-4">
+			<a href="{{ path('app_profile_my_covoiturages') }}" class="btn btn-secondary">Retour à mes covoiturages</a>
+		</div>
+	</div>
+{% endblock %}

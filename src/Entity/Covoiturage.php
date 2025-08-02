@@ -3,11 +3,21 @@
 namespace App\Entity;
 
 use App\Repository\CovoiturageRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Entity(repositoryClass: CovoiturageRepository::class)]
 class Covoiturage
 {
+    public const STATUT_PROPOSE = 'Proposé';
+    public const STATUT_CONFIRME = 'Confirmé';
+    public const STATUT_COMPLET = 'Complet';
+    public const STATUT_EN_COURS = 'En cours';
+    public const STATUT_TERMINE = 'Terminé';
+    public const STATUT_ANNULE = 'Annulé';
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -32,6 +42,14 @@ class Covoiturage
     private ?string $lieuArrivee = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\Choice(choices: [
+        Covoiturage::STATUT_PROPOSE,
+        Covoiturage::STATUT_CONFIRME,
+        Covoiturage::STATUT_COMPLET,
+        Covoiturage::STATUT_EN_COURS,
+        Covoiturage::STATUT_TERMINE,
+        Covoiturage::STATUT_ANNULE,
+    ])]
     private ?string $statut = null;
 
     #[ORM\Column]
@@ -46,6 +64,7 @@ class Covoiturage
     public function __construct()
     {
         $this->nbPlaceRestantes = $this->nbPlaceTotal;
+        $this->reservations = new ArrayCollection();
     }
 
     #[ORM\Column(length: 255, nullable: true)]
@@ -57,6 +76,12 @@ class Covoiturage
     #[ORM\ManyToOne(inversedBy: 'covoiturages')]
     #[ORM\JoinColumn(nullable: false)]
     private ?Voiture $voiture = null;
+
+    /**
+     * @var Collection<int, Reservation>
+     */
+    #[ORM\OneToMany(targetEntity: Reservation::class, mappedBy: 'covoiturage', orphanRemoval: true)]
+    private Collection $reservations;
 
     public function getId(): ?int
     {
@@ -219,6 +244,36 @@ class Covoiturage
     public function setVoiture(?Voiture $voiture): static
     {
         $this->voiture = $voiture;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Reservation>
+     */
+    public function getReservations(): Collection
+    {
+        return $this->reservations;
+    }
+
+    public function addReservation(Reservation $reservation): static
+    {
+        if (!$this->reservations->contains($reservation)) {
+            $this->reservations->add($reservation);
+            $reservation->setCovoiturage($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReservation(Reservation $reservation): static
+    {
+        if ($this->reservations->removeElement($reservation)) {
+            // set the owning side to null (unless already changed)
+            if ($reservation->getCovoiturage() === $this) {
+                $reservation->setCovoiturage(null);
+            }
+        }
 
         return $this;
     }

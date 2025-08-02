@@ -9,10 +9,9 @@
 		<div class="row">
 			<div class="col-md-4">
 				<div class="card shadow-sm">
-					<div
-						class="card-body text-center">
-						{# Affiche une photo si elle existe, sinon un avatar généré avec les initiales #}
-						<img src="{% if user.photo %} {{ asset('uploads/photos/' ~ user.photo) }} {% elseif user.sexe == 'Homme' %} {{ asset('images/avatar_homme.png') }} {% elseif user.sexe == 'Femme' %} {{ asset('images/avatar_femme.png') }} {% else %} {{ 'https://ui-avatars.com/api/?name=' ~ user.firstname|url_encode ~ '+' ~ user.lastname|url_encode ~ '&background=random&size=150' }} {% endif %}" alt="Photo de profil" class="img-fluid rounded-circle mb-3 profile-picture">
+					<div class="card-body text-center">
+						{% set avatar_url = user.getAvatarUrl(150) %}
+						<img src="{{ avatar_url starts with 'http' ? avatar_url : asset(avatar_url) }}" alt="Photo de profil de {{ user.pseudo }}" class="img-fluid rounded-circle mb-3 profile-picture">
 						<h4 class="card-title">{{ user.pseudo }}</h4>
 						{# Affichage de la note moyenne avec des étoiles #}
 						{% set averageRating = user.averageRating %}
@@ -50,7 +49,9 @@
 							{{ user.dateNaissance ? user.dateNaissance|date('d/m/Y') : 'Non renseignée' }}</li>
 						<li class="list-group-item">
 							<strong>Membre depuis :</strong>
-							{{ user.date_inscription | time_diff}}</li>
+							<p>Membre
+								{{ user.membershipDurationAsString }}</p>
+						</li>
 					</ul>
 				</div>
 			</div>
@@ -65,19 +66,22 @@
 						Actions rapides
 					</div>
 					<div class="card-body">
-						<a href="{{ path('app_profile_edit') }}" class="btn btn-primary mb-2">Modifier mes informations</a>
-						<a href="{{ path('app_profile_change_password') }}" class="btn btn-secondary mb-2">Changer mon mot de passe</a>
+						<a href="{{ path('app_profile_edit') }}" class="btn btn-primary mb-2">
+							<i class="fas fa-user-edit me-2"></i>Modifier mes informations</a>
+						<a href="{{ path('app_profile_change_password') }}" class="btn btn-secondary mb-2">
+							<i class="fas fa-key me-2"></i>Changer mon mot de passe</a>
+						<a href="{{ path('app_voiture_index') }}" class="btn btn-info mb-2">
+							<i class="fas fa-car me-2"></i>Gérer mes voitures</a>
 						<hr>
 
 						{% if 'ROLE_CHAUFFEUR' in user.roles %}
-							<a href="{{ path('app_voiture_index') }}" class="btn btn-info mb-2">Gérer mes voitures</a>
-							<a href="{{ path('app_covoiturage_new') }}" class="btn btn-success mb-2">Proposer un covoiturage</a>
+							<a href="{{ path('app_covoiturage_new') }}" class="btn btn-success mb-2">
+								<i class="fas fa-plus-circle me-2"></i>Proposer un covoiturage</a>
 						{% else %}
-							<p>Devenez chauffeur pour pouvoir ajouter des voitures et proposer des trajets.</p>
-							<form method="post" action="{{ path('app_profile_become_driver') }}" onsubmit="return confirm('Voulez-vous vraiment devenir chauffeur ?');" class="d-inline">
-								<input type="hidden" name="_token" value="{{ csrf_token('become_driver' ~ user.id) }}">
-								<button type="submit" class="btn btn-success">Devenir Chauffeur</button>
-							</form>
+							<p class="mb-2">Pour devenir chauffeur et proposer des trajets, vous devez d'abord enregistrer un véhicule.</p>
+							<a href="{{ path('app_voiture_new') }}" class="btn btn-info">
+								<i class="fas fa-car-side me-2"></i>Ajouter ma première voiture
+							</a>
 						{% endif %}
 					</div>
 				</div>
@@ -87,8 +91,11 @@
 						Mes activités
 					</div>
 					<div class="card-body">
-						<a href="{{ path('app_profile_my_covoiturages') }}" class="btn btn-outline-primary">Voir mes covoiturages proposés</a>
-						{# On pourra ajouter plus tard un lien vers les réservations de l'utilisateur #}
+						<a href="{{ path('app_profile_my_covoiturages') }}" class="btn btn-outline-primary mb-2">
+							<i class="fas fa-road me-2"></i>Mes covoiturages proposés</a>
+						<a href="{{ path('app_profile_my_reservations') }}" class="btn btn-outline-info mb-2">
+							<i class="fas fa-ticket-alt me-2"></i>Mes réservations</a>
+
 					</div>
 				</div>
 				{# Section pour afficher les avis reçus #}

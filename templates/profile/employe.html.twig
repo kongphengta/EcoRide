@@ -1,0 +1,29 @@
+{% extends 'base.html.twig' %}
+{% block title %}Espace Employé
+{% endblock %}
+{% block body %}
+	<div class="container my-5">
+		<h1>Espace Employé</h1>
+		<p>Bienvenue
+			{{ user.pseudo }}
+			!</p>
+		<h2>Mes réservations</h2>
+		<ul>
+			{% for reservation in reservations %}
+				<li>
+					{{ reservation.covoiturage.lieuDepart }}
+					→
+					{{ reservation.covoiturage.lieuArrivee }}
+					le
+					{{ reservation.covoiturage.dateDepart|date('d/m/Y') }}
+					({{ reservation.statut }})
+				</li>
+			{% else %}
+				<li>Aucune réservation.</li>
+			{% endfor %}
+		</ul>
+		<p>Crédits restants :
+			<strong>{{ user.credits }}</strong>
+		</p>
+	</div>
+{% endblock %}

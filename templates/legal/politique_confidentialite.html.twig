@@ -1,0 +1,60 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Politique de confidentialité - EcoRide{% endblock %}
+
+{% block carousel %}{% endblock %}
+
+{% block body %}
+<div class="container my-5">
+    <h1>Politique de confidentialité</h1>
+    
+    <h2>Collecte des données</h2>
+    <p>
+        EcoRide collecte les données personnelles suivantes :
+    </p>
+    <ul>
+        <li>Nom et prénom</li>
+        <li>Adresse email</li>
+        <li>Numéro de téléphone</li>
+        <li>Adresse postale (optionnelle)</li>
+        <li>Date de naissance (optionnelle)</li>
+        <li>Photo de profil (optionnelle)</li>
+    </ul>
+
+    <h2>Utilisation des données</h2>
+    <p>
+        Vos données personnelles sont utilisées pour :
+    </p>
+    <ul>
+        <li>Créer et gérer votre compte utilisateur</li>
+        <li>Faciliter la mise en relation entre conducteurs et passagers</li>
+        <li>Vous envoyer des notifications relatives à vos trajets</li>
+        <li>Améliorer nos services</li>
+    </ul>
+
+    <h2>Partage des données</h2>
+    <p>
+        Vos données ne sont partagées qu'avec les autres utilisateurs dans le cadre de l'organisation de covoiturages et uniquement les informations nécessaires (nom, prénom, photo de profil).
+    </p>
+
+    <h2>Vos droits</h2>
+    <p>
+        Conformément au RGPD, vous disposez des droits suivants :
+    </p>
+    <ul>
+        <li>Droit d'accès à vos données</li>
+        <li>Droit de rectification</li>
+        <li>Droit à l'effacement</li>
+        <li>Droit à la portabilité</li>
+        <li>Droit d'opposition</li>
+    </ul>
+
+    <p>
+        Pour exercer ces droits, contactez-nous à : <a href="mailto:contact@ecoride.fr">contact@ecoride.fr</a>
+    </p>
+
+    <div class="mt-4">
+        <a href="{{ path('app_home') }}" class="btn btn-success">Retour à l'accueil</a>
+    </div>
+</div>
+{% endblock %}
