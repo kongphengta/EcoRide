@@ -29,6 +29,10 @@ class PublicProfileController extends AbstractController
         return $this->render('public_profile/show.html.twig', [
             'user' => $user,
             'avisRecus' => $pagination,
+            'breadcrumb' => [
+                ['label' => 'Accueil', 'url' => $this->generateUrl('app_home')],
+                ['label' => 'Profil de ' . $user->getFirstname(), 'url' => ''],
+            ],
         ]);
     }
 }

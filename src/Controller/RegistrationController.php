@@ -88,6 +88,10 @@ class RegistrationController extends AbstractController
 
         return $this->render('registration/register.html.twig', [
             'registrationForm' => $form->createView(),
+            'breadcrumb' => [
+                ['label' => 'Accueil', 'url' => $this->generateUrl('app_home')],
+                ['label' => 'Inscription', 'url' => $this->generateUrl('app_register')],
+            ],
         ]);
     }
 
@@ -194,7 +198,11 @@ class RegistrationController extends AbstractController
 
         return $this->render('registration/complete_profile.html.twig', [
             'profileForm' => $form->createView(),
-            'user' => $user
+            'user' => $user,
+            'breadcrumb' => [
+                ['label' => 'Accueil', 'url' => $this->generateUrl('app_home')],
+                ['label' => 'Compléter mon profil', 'url' => $this->generateUrl('app_complete_profile')],
+            ],
         ]);
     }
 }

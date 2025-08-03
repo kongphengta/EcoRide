@@ -1,0 +1,63 @@
+{# Breadcrumb navigation #}
+<nav aria-label="breadcrumb" class="mb-3">
+	<ol
+		class="breadcrumb bg-light p-3">
+		{# Si un breadcrumb personnalisé est défini dans le controller, on l'utilise #}
+		{% if breadcrumb is defined and breadcrumb is not empty %}
+			{% for item in breadcrumb %}
+				{% if loop.last %}
+					<li class="breadcrumb-item active" aria-current="page">
+						<i class="fas fa-location-dot text-success"></i>
+						{{ item.label }}
+					</li>
+				{% else %}
+					<li class="breadcrumb-item">
+						{% if item.url %}
+							<a href="{{ item.url }}" class="text-decoration-none">
+								{% if loop.first %}
+									<i class="fas fa-home text-success"></i>
+								{% endif %}
+								{{ item.label }}
+							</a>
+						{% else %}
+							{{ item.label }}
+						{% endif %}
+					</li>
+				{% endif %}
+			{% endfor %}
+		{% else %}
+			{# Breadcrumb automatique basé sur la route actuelle (fallback) #}
+			<li class="breadcrumb-item">
+				<a href="{{ path('app_home') }}" class="text-decoration-none">
+					<i class="fas fa-home text-success"></i>
+					Accueil
+				</a>
+			</li>
+
+			{% set current_route = app.request.get('_route') %}
+
+			{% if current_route == 'app_covoiturage_index' %}
+				<li class="breadcrumb-item active" aria-current="page">
+					<i class="fas fa-search text-success"></i>
+					Rechercher un covoiturage
+				</li>
+			{% elseif current_route == 'app_covoiturage_new' %}
+				<li class="breadcrumb-item">
+					<a href="{{ path('app_covoiturage_index') }}" class="text-decoration-none">Covoiturage</a>
+				</li>
+				<li class="breadcrumb-item active" aria-current="page">
+					<i class="fas fa-plus text-success"></i>
+					Proposer un trajet
+				</li>
+			{% elseif current_route == 'app_covoiturage_show' %}
+				<li class="breadcrumb-item">
+					<a href="{{ path('app_covoiturage_index') }}" class="text-decoration-none">Covoiturage</a>
+				</li>
+				<li class="breadcrumb-item active" aria-current="page">
+					<i class="fas fa-eye text-success"></i>
+					Détails du trajet
+				</li>
+			{% endif %}
+		{% endif %}
+	</ol>
+</nav>

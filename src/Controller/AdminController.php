@@ -61,13 +61,19 @@ class AdminController extends AbstractController
 
         $users = $userRepo->findAll();
 
+        $breadcrumb = [
+            ['label' => 'Accueil', 'url' => $this->generateUrl('app_home')],
+            ['label' => 'Administration', 'url' => $this->generateUrl('admin_dashboard')],
+        ];
+
         return $this->render('admin/dashboard.html.twig', [
             'jours' => $jours,
             'totaux' => $totaux,
             'joursCredits' => $joursCredits,
             'creditsParJour' => $creditsParJourValues,
             'totalCredits' => $totalCredits,
-            'users' => $users, // <-- Ajoute cette ligne
+            'users' => $users,
+            'breadcrumb' => $breadcrumb,
         ]);
     }
 
@@ -102,6 +108,11 @@ class AdminController extends AbstractController
 
         return $this->render('admin/create_employe.html.twig', [
             'form' => $form->createView(),
+            'breadcrumb' => [
+                ['label' => 'Accueil', 'url' => $this->generateUrl('app_home')],
+                ['label' => 'Administration', 'url' => $this->generateUrl('admin_dashboard')],
+                ['label' => 'Créer un employé', 'url' => $this->generateUrl('admin_create_employe')],
+            ],
         ]);
     }
     #[Route('/suspendre-utilisateur/{id}', name: 'admin_suspend_user')]

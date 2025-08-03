@@ -31,17 +31,30 @@ class ProfileController extends AbstractController
             ['dateDepart' => 'DESC'] // Trier par date de départ, les plus récents en premier
         );
 
+        $breadcrumb = [
+            ['label' => 'Accueil', 'url' => $this->generateUrl('app_home')],
+            ['label' => 'Mon Profil', 'url' => $this->generateUrl('app_profile')],
+            ['label' => 'Mes Covoiturages', 'url' => $this->generateUrl('app_profile_my_covoiturages')],
+        ];
+
         return $this->render('profile/my_covoiturages.html.twig', [
             'covoiturages' => $covoiturages,
+            'breadcrumb' => $breadcrumb,
         ]);
     }
 
     #[Route('/', name: 'app_profile')]
     public function index(): Response
     {
+        $breadcrumb = [
+            ['label' => 'Accueil', 'url' => $this->generateUrl('app_home')],
+            ['label' => 'Mon Profil', 'url' => $this->generateUrl('app_profile')],
+        ];
+
         return $this->render('profile/profile.html.twig', [
             'user' => $this->getUser(),
-            'changePasswordForm' => $this->createForm(ChangePasswordFormType::class)->createView(),  // ← AJOUTER CETTE LIGNE
+            'changePasswordForm' => $this->createForm(ChangePasswordFormType::class)->createView(),
+            'breadcrumb' => $breadcrumb,
         ]);
     }
 
@@ -115,9 +128,17 @@ class ProfileController extends AbstractController
         }
 
         $logger->info("ProfileController: FIN edit() - Affichage template", ['userId' => $user->getId()]);
+        
+        $breadcrumb = [
+            ['label' => 'Accueil', 'url' => $this->generateUrl('app_home')],
+            ['label' => 'Mon Profil', 'url' => $this->generateUrl('app_profile')],
+            ['label' => 'Modifier mon profil', 'url' => $this->generateUrl('app_profile_edit')],
+        ];
+
         return $this->render('profile/edit_profile.html.twig', [
             'form' => $form->createView(),
             'user' => $user,
+            'breadcrumb' => $breadcrumb,
         ]);
     }
     #[Route('/change-password', name: 'change_password')]
@@ -146,6 +167,11 @@ class ProfileController extends AbstractController
 
         return $this->render('profile/change_password.html.twig', [
             'form' => $form->createView(),
+            'breadcrumb' => [
+                ['label' => 'Accueil', 'url' => $this->generateUrl('app_home')],
+                ['label' => 'Mon Profil', 'url' => $this->generateUrl('app_profile')],
+                ['label' => 'Changer mot de passe', 'url' => $this->generateUrl('change_password')],
+            ],
         ]);
     }
     #[Route('/devenir-chauffeur', name: 'app_profile_become_driver')]

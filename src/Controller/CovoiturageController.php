@@ -98,6 +98,11 @@ class CovoiturageController extends AbstractController
 
         return $this->render('covoiturage/new.html.twig', [
             'covoiturageForm' => $form->createView(),
+            'breadcrumb' => [
+                ['label' => 'Accueil', 'url' => $this->generateUrl('app_home')],
+                ['label' => 'Covoiturages', 'url' => $this->generateUrl('app_covoiturage_index')],
+                ['label' => 'Proposer un trajet', 'url' => $this->generateUrl('app_covoiturage_new')],
+            ],
         ]);
     }
     #[Route('/{id}', name: 'app_covoiturage_show', methods: ['GET'])]
@@ -225,6 +230,12 @@ class CovoiturageController extends AbstractController
         return $this->render('covoiturage/edit.html.twig', [
             'covoiturage' => $covoiturage,
             'covoiturageForm' => $form->createView(),
+            'breadcrumb' => [
+                ['label' => 'Accueil', 'url' => $this->generateUrl('app_home')],
+                ['label' => 'Mon Profil', 'url' => $this->generateUrl('app_profile')],
+                ['label' => 'Mes Covoiturages', 'url' => $this->generateUrl('app_profile_my_covoiturages')],
+                ['label' => 'Modifier covoiturage', 'url' => ''],
+            ],
         ]);
     }
 

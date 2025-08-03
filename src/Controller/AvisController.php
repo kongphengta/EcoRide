@@ -60,6 +60,11 @@ class AvisController extends AbstractController
         return $this->render('avis/new.html.twig', [
             'reservation' => $reservation,
             'form' => $form->createView(),
+            'breadcrumb' => [
+                ['label' => 'Accueil', 'url' => $this->generateUrl('app_home')],
+                ['label' => 'Mon Profil', 'url' => $this->generateUrl('app_profile')],
+                ['label' => 'Laisser un avis', 'url' => ''],
+            ],
         ]);
     }
 }

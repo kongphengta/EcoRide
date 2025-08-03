@@ -24,8 +24,15 @@ class VoitureController extends AbstractController
         $user = $this->getUser();
         $voitures = $user->getVoitures();
 
+        $breadcrumb = [
+            ['label' => 'Accueil', 'url' => $this->generateUrl('app_home')],
+            ['label' => 'Mon Profil', 'url' => $this->generateUrl('app_profile')],
+            ['label' => 'Mes Voitures', 'url' => $this->generateUrl('app_voiture_index')],
+        ];
+
         return $this->render('voiture/index.html.twig', [
             'voitures' => $voitures,
+            'breadcrumb' => $breadcrumb,
         ]);
     }
 
@@ -61,6 +68,12 @@ class VoitureController extends AbstractController
         return $this->render('voiture/new.html.twig', [
             'voiture' => $voiture,
             'form' => $form->createView(),
+            'breadcrumb' => [
+                ['label' => 'Accueil', 'url' => $this->generateUrl('app_home')],
+                ['label' => 'Mon Profil', 'url' => $this->generateUrl('app_profile')],
+                ['label' => 'Mes Voitures', 'url' => $this->generateUrl('app_voiture_index')],
+                ['label' => 'Ajouter une voiture', 'url' => $this->generateUrl('app_voiture_new')],
+            ],
         ]);
     }
 
@@ -86,6 +99,12 @@ class VoitureController extends AbstractController
         return $this->render('voiture/edit.html.twig', [
             'voiture' => $voiture,
             'form' => $form->createView(),
+            'breadcrumb' => [
+                ['label' => 'Accueil', 'url' => $this->generateUrl('app_home')],
+                ['label' => 'Mon Profil', 'url' => $this->generateUrl('app_profile')],
+                ['label' => 'Mes Voitures', 'url' => $this->generateUrl('app_voiture_index')],
+                ['label' => 'Modifier une voiture', 'url' => ''],
+            ],
         ]);
     }
 
