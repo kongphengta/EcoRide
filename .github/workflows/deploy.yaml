@@ -1,9 +1,10 @@
 name: Deploy to VPS
 
 on:
-  push:
-    branches:
-      - master # Ou 'main', ou la branche que vous utilisez pour la production
+  workflow_dispatch: # Déploiement manuel uniquement
+  # push:
+  #   branches:
+  #     - master # Déploiement automatique désactivé temporairement
 
 jobs:
   deploy:
