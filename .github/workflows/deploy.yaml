@@ -1,10 +1,10 @@
 name: Deploy to VPS
 
 on:
-  workflow_dispatch: # Déploiement manuel uniquement
-  # push:
-  #   branches:
-  #     - master # Déploiement automatique désactivé temporairement
+  push:
+    branches:
+      - master
+  workflow_dispatch: # Déploiement manuel aussi disponible
 
 jobs:
   deploy:
@@ -14,22 +14,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0 # Important pour rsync pour détecter les changements
 
-    - name: Deploy files to server via rsync
-      uses: easingthemes/ssh-deploy@v5.0.0
-      with:
-        SSH_PRIVATE_KEY: ${{ secrets.ACTION_ECORIDE }}
-        REMOTE_HOST: ${{ secrets.SSH_HOST }}
-        REMOTE_USER: ${{ secrets.SSH_USER }}
-        SOURCE: "./"
-        TARGET: ${{ secrets.PROJECT_PATH_ON_SERVER }}
-        # Exclure les fichiers et dossiers qui ne doivent pas être déployés
-        # ou qui sont gérés directement sur le serveur.
-        EXCLUDE: ".git/, node_modules/, .github/, vendor/, var/, public/build/, .env, .env.local, .env.*.local"
-
-    - name: Run post-deployment commands
+    - name: Deploy to server
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.SSH_HOST }}
@@ -37,30 +23,33 @@ jobs:
         key: ${{ secrets.ACTION_ECORIDE }}
         port: 22
         script: |
-          set -e # Arrêter le script à la première erreur
+          echo "Starting deployment..."
           cd ${{ secrets.PROJECT_PATH_ON_SERVER }}
-
-          # Compile les variables d'environnement pour une performance optimale en production.
-          echo "Compiling environment variables for production..."
-          composer dump-env prod
-
-          echo "Installing Composer dependencies..."
-          composer install --no-dev --optimize-autoloader --no-interaction
-
-          echo "Installing Node.js dependencies..."
-          npm install
-
-          echo "Building frontend assets for production..."
-          npm run build
-
-          echo "Running database migrations..."
-          php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
-
-          echo "Warming up Symfony cache..."
-          php bin/console cache:warmup
-
-          # corrige les permissions pour les dossier qui ont besoin d'être écrits par le serveur
-          echo "Fixing permissions for var/ and public/build directories..."
-          sudo chown -R www-data:www-data var public/build
-
-          echo "Deployment finished successfully!"
+          
+          # Pull latest changes
+          git pull origin master
+          
+          # Install dependencies if composer.json changed
+          if git diff --name-only HEAD~1 HEAD | grep -q "composer"; then
+            echo "Installing Composer dependencies..."
+            composer install --no-dev --optimize-autoloader --no-interaction
+          fi
+          
+          # Build assets if needed
+          if git diff --name-only HEAD~1 HEAD | grep -q -E "(package\.json|webpack|assets/)"; then
+            echo "Building frontend assets..."
+            npm install
+            npm run build
+          fi
+          
+          # Run migrations if needed
+          if git diff --name-only HEAD~1 HEAD | grep -q "migrations/"; then
+            echo "Running database migrations..."
+            php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
+          fi
+          
+          # Clear cache
+          echo "Clearing cache..."
+          php bin/console cache:clear --env=prod
+          
+          echo "Deployment completed successfully!"
