@@ -277,4 +277,32 @@ class Covoiturage
 
         return $this;
     }
+
+    /**
+     * Calcule le nombre réel de places restantes basé sur les réservations confirmées
+     */
+    public function getPlacesRealmentRestantes(): int
+    {
+        $placesConfirmees = 0;
+        foreach ($this->reservations as $reservation) {
+            if ($reservation->getStatut() === 'Confirmée') {
+                $placesConfirmees += $reservation->getNbPlacesReservees();
+            }
+        }
+        return $this->nbPlaceTotal - $placesConfirmees;
+    }
+
+    /**
+     * Calcule le nombre de places confirmées
+     */
+    public function getPlacesConfirmees(): int
+    {
+        $placesConfirmees = 0;
+        foreach ($this->reservations as $reservation) {
+            if ($reservation->getStatut() === 'Confirmée') {
+                $placesConfirmees += $reservation->getNbPlacesReservees();
+            }
+        }
+        return $placesConfirmees;
+    }
 }

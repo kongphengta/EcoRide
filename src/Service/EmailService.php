@@ -87,6 +87,58 @@ class EmailService
     }
 
     /**
+     * Notifie un passager qu'il a créé une nouvelle réservation.
+     */
+    public function sendReservationCreatedEmail(Reservation $reservation): bool
+    {
+        return $this->send(
+            $reservation->getPassager()->getEmail(),
+            'Votre réservation a été enregistrée - EcoRide',
+            'emails/reservation_created.html.twig',
+            ['reservation' => $reservation]
+        );
+    }
+
+    /**
+     * Notifie un chauffeur qu'il a reçu une nouvelle demande de réservation.
+     */
+    public function sendNewReservationToDriverEmail(Reservation $reservation): bool
+    {
+        return $this->send(
+            $reservation->getCovoiturage()->getChauffeur()->getEmail(),
+            'Nouvelle demande de réservation - EcoRide',
+            'emails/new_reservation_to_driver.html.twig',
+            ['reservation' => $reservation]
+        );
+    }
+
+    /**
+     * Notifie un passager que sa réservation a été confirmée par le chauffeur.
+     */
+    public function sendReservationConfirmedEmail(Reservation $reservation): bool
+    {
+        return $this->send(
+            $reservation->getPassager()->getEmail(),
+            'Votre réservation a été confirmée - EcoRide',
+            'emails/reservation_confirmed.html.twig',
+            ['reservation' => $reservation]
+        );
+    }
+
+    /**
+     * Notifie un passager que sa réservation a été rejetée par le chauffeur.
+     */
+    public function sendReservationRejectedEmail(Reservation $reservation): bool
+    {
+        return $this->send(
+            $reservation->getPassager()->getEmail(),
+            'Votre réservation a été refusée - EcoRide',
+            'emails/reservation_rejected.html.twig',
+            ['reservation' => $reservation]
+        );
+    }
+
+    /**
      * Méthode privée pour construire et envoyer les e-mails.
      * Centralise la logique d'envoi et la gestion des erreurs.
      *

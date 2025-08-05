@@ -1,78 +1,216 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Passagers pour
+{% block title %}Passagers -
 	{{ covoiturage.lieuDepart }}
-	-
+	→
 	{{ covoiturage.lieuArrivee }}
 {% endblock %}
 
 {% block body %}
-	<div class="container my-5">
-		<div class="d-flex justify-content-between align-items-center mb-4">
-			<div>
-				<h1>Passagers du trajet</h1>
-				<h5 class="text-muted">{{ covoiturage.lieuDepart }}
-					&rarr;
-					{{ covoiturage.lieuArrivee }}</h5>
-				<p class="text-muted">Le
-					{{ covoiturage.dateDepart|date('d/m/Y') }}
-					à
-					{{ covoiturage.heureDepart }}</p>
-			</div>
-			<a href="{{ path('app_profile_my_covoiturages') }}" class="btn btn-outline-secondary">
-				<i class="bi bi-arrow-left"></i>
-				Retour à mes covoiturages
-			</a>
-		</div>
+	<div class="container my-4">
+		<div class="row">
+			<div class="col-md-8">
+				<div class="card shadow-sm">
+					<div class="card-header bg-primary text-white">
+						<h1 class="h4 mb-0">
+							<i class="fas fa-users me-2"></i>
+							Gestion des passagers
+						</h1>
+					</div>
+					<div class="card-body">
+						{% if reservations is empty %}
+							<div class="text-center py-5">
+								<i class="fas fa-user-slash fa-3x text-muted mb-3"></i>
+								<h5 class="text-muted">Aucune réservation pour ce trajet</h5>
+								<p class="text-muted">Les passagers qui réserveront apparaîtront ici.</p>
+							</div>
+						{% else %}
+							<div class="list-group list-group-flush">
+								{% for reservation in reservations %}
+									<div class="list-group-item px-0">
+										<div class="row align-items-center">
+											<div class="col-md-3">
+												<div class="d-flex align-items-center">
+													<img src="{{ asset(reservation.passager.avatarUrl) }}" alt="Avatar" class="rounded-circle me-3" width="50" height="50">
+													<div>
+														<h6 class="mb-0">{{ reservation.passager.pseudo }}</h6>
+														<small class="text-muted">
+															{{ reservation.nbPlacesReservees }}
+															place{{ reservation.nbPlacesReservees > 1 ? 's' : '' }}
+														</small>
+													</div>
+												</div>
+											</div>
 
-		{% if reservations is not empty %}
-			<div class="table-responsive">
-				<table class="table table-hover align-middle">
-					<thead class="table-light">
-						<tr>
-							<th>Passager</th>
-							<th>Date de réservation</th>
-							<th>Places réservées</th>
-							<th>Statut</th>
-							<th class="text-end">Actions</th>
-						</tr>
-					</thead>
-					<tbody>
-						{% for reservation in reservations %}
-							<tr>
-								<td>
-									{# TODO: Lien vers le profil public du passager #}
-									{{ reservation.passager.pseudo }}
-								</td>
-								<td>{{ reservation.dateReservation|date('d/m/Y H:i') }}</td>
-								<td>{{ reservation.nbPlacesReservees }}</td>
-								<td>
-									<span class="badge bg-success">{{ reservation.statut }}</span>
-								</td>
-								<td class="text-end">
-									<a href="mailto:{{ reservation.passager.email }}" class="btn btn-sm btn-outline-primary me-2" title="Contacter par email">
-										<i class="bi bi-envelope"></i>
-									</a>
-									{# On ne peut annuler qu'une réservation confirmée #}
-									{% if reservation.statut == 'Confirmée' %}
-										<form method="post" action="{{ path('app_reservation_driver_cancel', {'id': reservation.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir annuler la réservation de ce passager ?');" class="d-inline">
-											<input type="hidden" name="_token" value="{{ csrf_token('driver_cancel' ~ reservation.id) }}">
-											<button class="btn btn-sm btn-outline-danger" title="Annuler la réservation">
-												<i class="bi bi-person-x-fill"></i>
-											</button>
-										</form>
-									{% endif %}
-								</td>
-							</tr>
-						{% endfor %}
-					</tbody>
-				</table>
+											<div class="col-md-3">
+												<div class="text-center">
+													{% if reservation.statut == 'En attente' %}
+														<span class="badge bg-warning text-dark">
+															<i class="fas fa-clock me-1"></i>En attente
+														</span>
+													{% elseif reservation.statut == 'Confirmée' %}
+														<span class="badge bg-success">
+															<i class="fas fa-check me-1"></i>Confirmée
+														</span>
+													{% elseif reservation.statut == 'Rejetée' %}
+														<span class="badge bg-danger">
+															<i class="fas fa-times me-1"></i>Rejetée
+														</span>
+													{% elseif reservation.statut == 'Annulée' %}
+														<span class="badge bg-secondary">
+															<i class="fas fa-ban me-1"></i>Annulée
+														</span>
+													{% endif %}
+												</div>
+												<small class="text-muted d-block text-center">
+													{{ reservation.dateReservation|date('d/m/Y H:i') }}
+												</small>
+											</div>
+
+											<div class="col-md-2 text-center">
+												<strong class="text-success">
+													{{ (covoiturage.prixPersonne * reservation.nbPlacesReservees)|number_format(2, ',', ' ') }}
+													€
+												</strong>
+											</div>
+
+											<div class="col-md-4 text-end">
+												{% if reservation.statut == 'En attente' %}
+													<div class="btn-group" role="group">
+														<form method="post" action="{{ path('app_reservation_confirm', {'id': reservation.id}) }}" class="d-inline">
+															<input type="hidden" name="_token" value="{{ csrf_token('confirm_' ~ reservation.id) }}">
+															<button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Confirmer cette réservation ?')">
+																<i class="fas fa-check me-1"></i>Accepter
+															</button>
+														</form>
+														<form method="post" action="{{ path('app_reservation_reject', {'id': reservation.id}) }}" class="d-inline">
+															<input type="hidden" name="_token" value="{{ csrf_token('reject_' ~ reservation.id) }}">
+															<button type="submit" class="btn btn-danger btn-sm ms-1" onclick="return confirm('Rejeter cette réservation ? Le passager sera remboursé.')">
+																<i class="fas fa-times me-1"></i>Refuser
+															</button>
+														</form>
+													</div>
+												{% elseif reservation.statut == 'Confirmée' %}
+													<form method="post" action="{{ path('app_reservation_driver_cancel', {'id': reservation.id}) }}" class="d-inline">
+														<input type="hidden" name="_token" value="{{ csrf_token('driver_cancel' ~ reservation.id) }}">
+														<button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Annuler cette réservation confirmée ? Le passager sera remboursé.')">
+															<i class="fas fa-ban me-1"></i>Annuler
+														</button>
+													</form>
+												{% else %}
+													<span class="text-muted">-</span>
+												{% endif %}
+											</div>
+										</div>
+									</div>
+								{% endfor %}
+							</div>
+						{% endif %}
+					</div>
+				</div>
 			</div>
-		{% else %}
-			<div class="alert alert-info" role="alert">
-				<h4 class="alert-heading">Aucun passager pour le moment</h4>
-				<p>Personne n'a encore réservé de place pour ce trajet. Revenez consulter cette page plus tard.</p>
+
+			<div
+				class="col-md-4">
+				<!-- Résumé du trajet -->
+				<div class="card shadow-sm mb-4">
+					<div class="card-header">
+						<h5 class="mb-0">
+							<i class="fas fa-route me-2"></i>Résumé du trajet
+						</h5>
+					</div>
+					<div class="card-body">
+						<h6>
+							<i class="fas fa-map-marker-alt text-success me-2"></i>
+							{{ covoiturage.lieuDepart }}
+						</h6>
+						<div class="text-center my-2">
+							<i class="fas fa-arrow-down text-muted"></i>
+						</div>
+						<h6>
+							<i class="fas fa-map-marker-alt text-danger me-2"></i>
+							{{ covoiturage.lieuArrivee }}
+						</h6>
+						<hr>
+						<p class="mb-2">
+							<i class="fas fa-calendar me-2"></i>
+							{{ covoiturage.dateDepart|date('d/m/Y') }}
+							à
+							{{ covoiturage.heureDepart }}
+						</p>
+						<p class="mb-2">
+							<i class="fas fa-euro-sign me-2"></i>
+							{{ covoiturage.prixPersonne|number_format(2, ',', ' ') }}
+							€ / personne
+						</p>
+						<p class="mb-0">
+							<i class="fas fa-users me-2"></i>
+							{{ covoiturage.placesConfirmees }}
+							/
+							{{ covoiturage.nbPlaceTotal }}
+							places confirmées ({{ covoiturage.placesRealmentRestantes }}
+							restantes)
+						</p>
+					</div>
+				</div>
+
+				<!-- Statistiques -->
+				<div class="card shadow-sm">
+					<div class="card-header">
+						<h5 class="mb-0">
+							<i class="fas fa-chart-bar me-2"></i>Statistiques
+						</h5>
+					</div>
+					<div class="card-body">
+						{% set enAttente = reservations|filter(r => r.statut == 'En attente')|length %}
+						{% set confirmees = reservations|filter(r => r.statut == 'Confirmée')|length %}
+						{% set rejetees = reservations|filter(r => r.statut == 'Rejetée')|length %}
+						{% set annulees = reservations|filter(r => r.statut == 'Annulée')|length %}
+
+						<div class="row text-center">
+							<div class="col-6 mb-3">
+								<div class="bg-warning-light p-2 rounded">
+									<h4 class="text-warning mb-0">{{ enAttente }}</h4>
+									<small>En attente</small>
+								</div>
+							</div>
+							<div class="col-6 mb-3">
+								<div class="bg-success-light p-2 rounded">
+									<h4 class="text-success mb-0">{{ confirmees }}</h4>
+									<small>Confirmées</small>
+								</div>
+							</div>
+							<div class="col-6">
+								<div class="bg-danger-light p-2 rounded">
+									<h4 class="text-danger mb-0">{{ rejetees }}</h4>
+									<small>Rejetées</small>
+								</div>
+							</div>
+							<div class="col-6">
+								<div class="bg-secondary-light p-2 rounded">
+									<h4 class="text-secondary mb-0">{{ annulees }}</h4>
+									<small>Annulées</small>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
 			</div>
-		{% endif %}
+		</div>
 	</div>
+
+	<style>
+		.bg-warning-light {
+			background-color: #fff3cd;
+		}
+		.bg-success-light {
+			background-color: #d1e7dd;
+		}
+		.bg-danger-light {
+			background-color: #f8d7da;
+		}
+		.bg-secondary-light {
+			background-color: #e2e3e5;
+		}
+	</style>
 {% endblock %}

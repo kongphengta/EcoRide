@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Réservation confirmée</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: #28a745; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+        .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+        .info-box { background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #28a745; }
+        .contact-box { background: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0; }
+        .btn { display: inline-block; background: #28a745; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 10px 0; }
+        .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; font-size: 14px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>✅ Réservation confirmée !</h1>
+    </div>
+    
+    <div class="content">
+        <p>Excellente nouvelle {{ reservation.passager.firstname }} !</p>
+        
+        <p>Le conducteur <strong>{{ reservation.covoiturage.chauffeur.firstname }} {{ reservation.covoiturage.chauffeur.lastname }}</strong> a accepté votre demande de réservation.</p>
+        
+        <div class="info-box">
+            <h3>📍 Récapitulatif de votre trajet</h3>
+            <p><strong>Trajet :</strong> {{ reservation.covoiturage.lieuDepart }} → {{ reservation.covoiturage.lieuArrivee }}</p>
+            <p><strong>Date :</strong> {{ reservation.covoiturage.dateDepart|date('d/m/Y à H:i') }}</p>
+            <p><strong>Lieu de RDV :</strong> {{ reservation.covoiturage.lieuDepart }}</p>
+            <p><strong>Nombre de places :</strong> {{ reservation.nbPlacesReservees }}</p>
+            <p><strong>Prix total :</strong> {{ reservation.nbPlacesReservees * reservation.covoiturage.prixPersonne }}€</p>
+            <p><strong>Statut :</strong> <span style="color: #28a745; font-weight: bold;">{{ reservation.statut }}</span></p>
+        </div>
+        
+        <div class="contact-box">
+            <h3>📞 Contact du conducteur</h3>
+            <p><strong>{{ reservation.covoiturage.chauffeur.firstname }} {{ reservation.covoiturage.chauffeur.lastname }}</strong></p>
+            {% if reservation.covoiturage.chauffeur.telephone %}
+            <p><strong>Téléphone :</strong> {{ reservation.covoiturage.chauffeur.telephone }}</p>
+            {% endif %}
+            <p><em>N'hésitez pas à contacter le conducteur pour finaliser les détails du point de rendez-vous.</em></p>
+        </div>
+        
+        <p>Bon voyage avec EcoRide ! 🚗💨</p>
+        
+        <a href="{{ url('app_profile_my_reservations') }}" class="btn">Voir mes réservations</a>
+        
+        <div class="footer">
+            <p>Après votre trajet, pensez à laisser un avis sur le conducteur ! 🌟</p>
+            <p><em>Cet email a été envoyé automatiquement, merci de ne pas y répondre.</em></p>
+        </div>
+    </div>
+</body>
+</html>

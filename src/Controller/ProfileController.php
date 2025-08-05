@@ -189,4 +189,27 @@ class ProfileController extends AbstractController
         $this->addFlash('success', 'Vous êtes maintenant chauffeur !');
         return $this->redirectToRoute('app_profile');
     }
+    #[Route('/mes-reservations', name: 'app_profile_my_reservations')]
+    public function myReservations(): Response
+    {
+        /** @var \App\Entity\User $user */
+        $user = $this->getUser();
+
+        // Récupérer toutes les réservations de l'utilisateur, triées par date de réservation
+        $reservations = $user->getReservations()->toArray();
+        usort($reservations, function($a, $b) {
+            return $b->getDateReservation() <=> $a->getDateReservation();
+        });
+
+        $breadcrumb = [
+            ['label' => 'Accueil', 'url' => $this->generateUrl('app_home')],
+            ['label' => 'Mon Profil', 'url' => $this->generateUrl('app_profile')],
+            ['label' => 'Mes Réservations', 'url' => $this->generateUrl('app_profile_my_reservations')],
+        ];
+
+        return $this->render('profile/my_reservations.html.twig', [
+            'reservations' => $reservations,
+            'breadcrumb' => $breadcrumb,
+        ]);
+    }
 }

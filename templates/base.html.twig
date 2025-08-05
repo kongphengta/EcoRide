@@ -59,23 +59,7 @@
 		{% endblock %}
 
 		<div class="container mt-4">
-			{% block breadcrumb %}
-				{% if breadcrumb is defined and breadcrumb|length > 1 %}
-					<nav aria-label="breadcrumb">
-						<ol class="breadcrumb">
-							{% for item in breadcrumb %}
-								<li class="breadcrumb-item{% if loop.last %} active{% endif %}">
-									{% if not loop.last %}
-										<a href="{{ item.url }}">{{ item.label }}</a>
-									{% else %}
-										{{ item.label }}
-									{% endif %}
-								</li>
-							{% endfor %}
-						</ol>
-					</nav>
-				{% endif %}
-			{% endblock %}
+			{% include '_partials/_breadcrumb.html.twig' %}
 
 			{% for label, messages in app.flashes %}
 				{% for message in messages %}

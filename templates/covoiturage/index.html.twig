@@ -33,10 +33,10 @@
 				{% if searchPerformed %}
 					<h2>Résultats de la recherche</h2>
 					<hr>
-					{% if covoiturages is not empty %}
-						<p class="text-muted">{{ covoiturages|length }}
+					{% if pagination.count > 0 %}
+						<p class="text-muted">{{ pagination.count }}
 							trajet(s) trouvé(s).</p>
-						{% for covoiturage in covoiturages %}
+						{% for covoiturage in pagination %}
 							<div class="card mb-3">
 								<div class="card-body">
 									<div class="d-flex justify-content-between">
@@ -80,16 +80,78 @@
 								</div>
 							</div>
 						{% endfor %}
+						
+						{# Affichage de la pagination #}
+						<div class="d-flex justify-content-center mt-4">
+							{{ knp_pagination_render(pagination) }}
+						</div>
 					{% else %}
 						<div class="alert alert-warning" role="alert">
 							Aucun covoiturage ne correspond à vos critères de recherche. Essayez d'élargir votre recherche.
 						</div>
 					{% endif %}
 				{% else %}
-					<div class="alert alert-info" role="alert">
-						<h4 class="alert-heading">Prêt à partir ?</h4>
-						<p>Utilisez le formulaire sur la gauche pour trouver le covoiturage parfait pour votre prochain voyage.</p>
-					</div>
+					{# Affichage par défaut : tous les covoiturages avec pagination #}
+					<h2>Tous les covoiturages disponibles</h2>
+					<hr>
+					{% if pagination.count > 0 %}
+						<p class="text-muted">{{ pagination.count }} trajet(s) disponible(s).</p>
+						{% for covoiturage in pagination %}
+							<div class="card mb-3">
+								<div class="card-body">
+									<div class="d-flex justify-content-between">
+										<div>
+											<h5 class="card-title">{{ covoiturage.lieuDepart }}
+												&rarr;
+												{{ covoiturage.lieuArrivee }}</h5>
+											<h6 class="card-subtitle mb-2 text-muted">
+												Le
+												{{ covoiturage.dateDepart|date('d/m/Y') }}
+												à
+												{{ covoiturage.heureDepart|date('H:i') }}
+											</h6>
+										</div>
+										<div class="text-end">
+											<span class="h4">{{ covoiturage.prixPersonne }}
+												€</span>
+											<p class="text-muted mb-0">par personne</p>
+										</div>
+									</div>
+									<hr>
+									<div class="d-flex justify-content-between align-items-center">
+										<div>
+											<img src="{{ covoiturage.chauffeur.avatarUrl(40) }}" alt="Avatar de {{ covoiturage.chauffeur.pseudo }}" class="rounded-circle me-2">
+											<span>{{ covoiturage.chauffeur.pseudo }}</span>
+											<span class="badge bg-warning text-dark ms-2">
+												<i class="bi bi-star-fill"></i>
+												{{ covoiturage.chauffeur.averageRating|number_format(1) }}</span>
+											{% if covoiturage.voiture.isElectric %}
+												<span class="badge bg-success ms-2" title="Voyage écologique">
+													<i class="bi bi-leaf-fill"></i>
+													Éco</span>
+											{% endif %}
+										</div>
+										<div>
+											<span class="badge bg-info me-2">{{ covoiturage.nbPlaceRestantes }}
+												place(s) restante(s)</span>
+											<a href="{{ path('app_covoiturage_show', {'id': covoiturage.id}) }}" class="btn btn-primary btn-sm">Voir les détails</a>
+										</div>
+									</div>
+								</div>
+							</div>
+						{% endfor %}
+						
+						{# Affichage de la pagination #}
+						<div class="d-flex justify-content-center mt-4">
+							{{ knp_pagination_render(pagination) }}
+						</div>
+					{% else %}
+						<div class="alert alert-info" role="alert">
+							<h4 class="alert-heading">Aucun covoiturage disponible</h4>
+							<p>Il n'y a actuellement aucun covoiturage disponible. Revenez plus tard ou proposez votre propre trajet !</p>
+							<a href="{{ path('app_covoiturage_new') }}" class="btn btn-success">Proposer un trajet</a>
+						</div>
+					{% endif %}
 				{% endif %}
 			</div>
 		</div>
