@@ -12,6 +12,9 @@
 				<li class="nav-item">
 					<a class="nav-link" href="{{ path('app_covoiturage_index') }}">Trouver un covoiturage</a>
 				</li>
+				<li class="nav-item">
+					<a class="nav-link" href="{{ path('app_contact') }}">Contact</a>
+				</li>
 				{% if is_granted('ROLE_CHAUFFEUR') %}
 					<li class="nav-item">
 						<a class="nav-link" href="{{ path('app_covoiturage_new') }}">Proposer un trajet</a>
