@@ -1,3 +1,8 @@
+# Exclure les PDF livrables
+pdfs_livrables/
+
+# Exclure les fichiers Markdown de révision
+md_revision/
 
 ###> symfony/framework-bundle ###
 /.env.local

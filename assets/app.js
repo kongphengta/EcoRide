@@ -14,4 +14,3 @@ console.log('This log comes from assets/app.js - Webpack Encore is running!');
 
 
 
-
