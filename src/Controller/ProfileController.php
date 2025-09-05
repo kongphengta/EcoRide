@@ -128,7 +128,7 @@ class ProfileController extends AbstractController
         }
 
         $logger->info("ProfileController: FIN edit() - Affichage template", ['userId' => $user->getId()]);
-        
+
         $breadcrumb = [
             ['label' => 'Accueil', 'url' => $this->generateUrl('app_home')],
             ['label' => 'Mon Profil', 'url' => $this->generateUrl('app_profile')],
@@ -190,7 +190,7 @@ class ProfileController extends AbstractController
         return $this->redirectToRoute('app_profile');
     }
     #[Route('/mes-reservations', name: 'app_profile_my_reservations')]
-    public function myReservations(): Response
+    public function myReservations(\App\Repository\ReservationRepository $reservationRepository): Response
     {
         /** @var \App\Entity\User $user */
         $user = $this->getUser();
@@ -201,6 +201,9 @@ class ProfileController extends AbstractController
             return $b->getDateReservation() <=> $a->getDateReservation();
         });
 
+        // Récupérer les réservations annulées
+        $annulees = $reservationRepository->findUserCanceledReservations($user);
+
         $breadcrumb = [
             ['label' => 'Accueil', 'url' => $this->generateUrl('app_home')],
             ['label' => 'Mon Profil', 'url' => $this->generateUrl('app_profile')],
@@ -209,6 +212,7 @@ class ProfileController extends AbstractController
 
         return $this->render('profile/my_reservations.html.twig', [
             'reservations' => $reservations,
+            'annulees' => $annulees,
             'breadcrumb' => $breadcrumb,
         ]);
     }

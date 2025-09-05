@@ -28,8 +28,8 @@ class Voiture
     #[ORM\Column(length: 50)]
     private ?string $couleur = null;
 
-    #[ORM\Column(length: 50, nullable: true)]
-    private ?string $date_premiere_immatriculation = null;
+    #[ORM\Column(type: 'date', nullable: true)]
+    private ?\DateTimeInterface $date_premiere_immatriculation = null;
 
     /**
      * @var Collection<int, Covoiturage>
@@ -108,12 +108,12 @@ class Voiture
         return $this;
     }
 
-    public function getDatePremiereImmatriculation(): ?string
+    public function getDatePremiereImmatriculation(): ?\DateTimeInterface
     {
         return $this->date_premiere_immatriculation;
     }
 
-    public function setDatePremiereImmatriculation(string $date_premiere_immatriculation): static
+    public function setDatePremiereImmatriculation(\DateTimeInterface $date_premiere_immatriculation): static
     {
         $this->date_premiere_immatriculation = $date_premiere_immatriculation;
 

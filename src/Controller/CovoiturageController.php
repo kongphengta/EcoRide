@@ -217,6 +217,10 @@ class CovoiturageController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Si le covoiturage était annulé, on le repasse à "Proposé" lors de la modification
+            if ($covoiturage->getStatut() === 'Annulé') {
+                $covoiturage->setStatut('Proposé');
+            }
             $entityManager->flush();
 
             $this->addFlash('success', 'Le covoiturage a été mis à jour avec succès.');

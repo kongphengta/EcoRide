@@ -35,6 +35,23 @@ class ReservationRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * Récupère les réservations annulées d'un utilisateur
+     * @param \App\Entity\User $user
+     * @return Reservation[]
+     */
+    public function findUserCanceledReservations(\App\Entity\User $user): array
+    {
+        return $this->createQueryBuilder('r')
+            ->where('r.passager = :user')
+            ->andWhere('r.statut = :statut')
+            ->setParameter('user', $user)
+            ->setParameter('statut', 'Annulé')
+            ->orderBy('r.dateReservation', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
 
     //    /**
     //     * @return Reservation[] Returns an array of Reservation objects

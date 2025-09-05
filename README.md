@@ -1,4 +1,3 @@
-
 # 🚗 EcoRide - Plateforme de Covoiturage
 
 EcoRide est une plateforme moderne de covoiturage développée avec Symfony 7.3.x, PHP 8.2, MySQL 8.0+, Bootstrap 5 et Doctrine ORM. Elle permet aux utilisateurs de proposer, rechercher et réserver des trajets partagés, avec un accent sur la sécurité, l’expérience utilisateur et la gestion transparente des réservations.
@@ -62,6 +61,11 @@ Comptes de test :
 - **Conducteur** : conducteur@test.fr / TestECF2025!
 - **Passager** : passager@test.fr / TestECF2025!
 - **Employé** : employe@ecoride.fr / EmployeECF2025!
+
+
+## Guide d’utilisation
+
+Consultez le [MANUEL_UTILISATEUR.md](MANUEL_UTILISATEUR.md) pour découvrir comment utiliser EcoRide.
 
 
 ## 🚀 Déploiement

@@ -9,11 +9,18 @@
 		<p>Gérez les trajets que vous avez proposés.</p>
 
 		<div class="d-flex justify-content-end mb-3">
-			<a href="{{ path('app_covoiturage_new') }}" class="btn btn-primary">
-				<i class="bi bi-plus-circle"></i>
-				Proposer un nouveau covoiturage
-			</a>
+			{% if is_granted('ROLE_CHAUFFEUR') %}
+				<a href="{{ path('app_covoiturage_new') }}" class="btn btn-primary">
+					<i class="bi bi-plus-circle"></i>
+					Proposer un nouveau covoiturage
+				</a>
+			{% endif %}
 		</div>
+
+		{# Bouton Imprimer #}
+		<button class="btn btn-outline-secondary mb-3" onclick="window.print()">
+			<i class="fas fa-print"></i> Imprimer mes trajets
+		</button>
 
 		{% if covoiturages is not empty %}
 			<div class="list-group">
@@ -79,19 +86,19 @@
 							{% endif %}
 
 							{# Modifier ou Annuler (si le trajet n'est pas commencé, terminé ou déjà annulé) #}
-							{% if covoiturage.statut in ['Proposé', 'Confirmé', 'Complet'] %}
-								<a href="{{ path('app_covoiturage_edit', {'id': covoiturage.id}) }}" class="btn btn-sm btn-outline-primary">
-									<i class="bi bi-pencil-fill"></i>
-									Modifier
-								</a>
-								<form method="post" action="{{ path('app_covoiturage_cancel', {'id': covoiturage.id}) }}" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir annuler ce covoiturage ? Cette action est irréversible.');">
-									<input type="hidden" name="_token" value="{{ csrf_token('cancel_covoiturage' ~ covoiturage.id) }}">
-									<button class="btn btn-sm btn-outline-danger">
-										<i class="bi bi-x-circle-fill"></i>
-										Annuler
-									</button>
-								</form>
-							{% endif %}
+							{% if covoiturage.statut in ['Proposé', 'Confirmé', 'Complet', 'Annulé'] %}
+    <a href="{{ path('app_covoiturage_edit', {'id': covoiturage.id}) }}" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-pencil-fill"></i>
+        Modifier
+    </a>
+    <form method="post" action="{{ path('app_covoiturage_cancel', {'id': covoiturage.id}) }}" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir annuler ce covoiturage ? Cette action est irréversible.');">
+        <input type="hidden" name="_token" value="{{ csrf_token('cancel_covoiturage' ~ covoiturage.id) }}">
+        <button class="btn btn-sm btn-outline-danger">
+            <i class="bi bi-x-circle-fill"></i>
+            Annuler
+        </button>
+    </form>
+{% endif %}
 						</div>
 					</div>
 				{% endfor %}
@@ -99,7 +106,12 @@
 		{% else %}
 			<div class="alert alert-info">
 				<h4 class="alert-heading">Aucun covoiturage proposé</h4>
-				<p>Vous n'avez pas encore proposé de trajet. Cliquez sur le bouton ci-dessus pour en créer un !</p>
+				<p>Vous n'avez pas encore proposé de trajet.</p>
+				{% if is_granted('ROLE_CHAUFFEUR') %}
+					<p>Cliquez sur le bouton ci-dessus pour en créer un !</p>
+				{% else %}
+					<p class="text-danger">Pour proposer un covoiturage, vous devez d'abord devenir chauffeur dans votre profil.</p>
+				{% endif %}
 			</div>
 		{% endif %}
 	</div>

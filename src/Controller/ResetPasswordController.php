@@ -56,7 +56,7 @@ class ResetPasswordController extends AbstractController
             'requestForm' => $form->createView(),
             'breadcrumb' => [
                 ['label' => 'Accueil', 'url' => $this->generateUrl('app_home')],
-                ['label' => 'Réinitialiser mot de passe', 'url' => $this->generateUrl('reset_password_request')],
+                ['label' => 'Réinitialiser mot de passe', 'url' => $this->generateUrl('request_password_reset')],
             ],
         ]);
     }

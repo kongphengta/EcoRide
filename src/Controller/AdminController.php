@@ -132,4 +132,34 @@ class AdminController extends AbstractController
         $this->addFlash('success', 'Utilisateur réactivé.');
         return $this->redirectToRoute('admin_dashboard');
     }
+
+    #[Route('/edit-role', name: 'admin_edit_role', methods: ['POST'])]
+    public function editRole(Request $request, EntityManagerInterface $em): Response
+    {
+        $userId = $request->request->get('user_id');
+        $newRole = $request->request->get('role');
+
+
+        $user = $em->getRepository(User::class)->find($userId);
+        $roleRepo = $em->getRepository(Role::class);
+        if ($user && in_array($newRole, ['ROLE_USER', 'ROLE_CHAUFFEUR', 'ROLE_ADMIN'])) {
+            // Retirer tous les rôles existants
+            foreach ($user->getEcoRideRoles() as $role) {
+                $user->removeEcoRideRole($role);
+            }
+            // Ajouter le nouveau rôle
+            $roleEntity = $roleRepo->findOneBy(['libelle' => $newRole]);
+            if ($roleEntity) {
+                $user->addEcoRideRole($roleEntity);
+                $em->flush();
+                $this->addFlash('success', 'Rôle modifié avec succès.');
+            } else {
+                $this->addFlash('danger', 'Rôle non trouvé.');
+            }
+        } else {
+            $this->addFlash('danger', 'Erreur lors de la modification du rôle.');
+        }
+
+        return $this->redirectToRoute('admin_dashboard');
+    }
 }

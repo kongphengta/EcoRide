@@ -6,47 +6,42 @@
 		<style>
 			body {
 				font-family: sans-serif;
-			}
-			.button {
-				display: inline-block;
-				padding: 10px 15px;
-				font-size: 16px;
-				color: #ffffff;
-				background-color: #0d6efd; /* Couleur Bootstrap primary */
-				border-radius: 5px;
-				text-decoration: none;
-				border: none;
-			}
+				<html > <head > <meta charset="UTF-8" > <title > Confirmez votre adresse e-mail</title > <style > body {
+					font-family: Arial, sans-serif;
+				}
+				.button {
+					display: inline-block;
+					padding: 12px 28px;
+					font-size: 17px;
+					color: #fff;
+					background-color: #28a745;
+					border-radius: 8px;
+					text-decoration: none;
+					border: none;
+					font-weight: bold;
+				}
+			</body>
 		</style>
 	</head>
 	<body>
-		<p>Bonjour
-			{{ user.firstname|default('Utilisateur') }}
-			!</p>
-
-		<p>Bienvenue sur EcoRide ! Pour finaliser votre inscription et activer votre compte, veuillez cliquer sur le bouton ou le lien ci-dessous :</p>
-
-		<p
-			style="margin: 20px 0;">
-			{# La variable verificationUrl est passée depuis le contrôleur #}
-			<a href="{{ verificationUrl }}" class="button">Confirmer mon adresse e-mail</a>
-		</p>
-
-		{# Optionnel: Ajouter une durée de validité si vous en implémentez une dans le futur #}
-		{# <p>Ce lien est valide pendant X heures.</p> #}
-
-		<p>Si le bouton ne fonctionne pas, vous pouvez copier et coller le lien suivant dans votre navigateur :</p>
-		<p>
-			<a href="{{ verificationUrl }}">{{ verificationUrl }}</a>
-		</p>
-
-		<hr>
-
-		<p>Si vous n'êtes pas à l'origine de cette inscription, veuillez simplement ignorer cet e-mail. Votre compte ne sera pas activé.</p>
-
-		<p>Merci et à bientôt sur EcoRide !</p>
-		<p>
-			<strong>L'équipe EcoRide</strong>
-		</p>
+		<div style="max-width: 600px; margin: 0 auto; background: #f8f9fa; border-radius: 12px; padding: 32px 24px;">
+			<h2 style="color: #222; font-size: 1.5em; font-weight: 600; margin-bottom: 18px;">Bienvenue
+				{{ user.firstname|default('Utilisateur') }}
+				!</h2>
+			<p style="font-size: 1.08em; color: #444; margin-bottom: 18px;">Merci de vous être inscrit sur
+				<strong>EcoRide</strong>, la plateforme de covoiturage écologique.</p>
+			<p style="font-size: 1.08em; color: #444; margin-bottom: 28px;">Pour activer votre compte et commencer à utiliser nos services, veuillez cliquer sur le bouton ci-dessous :</p>
+			<div style="text-align: center; margin: 36px 0;">
+				<a href="{{ verificationUrl }}" class="button">✔ Vérifier mon compte</a>
+			</div>
+			<p style="color: #666; font-size: 14px;">Si le bouton ne fonctionne pas, vous pouvez copier et coller ce lien dans votre navigateur :<br>
+				<a href="{{ verificationUrl }}" style="color: #28a745;">{{ verificationUrl }}</a>
+			</p>
+			<hr style="margin: 30px 0; border: none; border-top: 1px solid #ddd;">
+			<p style="color: #666; font-size: 12px; text-align: center;">
+				© 2025 EcoRide - Plateforme de covoiturage écologique
+			</p>
+		</div>
 	</body>
 </html>
+<p></p>

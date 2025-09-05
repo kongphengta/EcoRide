@@ -1,0 +1,12 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Accès refusé{% endblock %}
+
+{% block body %}
+<div class="container mt-5 text-center">
+    <h1 class="display-4 text-danger"><i class="bi bi-shield-lock"></i> Accès refusé</h1>
+    <p class="lead">Vous devez être chauffeur pour accéder à cette page et ajouter une voiture.</p>
+    <p>Pour devenir chauffeur, rendez-vous dans votre profil et cliquez sur "Devenir chauffeur".</p>
+    <a href="{{ path('app_profile') }}" class="btn btn-primary mt-3">Retour au profil</a>
+</div>
+{% endblock %}

@@ -37,6 +37,7 @@ class VoitureController extends AbstractController
     }
 
     #[Route('/new', name: 'app_voiture_new', methods: ['GET', 'POST'])]
+    #[IsGranted('ROLE_CHAUFFEUR')]
     public function new(Request $request, EntityManagerInterface $entityManager, RoleRepository $roleRepository): Response
     {
         $voiture = new Voiture();

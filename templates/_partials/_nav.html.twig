@@ -37,6 +37,9 @@
 								<a class="dropdown-item" href="{{ path('app_profile') }}">Mon Profil</a>
 							</li>
 							<li>
+								<a class="dropdown-item" href="{{ path('app_profile_my_reservations') }}">Mes Réservations</a>
+							</li>
+							<li>
 								<a class="dropdown-item" href="{{ path('app_profile_my_covoiturages') }}">Mes Covoiturages</a>
 							</li>
 							<li>
@@ -44,7 +47,7 @@
 							</li>
 							<li><hr class="dropdown-divider"></li>
 							<li>
-								<a class="dropdown-item" href="{{ path('app_logout') }}">Déconnexion</a>
+								<a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#logoutModal">Déconnexion</a>
 							</li>
 						</ul>
 					</li>
@@ -57,6 +60,25 @@
 					</li>
 				{% endif %}
 			</ul>
+		</div>
+
+		{# Modal de confirmation de déconnexion #}
+		<div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+			<div class="modal-dialog modal-dialog-centered">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="logoutModalLabel">Confirmer la déconnexion</h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+					</div>
+					<div class="modal-body">
+						Êtes-vous sûr de vouloir vous déconnecter ?
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+						<a href="{{ path('app_logout') }}" class="btn btn-danger">Se déconnecter</a>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 </nav>

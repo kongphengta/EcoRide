@@ -8,7 +8,6 @@ import './bootstrap.js';
 import './styles/app.css';
 import './styles/profile.css';
 import $ from 'jquery'; // Import jQuery
-import 'bootstrap'; // Import Bootstrap JavaScript
 global.$ = global.jQuery = $; // Make jQuery available globally
 console.log('This log comes from assets/app.js - Webpack Encore is running!');
 
