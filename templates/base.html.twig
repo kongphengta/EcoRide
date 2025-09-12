@@ -2,7 +2,10 @@
 <html>
 	<head>
 		<meta charset="UTF-8">
-		<title>{% block title %}Bienvenue!{% endblock %}</title>
+		<title>
+			{% block title %}Bienvenue!
+			{% endblock %}
+		</title>
 		<link rel="icon" href="data:image/svg+xml,<svg viewBox='0 0 150 150' xmlns='http://www.w3.org/2000/svg'><style>.st0{fill:#5cb85c}.st1{fill:#fff}</style><path class='st0' d='M0 0h150v150H0z'/><path class='st1' d='m50.4 108.5 29.1-45.2 30.1 45.2H95.5L79.9 84.4l-15.6 24.1zM34.9 41.5h80.2v16.6H34.9zM34.9 66.3h80.2v16.6H34.9zM34.9 91.1h45.2v16.6H34.9z'/></svg>">
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" integrity="..." crossorigin="anonymous"/>
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
@@ -71,38 +74,42 @@
 
 		<!-- Footer -->
 		<footer class="bg-success text-white mt-auto py-4">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-6">
-                <h5>
-                    <i class="bi bi-leaf-fill me-2"></i>EcoRide</h5>
-                <p class="mb-2">Votre plateforme de covoiturage écologique</p>
-                <p class="mb-0">
-                    <i class="bi bi-envelope me-2"></i>
-                    <a href="mailto:contact@ecoride.fr" class="text-white text-decoration-none">
-                        contact@ecoride.fr
-                    </a>
-                </p>
-            </div>
-            <div class="col-md-6 text-md-end">
-                <div class="d-flex flex-column align-items-md-end">
-                    <div class="mb-2">
-                        <a href="{{ path('app_legal_mentions') }}" class="text-white text-decoration-none me-3">
-                            <i class="bi bi-file-text me-2"></i>Mentions légales
-                        </a>
-                        <a href="{{ path('app_legal_privacy') }}" class="text-white text-decoration-none me-3">
-                            <i class="bi bi-shield-check me-2"></i>Politique de confidentialité
-                        </a>
-                    </div>
-                    <div>
-                        <a href="{{ path('app_legal_terms') }}" class="text-white text-decoration-none">
-                            <i class="bi bi-file-earmark-text me-2"></i>Conditions d'utilisation
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</footer>
+			<div class="container">
+				<div class="row">
+					<div class="col-md-6">
+						<h5>
+							<i class="bi bi-leaf-fill me-2"></i>EcoRide</h5>
+						<p class="mb-2">Votre plateforme de covoiturage écologique</p>
+						<p class="mb-0">
+							<i class="bi bi-envelope me-2"></i>
+							<a href="mailto:contact@ecoride.fr" class="text-white text-decoration-none">
+								contact@ecoride.fr
+							</a>
+						</p>
+					</div>
+					<div class="col-md-6 text-md-end">
+						<div class="d-flex flex-column align-items-md-end">
+							<div class="mb-2">
+								<a href="{{ path('app_legal_mentions') }}" class="text-white text-decoration-none me-3">
+									<i class="bi bi-file-text me-2"></i>Mentions légales
+								</a>
+								<a href="{{ path('app_legal_privacy') }}" class="text-white text-decoration-none me-3">
+									<i class="bi bi-shield-check me-2"></i>Politique de confidentialité
+								</a>
+							</div>
+							<div>
+								<a href="{{ path('app_legal_terms') }}" class="text-white text-decoration-none">
+									<i class="bi bi-file-earmark-text me-2"></i>Conditions d'utilisation
+								</a>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</footer>
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+		{% block javascripts %}
+			{{ encore_entry_script_tags('app') }}
+		{% endblock %}
 	</body>
 </html>
