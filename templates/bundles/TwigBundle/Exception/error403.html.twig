@@ -5,8 +5,21 @@
 {% block body %}
 <div class="container mt-5 text-center">
     <h1 class="display-4 text-danger"><i class="bi bi-shield-lock"></i> Accès refusé</h1>
-    <p class="lead">Vous devez être chauffeur pour accéder à cette page et ajouter une voiture.</p>
-    <p>Pour devenir chauffeur, rendez-vous dans votre profil et cliquez sur "Devenir chauffeur".</p>
-    <a href="{{ path('app_profile') }}" class="btn btn-primary mt-3">Retour au profil</a>
+    {% if required_role is defined %}
+        {% if required_role == 'ROLE_ADMIN' %}
+            <p class="lead">Cette page est réservée aux administrateurs.</p>
+            <a href="{{ path('app_home') }}" class="btn btn-primary mt-3">Retour à l'accueil</a>
+        {% elseif required_role == 'ROLE_CHAUFFEUR' %}
+            <p class="lead">Vous devez être chauffeur pour accéder à cette page et ajouter une voiture.</p>
+            <p>Pour devenir chauffeur, rendez-vous dans votre profil et cliquez sur "Devenir chauffeur".</p>
+            <a href="{{ path('app_profile') }}" class="btn btn-primary mt-3">Retour au profil</a>
+        {% else %}
+            <p class="lead">Vous n'avez pas les permissions nécessaires pour accéder à cette page.</p>
+            <a href="{{ path('app_home') }}" class="btn btn-primary mt-3">Retour à l'accueil</a>
+        {% endif %}
+    {% else %}
+        <p class="lead">Vous n'avez pas les permissions nécessaires pour accéder à cette page.</p>
+        <a href="{{ path('app_home') }}" class="btn btn-primary mt-3">Retour à l'accueil</a>
+    {% endif %}
 </div>
 {% endblock %}
