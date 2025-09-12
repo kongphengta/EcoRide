@@ -11,6 +11,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
+use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorageInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Psr\Log\LoggerInterface;
@@ -175,7 +177,7 @@ class ProfileController extends AbstractController
         ]);
     }
     #[Route('/devenir-chauffeur', name: 'app_profile_become_driver')]
-    public function becomeDriver(EntityManagerInterface $entityManager): Response
+    public function becomeDriver(EntityManagerInterface $entityManager, \App\Repository\RoleRepository $roleRepository, TokenStorageInterface $tokenStorage): Response
     {
         /** @var \App\Entity\User $user */
         $user = $this->getUser();
@@ -183,8 +185,21 @@ class ProfileController extends AbstractController
             throw $this->createAccessDeniedException('Utilisateur non connecté.');
         }
 
+
+
         $user->setIsChauffeur(true); // Assurez-vous que le champ existe dans l'entité User
+
+        // Ajouter le rôle chauffeur si non déjà présent
+        $chauffeurRole = $roleRepository->findOneBy(['libelle' => 'ROLE_CHAUFFEUR']);
+        if ($chauffeurRole && !$user->getEcoRideRoles()->contains($chauffeurRole)) {
+            $user->addEcoRideRole($chauffeurRole);
+        }
+
         $entityManager->flush();
+
+        // Rafraîchir le token de sécurité pour prendre en compte le nouveau rôle immédiatement
+        $token = new UsernamePasswordToken($user, 'main', $user->getRoles());
+        $tokenStorage->setToken($token);
 
         $this->addFlash('success', 'Vous êtes maintenant chauffeur !');
         return $this->redirectToRoute('app_profile');

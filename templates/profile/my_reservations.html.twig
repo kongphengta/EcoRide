@@ -1,4 +1,5 @@
 {% extends 'base.html.twig' %}
+{% block title %}Mes réservations{% endblock %}
 {% block body %}
 {% set rejetees = reservations|filter(r => r.statut == 'Rejetée')|length %}
 {% set annulees = reservations|filter(r => r.statut starts with 'Annulée')|length %}
@@ -27,11 +28,10 @@
 								<tr>
 									<th>Trajet</th>
 									<th>Date</th>
+									<th>Heure</th>
 									<th>Chauffeur</th>
-									<th>Places</th>
-									<th>Statut</th>
-									<th>Réservé le</th>
-									<th>Prix</th>
+									<th>Places réservées</th>
+									<th>Prix total</th>
 									<th>Actions</th>
 								</tr>
 							</thead>

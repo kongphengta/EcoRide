@@ -1,11 +1,10 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Mes Covoiturages
-{% endblock %}
+{% block title %}Mes covoiturages{% endblock %}
 
 {% block body %}
 	<div class="container mt-4">
-		<h1>Mes Covoiturages</h1>
+		<h1 class="mb-4">Mes covoiturages</h1>
 		<p>Gérez les trajets que vous avez proposés.</p>
 
 		<div class="d-flex justify-content-end mb-3">
@@ -23,86 +22,73 @@
 		</button>
 
 		{% if covoiturages is not empty %}
-			<div class="list-group">
-				{% for covoiturage in covoiturages %}
-					<div class="list-group-item list-group-item-action flex-column align-items-start">
-						<div class="d-flex w-100 justify-content-between">
-							<h5 class="mb-1">{{ covoiturage.lieuDepart }}
-								&rarr;
-								{{ covoiturage.lieuArrivee }}</h5>
-							<div>
-								<span class="badge
-										                                {% if covoiturage.statut == 'Proposé' %}bg-secondary
-										                                {% elseif covoiturage.statut in ['Confirmé', 'Complet'] %}bg-primary
-										                                {% elseif covoiturage.statut == 'En cours' %}bg-info text-dark
-										                                {% elseif covoiturage.statut == 'Terminé' %}bg-success
-										                                {% elseif covoiturage.statut == 'Annulé' %}bg-danger
-										                                {% else %}bg-light text-dark{% endif %}">
-									{{ covoiturage.statut }}
-								</span>
-							</div>
-						</div>
-						<p class="mb-1">
-							Le
-							{{ covoiturage.dateDepart|date('d/m/Y') }}
-							à
-							{{ covoiturage.heureDepart|date('H:i') }}
-						</p>
-						<small class="text-muted">
-							{{ covoiturage.reservations|length }}
-							réservation(s) /
-							{{ covoiturage.nbPlaceTotal }}
-							places.
-						</small>
+			<table class="table table-bordered">
+				<thead class="table-light">
+					<tr>
+						<th>Départ</th>
+						<th>Arrivée</th>
+						<th>Date</th>
+						<th>Heure</th>
+						<th>Places restantes</th>
+						<th>Prix</th>
+						<th>Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for covoiturage in covoiturages %}
+						<tr>
+							<td>{{ covoiturage.lieuDepart }}</td>
+							<td>{{ covoiturage.lieuArrivee }}</td>
+							<td>{{ covoiturage.dateDepart|date('d/m/Y') }}</td>
+							<td>{{ covoiturage.heureDepart|date('H:i') }}</td>
+							<td>{{ covoiturage.nbPlaceRestantes }}</td>
+							<td>{{ covoiturage.prixPersonne }} €</td>
+							<td>
+								<div class="d-flex">
+									<a href="{{ path('app_covoiturage_show', {'id': covoiturage.id}) }}" class="btn btn-primary btn-sm me-2">Voir</a>
 
-						<div class="mt-3 text-end">
-							{# Actions possibles en fonction du statut #}
+									{# Démarrer le trajet #}
+									{% if covoiturage.statut in ['Confirmé', 'Complet'] %}
+										<form method="post" action="{{ path('app_covoiturage_start', {'id': covoiturage.id}) }}" class="d-inline" onsubmit="return confirm('Voulez-vous vraiment démarrer ce trajet ?');">
+											<input type="hidden" name="_token" value="{{ csrf_token('start' ~ covoiturage.id) }}">
+											<button class="btn btn-sm btn-success me-2">
+												<i class="bi bi-play-circle-fill"></i>
+												Démarrer
+											</button>
+										</form>
+									{% endif %}
 
-							{# Voir les passagers (toujours possible si chauffeur) #}
-								<a href="{{ path('app_covoiturage_passengers', {'id': covoiturage.id}) }}" class="btn btn-sm btn-outline-secondary"> <i class="bi bi-people-fill"></i>
-								Passagers
-							</a>
+									{# Terminer le trajet #}
+									{% if covoiturage.statut == 'En cours' %}
+										<form method="post" action="{{ path('app_covoiturage_finish', {'id': covoiturage.id}) }}" class="d-inline" onsubmit="return confirm('Confirmez-vous l'arrivée à destination ?');">
+											<input type="hidden" name="_token" value="{{ csrf_token('finish' ~ covoiturage.id) }}">
+											<button class="btn btn-sm btn-info text-dark me-2">
+												<i class="bi bi-check-circle-fill"></i>
+												Arrivé à destination
+											</button>
+										</form>
+									{% endif %}
 
-							{# Démarrer le trajet #}
-							{% if covoiturage.statut in ['Confirmé', 'Complet'] %}
-								<form method="post" action="{{ path('app_covoiturage_start', {'id': covoiturage.id}) }}" class="d-inline" onsubmit="return confirm('Voulez-vous vraiment démarrer ce trajet ?');">
-									<input type="hidden" name="_token" value="{{ csrf_token('start' ~ covoiturage.id) }}">
-									<button class="btn btn-sm btn-success">
-										<i class="bi bi-play-circle-fill"></i>
-										Démarrer
-									</button>
-								</form>
-							{% endif %}
-
-							{# Terminer le trajet #}
-							{% if covoiturage.statut == 'En cours' %}
-								<form method="post" action="{{ path('app_covoiturage_finish', {'id': covoiturage.id}) }}" class="d-inline" onsubmit="return confirm('Confirmez-vous l'arrivée à destination ?');">
-									<input type="hidden" name="_token" value="{{ csrf_token('finish' ~ covoiturage.id) }}">
-									<button class="btn btn-sm btn-info text-dark">
-										<i class="bi bi-check-circle-fill"></i>
-										Arrivé à destination
-									</button>
-								</form>
-							{% endif %}
-
-							{# Modifier ou Annuler (si le trajet n'est pas commencé, terminé ou déjà annulé) #}
-							{% if covoiturage.statut in ['Proposé', 'Confirmé', 'Complet', 'Annulé'] %}
-    <a href="{{ path('app_covoiturage_edit', {'id': covoiturage.id}) }}" class="btn btn-sm btn-outline-primary">
-        <i class="bi bi-pencil-fill"></i>
-        Modifier
-    </a>
-    <form method="post" action="{{ path('app_covoiturage_cancel', {'id': covoiturage.id}) }}" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir annuler ce covoiturage ? Cette action est irréversible.');">
-        <input type="hidden" name="_token" value="{{ csrf_token('cancel_covoiturage' ~ covoiturage.id) }}">
-        <button class="btn btn-sm btn-outline-danger">
-            <i class="bi bi-x-circle-fill"></i>
-            Annuler
-        </button>
-    </form>
-{% endif %}
-						</div>
-					</div>
-				{% endfor %}
-			</div>
+									{# Modifier ou Annuler (si le trajet n'est pas commencé, terminé ou déjà annulé) #}
+									{% if covoiturage.statut in ['Proposé', 'Confirmé', 'Complet', 'Annulé'] %}
+										<a href="{{ path('app_covoiturage_edit', {'id': covoiturage.id}) }}" class="btn btn-sm btn-outline-primary me-2">
+											<i class="bi bi-pencil-fill"></i>
+											Modifier
+										</a>
+										<form method="post" action="{{ path('app_covoiturage_cancel', {'id': covoiturage.id}) }}" class="d-inline" onsubmit="return confirm('Êtes-vous sûr de vouloir annuler ce covoiturage ? Cette action est irréversible.');">
+											<input type="hidden" name="_token" value="{{ csrf_token('cancel_covoiturage' ~ covoiturage.id) }}">
+											<button class="btn btn-sm btn-outline-danger">
+												<i class="bi bi-x-circle-fill"></i>
+												Annuler
+											</button>
+										</form>
+									{% endif %}
+								</div>
+							</td>
+						</tr>
+					{% endfor %}
+				</tbody>
+			</table>
 		{% else %}
 			<div class="alert alert-info">
 				<h4 class="alert-heading">Aucun covoiturage proposé</h4>

@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Mon Profil
+{% block title %}Mon profil
 {% endblock %}
 
 {% block body %}
@@ -13,7 +13,7 @@
 
 		<div class="row">
 			<div class="col-md-6">
-				<h1>Mon Profil</h1>
+				<h1 class="mb-4">Mon profil</h1>
 				{% for message in app.flashes('error') %}
 					<div class="alert alert-danger">
 						{{ message }}
@@ -45,6 +45,9 @@
 
 					<dt class="col-sm-3">Date de naissance</dt>
 					<dd class="col-sm-9">{{ user.dateNaissance ? user.dateNaissance|date('d/m/Y') : 'Non renseignée' }}</dd>
+
+					<dt class="col-sm-3">Crédits</dt>
+					<dd class="col-sm-9">{{ user.credits }}</dd>
 
 					<dt class="col-sm-3">Photo</dt>
 					<dd class="col-sm-9">
@@ -109,7 +112,8 @@
 	{% endif %}
 
 	<button class="btn btn-outline-secondary mb-3" onclick="window.print()">
-		<i class="fas fa-print"></i> Imprimer mon profil
+		<i class="fas fa-print"></i>
+		Imprimer mon profil
 	</button>
 
 {% endblock %}
