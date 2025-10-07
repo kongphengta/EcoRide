@@ -34,7 +34,7 @@ EcoRide est une plateforme moderne de covoiturage développée avec Symfony 7.3.
 
 ## 🚀 Installation & configuration
 
-Voir la documentation technique (`DOCUMENTATION_TECHNIQUE.md`) pour l’installation complète.
+Voir la documentation technique [Documentation Technique](https://github.com/kongphengta/EcoRide/blob/master/DOCUMENTATION_TECHNIQUE.md) pour l’installation complète.
 
 Principales étapes :
 
