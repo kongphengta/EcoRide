@@ -50,7 +50,7 @@ Principales étapes :
 
 ## 🎯 Utilisation
 
-Consultez le [manuel utilisateur](https://github.com/kongphengta/EcoRide/blob/master/Manuel%20d'utilisation.pdf) pour le workflow complet.
+Consultez le [Manuel d'utilisateur](https://github.com/kongphengta/EcoRide/blob/master/Manuel%20d'utilisation.pdf) pour le workflow complet.
 
 Comptes de test :
 
